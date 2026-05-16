@@ -7,6 +7,8 @@ exports.up = function(knex) {
     table.uuid('id').primary();
     table.string('nome').notNullable();
     table.string('slug').unique().notNullable();
+    table.enum('plano', ['ESSENCIAL', 'PROFISSIONAL', 'ENTERPRISE']).defaultTo('ESSENCIAL');
+    table.integer('limite_corretores').defaultTo(20);
     table.string('logo_url');
     table.string('cor_primaria').defaultTo('#D4AF37'); // Dourado Talentos
     table.enum('status', ['ATIVO', 'SUSPENSO', 'CANCELADO']).defaultTo('ATIVO');

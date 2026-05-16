@@ -18,6 +18,8 @@ exports.seed = async function(knex) {
     id: empresaId,
     nome: 'Construtora Haja',
     slug: 'haja',
+    plano: 'PROFISSIONAL',
+    limite_corretores: 60,
     logo_url: 'https://haja.com.br/logo.png',
     cor_primaria: '#D4AF37',
     status: 'ATIVO'

@@ -10,6 +10,8 @@ Entidade master que isola todos os dados do sistema.
 - `id`: UUID (PK)
 - `nome`: String (Ex: "Construtora Haja")
 - `slug`: String (Identificador único para URL/Login)
+- `plano`: Enum (`ESSENCIAL`, `PROFISSIONAL`, `ENTERPRISE`)
+- `limite_corretores`: Int (Baseado no plano)
 - `logo_url`: String
 - `cor_primaria`: String (Hexadecimal para personalização do tema)
 - `status`: Enum (`ATIVO`, `SUSPENSO`, `CANCELADO`)
