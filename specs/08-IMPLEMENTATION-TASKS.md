@@ -32,9 +32,9 @@ Este documento é o guia de execução do projeto. Nenhuma tarefa deve ser inici
 ### História 3: Login Universal
 *Como usuário (Corretor ou Admin), quero realizar login em um portal único para ser redirecionado ao ambiente personalizado da minha empresa.*
 
-- [ ] **Tarefa 3.1:** Implementar o serviço de autenticação (JWT).
-- [ ] **Tarefa 3.2:** Criar o middleware de identificação de Tenant (Extração do `empresa_id` a partir do usuário logado).
-- [ ] **Tarefa 3.3:** Endpoint de "Meus Dados" que retorna o tema visual da empresa (Logo/Cores).
+- [x] **Tarefa 3.1:** Implementar o serviço de autenticação (JWT).
+- [x] **Tarefa 3.2:** Criar o middleware de identificação de Tenant (Extração do `empresa_id` a partir do usuário logado).
+- [x] **Tarefa 3.3:** Endpoint de "Meus Dados" que retorna o tema visual da empresa (Logo/Cores).
 
 ---
 
