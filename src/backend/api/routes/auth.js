@@ -1,0 +1,12 @@
+const { Router } = require('express');
+const AutenticacaoController = require('../controllers/AutenticacaoController');
+const tenantMiddleware = require('../../infra/middlewares/TenantMiddleware');
+
+const routes = Router();
+
+routes.post('/login', AutenticacaoController.login);
+
+// Rota de teste protegida
+routes.get('/me', tenantMiddleware, AutenticacaoController.me);
+
+module.exports = routes;
