@@ -10,11 +10,11 @@ Este documento é o guia de execução do projeto. Nenhuma tarefa deve ser inici
 ### História 1: Setup do Workspace
 *Como desenvolvedor, quero preparar a estrutura base do projeto para garantir organização e isolamento entre as camadas de Backend e Frontend.*
 
-- [ ] **Tarefa 1.1:** Inicializar o projeto Node.js (`npm init -y`) na raiz.
-- [ ] **Tarefa 1.2:** Criar estrutura de diretórios:
+- [x] **Tarefa 1.1:** Inicializar o projeto Node.js (`npm init -y`) na raiz.
+- [x] **Tarefa 1.2:** Criar estrutura de diretórios:
     - `src/backend` (API, Regras de Negócio, Infra)
     - `src/frontend` (Interface Web Premium)
-- [ ] **Tarefa 1.3:** Configurar arquivo `.gitignore` (node_modules, .env, *.db).
+- [x] **Tarefa 1.3:** Configurar arquivo `.gitignore` (node_modules, .env, *.db).
 
 ### História 2: Infraestrutura de Dados Multi-Tenant
 *Como arquiteto, preciso estabelecer a base de dados SaaS para garantir que cada empresa tenha seus dados estritamente isolados.*

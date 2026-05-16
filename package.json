@@ -1,12 +1,17 @@
 {
   "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "knex": "^3.2.10",
+    "pg": "^8.20.0",
+    "sqlite3": "^6.0.1",
     "xlsx": "^0.18.5"
   },
   "name": "premios",
   "version": "1.0.0",
   "description": "",
   "main": "read_headers.js",
-  "devDependencies": {},
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },

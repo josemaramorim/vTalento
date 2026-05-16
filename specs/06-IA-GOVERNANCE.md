@@ -57,6 +57,7 @@ Ao final de **toda sessão**, a IA deve atualizar o Log de Progresso abaixo. Iss
 | Módulo | Status | Task Atual | Branch | Observação |
 | :--- | :--- | :--- | :--- | :--- |
 | **SPEC-KIT** | ✅ Concluído | 2.0 (SaaS) | `docs/saas-ready` | Arquitetura Multi-Tenant com isolamento por Empresa integrada. |
+| **DESENVOLVIMENTO** | 🏗️ Em Curso | História 2 (Infra) | `feature/db-setup` | Setup do Workspace concluído. |
 
 ---
 
