@@ -19,11 +19,11 @@ Este documento é o guia de execução do projeto. Nenhuma tarefa deve ser inici
 ### História 2: Infraestrutura de Dados Multi-Tenant
 *Como arquiteto, preciso estabelecer a base de dados SaaS para garantir que cada empresa tenha seus dados estritamente isolados.*
 
-- [ ] **Tarefa 2.1:** Instalar dependências base do Backend:
-    - `express`, `cors`, `dotenv`, `knex`, `sqlite3` (para desenvolvimento rápido).
-- [ ] **Tarefa 2.2:** Configurar o `knexfile.js` e a conexão com o banco de dados.
-- [ ] **Tarefa 2.3:** Criar a Migration inicial para a tabela `GamEmpresa` (Tenants).
-- [ ] **Tarefa 2.4:** Criar a Migration da tabela `GamUsuario` (Autenticação Multi-Tenant).
+- [x] **Tarefa 2.1:** Instalar dependências base do Backend:
+    - `express`, `cors`, `dotenv`, `knex`, `sqlite3`, `pg`.
+- [x] **Tarefa 2.2:** Configurar o `knexfile.js` e a conexão com o banco de dados (SQLite/Postgres).
+- [x] **Tarefa 2.3:** Criar a Migration inicial para a tabela `GamEmpresa` (Tenants).
+- [x] **Tarefa 2.4:** Criar a Migration da tabela `GamUsuario` (Autenticação Multi-Tenant).
 
 ---
 
