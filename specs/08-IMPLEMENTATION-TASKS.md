@@ -39,10 +39,10 @@ Este documento é o guia de execução do projeto. Nenhuma tarefa deve ser inici
 ### História 4: Interface de Acesso (Frontend)
 *Como usuário, quero uma interface premium para me autenticar e acessar meu painel de prêmios.*
 
-- [ ] **Tarefa 4.1:** Configurar estrutura base do Frontend (Index, CSS Global, Assets).
-- [ ] **Tarefa 4.2:** Desenvolver a Tela de Login com estética "Airy" e Glassmorphism.
-- [ ] **Tarefa 4.3:** Implementar a lógica de consumo da API de Login e armazenamento do Token.
-- [ ] **Tarefa 4.4:** Criar o layout base do Dashboard com barra lateral e cabeçalho responsivo.
+- [x] **Tarefa 4.1:** Configurar estrutura base do Frontend (Index, CSS Global, Assets).
+- [x] **Tarefa 4.2:** Desenvolver a Tela de Login com estética "Airy" e Glassmorphism.
+- [x] **Tarefa 4.3:** Implementar a lógica de consumo da API de Login e armazenamento do Token.
+- [x] **Tarefa 4.4:** Criar o layout base do Dashboard com barra lateral e cabeçalho responsivo.
 
 ---
 
