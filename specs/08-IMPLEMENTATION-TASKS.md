@@ -47,4 +47,22 @@ Este documento é o guia de execução do projeto. Nenhuma tarefa deve ser inici
 ---
 
 ## FASE 3: Motor de Importação e Gamificação
-*(A ser detalhado após conclusão da Fase 2)*
+
+### História 5: Importação de Planilhas (CSV/Excel)
+*Como administrador, quero fazer upload de planilhas financeiras para que o sistema distribua talentos automaticamente aos corretores.*
+
+- [ ] **Tarefa 5.1:** Criar backend para processamento de arquivos (usando `xlsx` ou `csv-parser`).
+- [ ] **Tarefa 5.2:** Implementar lógica de distribuição de saldo (Total recebido -> Percentual definido em GamEmpresa -> Atualiza `saldo_disponivel` do Usuário).
+- [ ] **Tarefa 5.3:** Criar tela no frontend para upload de arquivos com barra de progresso.
+
+### História 6: Lançamento Manual de Talentos
+*Como administrador, quero poder adicionar ou remover talentos manualmente de um corretor específico, justificando a ação (ex: bônus extra ou correção).*
+
+- [ ] **Tarefa 6.1:** Criar endpoint no backend (POST `/api/admin/lancamento-manual`) que recebe `usuario_id`, `valor` e `justificativa`, atualizando o saldo imediatamente.
+- [ ] **Tarefa 6.2:** Criar tabela no banco de dados (`GamTransacao`) para registrar o histórico/extrato de movimentações (quem lançou, para quem, valor, data e justificativa).
+- [ ] **Tarefa 6.3:** Criar interface no painel Admin contendo busca de corretor e formulário de lançamento.
+
+---
+
+## FASE 4: Vitrine de Prêmios e Resgate
+*(A ser detalhado após conclusão da Fase 3)*

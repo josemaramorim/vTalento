@@ -42,12 +42,19 @@
 1. Cadastra novos corretores ou importa em lote.
 2. Ativa/Desativa acesso de usuários.
 
-### 2.2. Importação de Dados Financeiros
+### 2.2. Importação de Dados Financeiros (Em Lote)
 1. Faz upload de arquivo CSV/Excel de recebíveis.
 2. Mapeia colunas (se necessário).
 3. Sistema processa e gera créditos/atualizações de status automaticamente.
 
-### 2.3. Gestão de Prêmios (Painel E-commerce)
+### 2.3. Lançamento Manual de Talentos
+1. Acessa a tela "Lançamento Manual".
+2. Busca o Corretor pelo nome, e-mail ou CPF.
+3. Insere o valor em Talentos (Positivo para crédito extra, Negativo para estorno/ajuste).
+4. Preenche o campo obrigatório "Justificativa" (ex: Bônus por meta, Erro na planilha).
+5. Confirma a operação. O saldo "Disponível" do corretor é atualizado imediatamente.
+
+### 2.4. Gestão de Prêmios (Painel E-commerce)
 1. **Catálogo:** Cadastra prêmios com múltiplas fotos, categorias e tags (ex: "Destaque").
 2. **Estoque:** Gerencia quantidade disponível.
 3. **Fila de Pedidos:** 
