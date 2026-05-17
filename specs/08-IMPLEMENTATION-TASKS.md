@@ -36,7 +36,15 @@ Este documento é o guia de execução do projeto. Nenhuma tarefa deve ser inici
 - [x] **Tarefa 3.2:** Criar o middleware de identificação de Tenant (Extração do `empresa_id` a partir do usuário logado).
 - [x] **Tarefa 3.3:** Endpoint de "Meus Dados" que retorna o tema visual da empresa (Logo/Cores).
 
+### História 4: Interface de Acesso (Frontend)
+*Como usuário, quero uma interface premium para me autenticar e acessar meu painel de prêmios.*
+
+- [ ] **Tarefa 4.1:** Configurar estrutura base do Frontend (Index, CSS Global, Assets).
+- [ ] **Tarefa 4.2:** Desenvolver a Tela de Login com estética "Airy" e Glassmorphism.
+- [ ] **Tarefa 4.3:** Implementar a lógica de consumo da API de Login e armazenamento do Token.
+- [ ] **Tarefa 4.4:** Criar o layout base do Dashboard com barra lateral e cabeçalho responsivo.
+
 ---
 
-## FASE 3: Motor de Importação e Gamificação (Próximos Passos...)
-*(A ser detalhado após conclusão da Fase 1)*
+## FASE 3: Motor de Importação e Gamificação
+*(A ser detalhado após conclusão da Fase 2)*

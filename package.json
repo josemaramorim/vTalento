@@ -16,6 +16,7 @@
   "description": "",
   "main": "read_headers.js",
   "scripts": {
+    "backend:dev": "node src/backend/app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

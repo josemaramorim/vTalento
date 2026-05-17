@@ -14,6 +14,13 @@ O sistema deve transmitir **exclusividade, performance e clareza**.
     - **Alerta (Não Compensados):** Laranja Coral (#E67E22).
 - **Tipografia:** Moderna e limpa (ex: Inter, Roboto ou Outfit).
 - **Estilo:** Glassmorphism sutil, bordas arredondadas, sombras suaves e micro-animações (hover em botões e cards).
+- **Temas (Dark/Light):**
+    - O sistema deve suportar alternância entre modo claro e escuro.
+    - Uso de variáveis CSS para cores de fundo, texto e superfícies.
+    - Detecção automática baseada na preferência do sistema operacional.
+- **Responsividade Adaptativa:**
+    - Mobile-First: Interfaces otimizadas para uso com uma mão.
+    - Desktop: Aproveitamento de espaço para tabelas e filtros complexos.
 
 3. **Vitrine de Prêmios (E-commerce)**
 - **Grid de Cards:** Layout em grade responsiva com imagens em alta definição e badges de categoria.
