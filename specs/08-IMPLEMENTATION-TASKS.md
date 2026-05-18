@@ -44,6 +44,13 @@ Este documento é o guia de execução do projeto. Nenhuma tarefa deve ser inici
 - [x] **Tarefa 4.3:** Implementar a lógica de consumo da API de Login e armazenamento do Token.
 - [x] **Tarefa 4.4:** Criar o layout base do Dashboard com barra lateral e cabeçalho responsivo.
 
+### História 4.5 (Técnica): Cobertura de Testes
+*Como engenheiro, quero garantir a estabilidade do fluxo de login e aderência à nova política de testes.*
+
+- [x] **Tarefa 4.5.1:** Instalar dependências de teste (`jest`, `supertest`, `sqlite3` in-memory).
+- [x] **Tarefa 4.5.2:** Escrever testes unitários para o `AutenticacaoService`.
+- [x] **Tarefa 4.5.3:** Escrever testes de integração para o endpoint `/api/auth/login`.
+
 ---
 
 ## FASE 3: Motor de Importação e Gamificação

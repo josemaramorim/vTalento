@@ -10,6 +10,7 @@
 - **Frontend:** HTML5, CSS3 (Vanilla ou Tailwind) e Javascript (Vanilla/ES6).
 - **Autenticação:** JSON Web Tokens (JWT).
 - **Processamento de Arquivos:** bibliotecas `xlsx` ou `csv-parser`.
+- **Testes (Qualidade):** `Jest` (Test Runner) e `Supertest` (Testes de Integração de API).
 
 ## 2. Estrutura de Pastas (Padrão de Infraestrutura)
 

@@ -28,6 +28,7 @@ Nunca renomear tabelas ou colunas que façam parte do legado de integração (pl
 2. **Quando em dúvida, PARE:** Se a SPEC for ambígua, a IA deve reportar a `DÚVIDA` e aguardar instrução.
 3. **Citar Origem:** Todo módulo complexo deve conter comentários indicando qual seção da SPEC ele atende.
 4. **Validations vs Exceptions:** Use retornos estruturados (`Result<T>`) para erros de negócio esperados (ex: saldo insuficiente). Exceções são apenas para falhas críticas.
+5. **Cobertura de Testes Obrigatória:** Todo novo *Service* ou *Controller* deve ser acompanhado de pelo menos um teste unitário/integração validando o caminho feliz e erros esperados (usando Jest/Supertest). O código não está "Pronto" sem testes passando.
 
 ---
 

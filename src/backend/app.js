@@ -13,8 +13,10 @@ app.use('/api/auth', authRoutes);
 
 const PORT = process.env.PORT || 3001;
 
-app.listen(PORT, () => {
-  console.log(`V-Talentos SaaS Backend running on port ${PORT}`);
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`V-Talentos SaaS Backend running on port ${PORT}`);
+  });
+}
 
 module.exports = app;
