@@ -58,7 +58,7 @@ Ao final de **toda sessão**, a IA deve atualizar o Log de Progresso abaixo. Iss
 | Módulo | Status | Task Atual | Branch | Observação |
 | :--- | :--- | :--- | :--- | :--- |
 | **SPEC-KIT** | ✅ Concluído | 2.0 (SaaS) | `docs/saas-ready` | Arquitetura Multi-Tenant com isolamento por Empresa integrada. |
-| **DESENVOLVIMENTO** | 🏗️ Em Curso | Fase 3: Dashboard MVP | `develop` | Frontend (Login/Temas/Auth) concluído e mergeado na develop. |
+| **DESENVOLVIMENTO** | 🏗️ Em Curso | Fase 3: Lançamento Manual / Importação | `develop` | Testes do Login concluídos (Jest/Supertest). Próxima etapa: Fase 3. |
 
 ---
 
