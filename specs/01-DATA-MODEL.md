@@ -17,24 +17,27 @@ Entidade master que isola todos os dados do sistema.
 - `status`: Enum (`ATIVO`, `SUSPENSO`, `CANCELADO`)
 - `data_adesao`: DateTime
 
-### 1.1. `GamCorretor` (Vendedores)
-- `id`: UUID / INT (PK)
+### 1.1. `GamUsuario` (Usuários / Corretores)
+- `id`: UUID (PK)
 - `empresa_id`: FK -> `GamEmpresa`
 - `nome`: String
 - `email`: String (Unique)
 - `senha_hash`: String
-- `cpf`: String
-- `equipe`: String (Opcional)
+- `cpf`: String (Opcional)
+- `perfil`: Enum (`CORRETOR`, `ADMIN_EMPRESA`, `SUPER_ADMIN`)
 - `saldo_disponivel`: Decimal (Total pronto para resgate)
 - `saldo_a_receber`: Decimal (Total de vendas não pagas)
-- `data_cadastro`: DateTime
+- `created_at`: DateTime
+- `updated_at`: DateTime
 
 ### 1.2. `GamTransacao` (Extrato)
 Registro detalhado de cada entrada e saída de talentos.
-- `id`: UUID / INT (PK)
+- `id`: UUID (PK)
 - `empresa_id`: FK -> `GamEmpresa`
-- `corretor_id`: FK -> `GamCorretor`
-- `tipo`: Enum (`CREDITO`, `DEBITO`)
+- `usuario_id`: FK -> `GamUsuario` (O corretor que recebe/debita)
+- `admin_id`: FK -> `GamUsuario` (Opcional, admin que realizou lançamento manual)
+- `tipo`: Enum (`CREDITO`, `DEBITO`, `ESTORNO`)
+- `origem`: Enum (`MANUAL`, `IMPORTACAO`)
 - `valor`: Decimal (Em Talentos)
 - `valor_original_rs`: Decimal (Opcional, para rastreabilidade)
 - `status`: Enum (`PENDENTE`, `COMPENSADO`, `CANCELADO`, `RESGATADO`)
@@ -43,12 +46,12 @@ Registro detalhado de cada entrada e saída de talentos.
 - `unidade`: String (Ex: "Apto 5 - 12º Piso")
 - `contato_cliente`: String (Telefone/E-mail para apoio à cobrança)
 - `origem_id`: String (ID da Venda ou Boleto na planilha de origem)
-- `descricao`: String (Ex: "Venda Lote 04 - Cliente João")
-- `data_movimentacao`: DateTime
+- `justificativa`: String / Text (Para lançamentos manuais)
+- `created_at`: DateTime
 - `data_compensacao`: DateTime (Preenchido quando o boleto é pago)
 
 ### 1.3. `GamPremio` (Catálogo)
-- `id`: UUID / INT (PK)
+- `id`: UUID (PK)
 - `empresa_id`: FK -> `GamEmpresa`
 - `nome`: String
 - `descricao`: Text
@@ -60,9 +63,9 @@ Registro detalhado de cada entrada e saída de talentos.
 - `ativo`: Boolean
 
 ### 1.4. `GamResgate` (Trocas Realizadas)
-- `id`: UUID / INT (PK)
+- `id`: UUID (PK)
 - `empresa_id`: FK -> `GamEmpresa`
-- `corretor_id`: FK -> `GamCorretor`
+- `usuario_id`: FK -> `GamUsuario` (O corretor que realiza o resgate)
 - `premio_id`: FK -> `GamPremio`
 - `status`: Enum (`SOLICITADO`, `APROVADO`, `ENTREGUE`, `RECUSADO`, `DISPONIVEL_RETIRADA`)
 - `tipo_entrega`: Enum (`ENDERECO`, `A_COMBINAR`)
@@ -75,10 +78,11 @@ Registro detalhado de cada entrada e saída de talentos.
 ## 2. Regras de Integridade
 - **RN-D01:** Nenhuma transação pode ser deletada. Para correções, deve-se criar uma transação de estorno (débito/crédito corretivo).
 ### 1.5. `GamConfigImportacao` (Perfis de Mapeamento)
-- `id`: UUID / INT (PK)
+- `id`: UUID (PK)
 - `empresa_id`: UUID (FK -> GamEmpresa)
 - `nome_perfil`: String (Ex: "Padrão Park View")
-- `mapeamento_json`: Text / JSON (Ex: `{"corretor_id": "Corretor Responsável", "valor": "Valor Pago Atual"}`)
+- `mapeamento_json`: Text / JSON (Ex: `{"corretor_identificador": "Nome Corretor", "valor_pago": "Valor da Parcela"}`)
 - `separador_multiplo`: String (Ex: "|") - Usado para dividir datas de balões/reforços na mesma célula.
 - `linha_cabecalho`: Int (Linha onde estão os títulos das colunas)
-- `data_criacao`: DateTime
+- `created_at`: DateTime
+- `updated_at`: DateTime
