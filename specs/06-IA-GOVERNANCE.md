@@ -59,6 +59,7 @@ Ao final de **toda sessão**, a IA deve atualizar o Log de Progresso abaixo. Iss
 | :--- | :--- | :--- | :--- | :--- |
 | **SPEC-KIT** | ✅ Concluído | 2.0 (SaaS) | `docs/saas-ready` | Arquitetura Multi-Tenant com isolamento por Empresa integrada. |
 | **DESENVOLVIMENTO** | ✅ Concluído | Fase 3: Importação & Gamificação | `develop` | Motor de processamento dinâmico Excel, balões, transações pendentes/compensadas e UI Airy Glassmorphism 100% concluído e verificado. |
+| **LIMPEZA/GOVERNANÇA** | ✅ Concluído | Remoção de arquivos legado Versatus | `develop` | Removidos da raiz: `03-REGRAS-ANTI-ALUCINACAO.md`, `04-CONTRATO-DA-IA.md`, `05-ONBOARDING-IA-PROMPT.md`, `MOD-14-GAMIFICACAO-VENDAS.md`. Spec `01-DATA-MODEL.md` sincronizada com `GamUsuario` (era `GamCorretor`). 23/23 testes passando. |
 | **DESENVOLVIMENTO** | 🏗️ Em Curso | Fase 4: Vitrine de Prêmios | `develop` | Próximo: Especificar e desenvolver Vitrine de Prêmios e fluxo de resgates. |
 
 ---
