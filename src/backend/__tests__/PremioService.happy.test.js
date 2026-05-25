@@ -34,7 +34,6 @@ describe('PremioService - caminho feliz e concorrência leve', () => {
     });
 
     const result = await PremioService.requestResgate({ usuario_id: 'u2', premio_id: 2, quantidade: 3 });
-    console.log('DEBUG result1 ->', result);
     expect(result.success).toBe(true);
     expect(result.data).toHaveProperty('resgateId');
     expect(result.data).toHaveProperty('novoSaldo');

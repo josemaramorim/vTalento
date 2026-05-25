@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>V-TALENTOS | Vitrine de Prêmios</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <style>
+        .actions-btn {
+            display: flex;
+            gap: 10px;
+        }
+        .btn-sm {
+            padding: 4px 8px;
+            font-size: 0.75rem;
+        }
+        .badge-ativo { background: rgba(0, 255, 0, 0.1); color: var(--success); }
+        .badge-inativo { background: rgba(255, 0, 0, 0.1); color: var(--error); }
+    </style>
+</head>
+<body data-theme="dark">
+    <div class="app-layout">
+        <aside class="sidebar">
+            <div class="logo" style="font-size: 1.5rem; margin-bottom: 50px;">V-<span>TALENTOS</span></div>
+            <nav style="display: flex; flex-direction: column; gap: 15px;">
+                <p style="color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; margin-bottom: 10px;">MENU PRINCIPAL</p>
+                <a href="dashboard.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">🏠 Dashboard</a>
+                <a href="vitrine.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">🎁 Vitrine de Prêmios</a>
+
+                <p style="color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; margin-top: 15px; margin-bottom: 10px;">ADMINISTRAÇÃO</p>
+                <a href="admin-lancamento.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">💎 Lançamento Manual</a>
+                <a href="admin-importacao.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">📤 Importação Excel</a>
+                <a href="admin-premios.html" style="color: var(--accent-primary); text-decoration: none; font-weight: 600;">⚙️ Gerenciar Prêmios</a>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="header">
+                <div>
+                    <h1 style="font-size: 1.8rem; margin-bottom: 5px;">Vitrine de Prêmios</h1>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem;">Gerencie o catálogo de recompensas disponíveis para resgate</p>
+                </div>
+                <div style="display: flex; align-items: center; gap: 20px;">
+                    <button class="theme-toggle" id="themeToggle" title="Alternar Tema">🌓</button>
+                    <button class="btn" onclick="logout()" style="padding: 8px 16px; font-size: 0.8rem; background: rgba(255,0,0,0.1); color: var(--error);">SAIR</button>
+                </div>
+            </header>
+
+            <!-- Formulário de Prêmio -->
+            <section class="form-card glass">
+                <h2 id="formTitle" style="font-size: 1.2rem; margin-bottom: 20px; color: var(--accent-primary);">Novo Prêmio</h2>
+                <form id="premioForm">
+                    <input type="hidden" id="premioId">
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="tituloInput">Título do Prêmio</label>
+                            <input type="text" id="tituloInput" placeholder="Ex: Voucher iFood R$ 50" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="descricaoInput">Descrição</label>
+                            <textarea id="descricaoInput" rows="1" placeholder="Detalhes do prêmio..." required></textarea>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="quantidadeInput">Estoque (Unidades)</label>
+                            <input type="number" id="quantidadeInput" min="0" placeholder="Ex: 10" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="custoInput">Custo (Talentos)</label>
+                            <input type="number" id="custoInput" min="1" placeholder="Ex: 500" required>
+                        </div>
+                        <div class="form-group" style="justify-content: center; align-items: center; display: flex; flex-direction: row; gap: 10px;">
+                            <label for="ativoInput" style="margin: 0;">Ativo para Resgate?</label>
+                            <input type="checkbox" id="ativoInput" checked style="width: 20px; height: 20px; accent-color: var(--accent-primary);">
+                        </div>
+                    </div>
+
+                    <div style="text-align: right; display: flex; justify-content: flex-end; gap: 10px;">
+                        <button type="button" class="btn" id="btnCancelEdit" style="display: none; background: var(--bg-card); color: var(--text-primary);" onclick="resetForm()">CANCELAR</button>
+                        <button type="submit" class="btn btn-primary" id="btnSubmit">SALVAR PRÊMIO</button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- Catálogo Atual -->
+            <section class="history-card glass" style="margin-top: 30px;">
+                <h2 style="font-size: 1.2rem; margin-bottom: 10px; color: var(--text-primary);">Catálogo de Prêmios</h2>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Título</th>
+                                <th>Estoque</th>
+                                <th>Custo</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="premiosTableBody">
+                            <tr>
+                                <td colspan="6" style="text-align: center; color: var(--text-secondary);">Carregando prêmios...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="assets/js/auth.js"></script>
+    <script>
+        // Check Admin Auth
+        const token = localStorage.getItem('@VTalentos:token');
+        const userStr = localStorage.getItem('@VTalentos:user');
+
+        if (!token || !userStr) {
+            window.location.href = 'login.html';
+        } else {
+            const user = JSON.parse(userStr);
+            if (user.perfil !== 'ADMIN_EMPRESA' && user.perfil !== 'SUPER_ADMIN') {
+                alert('Acesso restrito a administradores.');
+                window.location.href = 'dashboard.html';
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('@VTalentos:token');
+            localStorage.removeItem('@VTalentos:user');
+            window.location.href = 'login.html';
+        }
+
+
+
+        // API Integration
+        const API_BASE = 'http://localhost:3001/api/admin';
+        let statePremios = [];
+
+        async function fetchPremios() {
+            try {
+                const response = await fetch(`${API_BASE}/premios`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const resData = await response.json();
+                
+                const tbody = document.getElementById('premiosTableBody');
+                tbody.innerHTML = '';
+
+                if (!resData.success || resData.data.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-secondary);">Nenhum prêmio cadastrado.</td></tr>`;
+                    statePremios = [];
+                    return;
+                }
+
+                statePremios = resData.data;
+
+                statePremios.forEach(premio => {
+                    const tr = document.createElement('tr');
+                    const badgeClass = premio.ativo ? 'badge-ativo' : 'badge-inativo';
+                    const statusText = premio.ativo ? 'ATIVO' : 'INATIVO';
+                    
+                    tr.innerHTML = `
+                        <td>#${premio.id}</td>
+                        <td><strong>${premio.titulo}</strong></td>
+                        <td>${premio.quantidade_disponivel} un.</td>
+                        <td><strong style="color: var(--accent-primary)">${premio.custo_pontos} T$</strong></td>
+                        <td><span class="badge ${badgeClass}">${statusText}</span></td>
+                        <td>
+                            <div class="actions-btn">
+                                <button class="btn btn-sm" onclick="editPremio(${premio.id})" style="background: rgba(255,255,255,0.1); color: var(--text-primary);">Editar</button>
+                                <button class="btn btn-sm" onclick="deletePremio(${premio.id})" style="background: rgba(255,0,0,0.1); color: var(--error);">Excluir</button>
+                            </div>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (err) {
+                console.error('Erro ao buscar prêmios:', err);
+                showToast('Erro ao buscar catálogo de prêmios.', 'error');
+            }
+        }
+
+        // Form Submit
+        document.getElementById('premioForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const id = document.getElementById('premioId').value;
+            const titulo = document.getElementById('tituloInput').value;
+            const descricao = document.getElementById('descricaoInput').value;
+            const quantidade_disponivel = parseInt(document.getElementById('quantidadeInput').value, 10);
+            const custo_pontos = parseInt(document.getElementById('custoInput').value, 10);
+            const ativo = document.getElementById('ativoInput').checked;
+            
+            const btnSubmit = document.getElementById('btnSubmit');
+
+            try {
+                btnSubmit.disabled = true;
+                btnSubmit.innerText = 'PROCESSANDO...';
+
+                const url = id ? `${API_BASE}/premios/${id}` : `${API_BASE}/premios`;
+                const method = id ? 'PUT' : 'POST';
+
+                const response = await fetch(url, {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ titulo, descricao, quantidade_disponivel, custo_pontos, ativo })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    throw new Error(data.error || 'Erro ao salvar prêmio');
+                }
+
+                showToast(id ? 'Prêmio atualizado com sucesso!' : 'Prêmio criado com sucesso!', 'success');
+                resetForm();
+                await fetchPremios();
+
+            } catch (err) {
+                showToast(err.message, 'error');
+            } finally {
+                btnSubmit.disabled = false;
+                btnSubmit.innerText = id ? 'ATUALIZAR PRÊMIO' : 'SALVAR PRÊMIO';
+            }
+        });
+
+        function editPremio(id) {
+            const premio = statePremios.find(p => p.id === id);
+            if (!premio) return;
+
+            document.getElementById('formTitle').innerText = 'Editar Prêmio #' + id;
+            document.getElementById('premioId').value = premio.id;
+            document.getElementById('tituloInput').value = premio.titulo;
+            document.getElementById('descricaoInput').value = premio.descricao;
+            document.getElementById('quantidadeInput').value = premio.quantidade_disponivel;
+            document.getElementById('custoInput').value = premio.custo_pontos;
+            document.getElementById('ativoInput').checked = premio.ativo;
+
+            document.getElementById('btnSubmit').innerText = 'ATUALIZAR PRÊMIO';
+            document.getElementById('btnCancelEdit').style.display = 'inline-block';
+            
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        async function deletePremio(id) {
+            if (!confirm('Deseja inativar/excluir este prêmio?')) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/premios/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                const data = await response.json();
+                if (!response.ok || !data.success) {
+                    throw new Error(data.error || 'Erro ao excluir prêmio');
+                }
+
+                showToast('Prêmio removido/inativado com sucesso.', 'success');
+                await fetchPremios();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        function resetForm() {
+            document.getElementById('formTitle').innerText = 'Novo Prêmio';
+            document.getElementById('premioForm').reset();
+            document.getElementById('premioId').value = '';
+            document.getElementById('btnSubmit').innerText = 'SALVAR PRÊMIO';
+            document.getElementById('btnCancelEdit').style.display = 'none';
+        }
+
+        // Init
+        window.addEventListener('DOMContentLoaded', () => {
+            fetchPremios();
+        });
+    </script>
+</body>
+</html>

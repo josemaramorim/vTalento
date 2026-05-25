@@ -72,4 +72,14 @@ Este documento é o guia de execução do projeto. Nenhuma tarefa deve ser inici
 ---
 
 ## FASE 4: Vitrine de Prêmios e Resgate
-*(A ser detalhado após conclusão da Fase 3)*
+*Como usuário, quero acessar uma vitrine de recompensas e solicitar resgates com saldo validado e transações registradas.*
+
+- [x] **Tarefa 4.1:** Criar SPEC de Vitrine de Prêmios em `specs/09-VITRINE-DE-PREMIOS.md`.
+- [x] **Tarefa 4.2:** Criar migração inicial para tabelas `Premio`, `VitrineItem` e `Resgate`.
+- [x] **Tarefa 4.3:** Implementar `PremioService` com métodos `list`, `create` e `requestResgate`.
+- [x] **Tarefa 4.4:** Implementar `PremioController` e rotas públicas/admin.
+- [x] **Tarefa 4.5:** Escrever testes para `PremioService` e `PremioController` (`supertest`).
+- [x] **Tarefa 4.6:** Implementar Frontend Admin para CRUD de prêmios (`admin-premios.html`).
+- [x] **Tarefa 4.7:** Integrar navegação lateral consistente (Sidebar) em `dashboard.html`, `admin-lancamento.html`, `admin-importacao.html` e `admin-premios.html`.
+- [x] **Tarefa 4.8:** Implementar Frontend do Colaborador para visualização e resgate de recompensas (`vitrine.html`).
+- [x] **Tarefa 4.9:** Atualizar endpoint `/api/auth/me` para prover dados de perfil e saldo em tempo real no frontend.

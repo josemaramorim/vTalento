@@ -8,16 +8,22 @@
 
 ## 1. Leis Fundamentais (NÃO NEGOCIÁVEIS)
 
-### A. Metodologia SPEC-First
-A IA nunca deve implementar código antes que a SPEC do respectivo módulo esteja aprovada pelo usuário.
-1. Se a IA identificar falta de informação, ela deve sugerir a atualização da SPEC.
-2. O código só será escrito após a confirmação de que a SPEC reflete a necessidade.
+### A. Metodologia SPEC-First (Evolução Estrita)
+A IA nunca deve implementar, refatorar, adicionar sementes de dados (seeds), ou alterar qualquer linha de código sem antes ter a SPEC ou o respectivo Plano de Implementação aprovado pelo usuário.
+1. Qualquer necessidade de alteração não prevista na SPEC deve forçar uma pausa imediata, sugestão de revisão da SPEC/Plano de Implementação, e obtenção de aprovação explícita.
+2. **Nenhuma alteração é "pequena demais" para pular o fluxo:** mesmo ajustes finos, sementes de banco (seeds) ou correções pontuais exigem validação prévia na SPEC antes de mexer em código de produção.
 
 ### B. Nomenclatura Híbrida
-- **Infraestrutura (Inglês):** Nomes de pastas, arquivos de sistema, namespaces técnicos e termos de programação (ex: `repositories/`, `controllers/`, `auth-service.js`).
-- **Domínio de Negócio (Português):** Nomes de tabelas, entidades de banco, campos de negócio e erros de negócio (ex: `Corretor`, `Talento`, `Premio`, `valor_venda`).
+- **Infraestrutura (Sufixos e Pastas em Inglês):** Nomes de pastas, arquivos de sistema, e design patterns (ex: `repositories/`, `controllers/`, `middlewares/`).
+- **Domínio de Negócio (Português):** O prefixo do arquivo e nomes de tabelas, entidades, campos e erros DEVEM ser em Português.
+  - ❌ ERRADO: `prizeService.js`, `prizesController.js`, `prizes.js` (isso é alucinação por tradução).
+  - ✅ CORRETO: `PremioService.js`, `PremioController.js`, `premios.js`.
 
-### C. Nomes de Tabelas são Sagrados
+### C. Estrutura de Rotas Admin vs Public
+- **Rotas Administrativas:** TODAS as rotas administrativas DEVEM ser inseridas no arquivo `api/routes/admin.js`, que já aplica os middlewares globais (`tenantMiddleware`, `adminMiddleware`). NÃO misture rotas de admin em arquivos de rotas públicas.
+- **Rotas Públicas/Cliente:** Ficam em seus respectivos arquivos de domínio (ex: `premios.js`, `auth.js`).
+
+### D. Nomes de Tabelas são Sagrados
 Nunca renomear tabelas ou colunas que façam parte do legado de integração (planilha/financeiro).
 
 ---
@@ -32,26 +38,31 @@ Nunca renomear tabelas ou colunas que façam parte do legado de integração (pl
 
 ---
 
-## 3. Protocolo Git Estrito
+## 3. Protocolo Git Estrito (Micro-Branches e Entregas Focadas)
 
-Para garantir a integridade do código e facilitar o rastreio de mudanças, a IA deve seguir este fluxo:
+Para garantir a integridade do código, evitar conflitos massivos e facilitar o rastreio de mudanças, a IA deve seguir rigorosamente este fluxo:
 
-1. **Estratégia de Branches:**
-    - `main`: Reservada para versões estáveis aprovadas pelo usuário.
-    - `develop`: Branch de integração diária.
-    - `feature/[id-tarefa]`: Criada a partir da `develop` para executar cada item do documento `08-IMPLEMENTATION-TASKS.md`.
-2. **Padrão de Commits (Conventional Commits):**
+1. **Micro-Branches (Branches Curtas e Focadas):**
+    - Nunca crie uma única branch gigante para acumular múltiplas modificações complexas (ex: toda uma fase do projeto na mesma branch).
+    - As branches de *Feature* devem ser **micro-branches** extremamente focadas em uma única subtarefa (ex: `feature/vitrine-backend-routes`, `feature/vitrine-ui-admin`, `feature/vitrine-ui-cliente`).
+    - Cada micro-branch deve ser criada a partir de `develop`, validada com testes passando, mesclada via Merge para `develop` o quanto antes, e excluída.
+2. **Estratégia Geral:**
+    - `main`: Reservada exclusivamente para versões estáveis em produção aprovadas pelo usuário.
+    - `develop`: Branch padrão para integração e testes integrados.
+3. **Padrão de Commits (Conventional Commits):**
     - `feat(escopo):` Nova funcionalidade.
     - `fix(escopo):` Correção de erro.
     - `docs(escopo):` Alteração em documentação/SPECs.
     - `refactor(escopo):` Refatoração de código.
-3. **Fluxo:** Abrir branch -> Executar tarefa -> Commitar -> Merge para `develop` após validação.
+4. **Fluxo Estrito:** Abrir micro-branch -> Executar tarefa única -> Validar testes locais -> Commitar -> Merge para `develop` -> Deletar micro-branch.
 
 ---
 
 ## 3. Ritual de Sessão e Handoff
 
-Ao final de **toda sessão**, a IA deve atualizar o Log de Progresso abaixo. Isso garante que a próxima instância da IA saiba onde parou.
+Para garantir a continuidade perfeita e o alinhamento do projeto, a IA deve seguir este ritual estrito ao final de toda sessão:
+1. **Atualização de Progresso Técnico:** O arquivo [08-IMPLEMENTATION-TASKS.md](file:///c:/Pasta%20de%20Trabalho/Projetos/Node/Premios/specs/08-IMPLEMENTATION-TASKS.md) deve ser mantido rigorosamente atualizado, marcando com `- [x]` as tarefas concluídas. Nenhuma sessão pode ser finalizada sem que este checklist reflita o estado real do código.
+2. **Atualização do Log de Handoff:** Atualizar a tabela de Log de Progresso abaixo com o módulo, status, task atual, branch e observações, garantindo que a próxima instância da IA saiba exatamente onde retomar.
 
 ### Log de Progresso (Handoff)
 
@@ -60,7 +71,7 @@ Ao final de **toda sessão**, a IA deve atualizar o Log de Progresso abaixo. Iss
 | **SPEC-KIT** | ✅ Concluído | 2.0 (SaaS) | `docs/saas-ready` | Arquitetura Multi-Tenant com isolamento por Empresa integrada. |
 | **DESENVOLVIMENTO** | ✅ Concluído | Fase 3: Importação & Gamificação | `develop` | Motor de processamento dinâmico Excel, balões, transações pendentes/compensadas e UI Airy Glassmorphism 100% concluído e verificado. |
 | **LIMPEZA/GOVERNANÇA** | ✅ Concluído | Remoção de arquivos legado Versatus | `develop` | Removidos da raiz: `03-REGRAS-ANTI-ALUCINACAO.md`, `04-CONTRATO-DA-IA.md`, `05-ONBOARDING-IA-PROMPT.md`, `MOD-14-GAMIFICACAO-VENDAS.md`. Spec `01-DATA-MODEL.md` sincronizada com `GamUsuario` (era `GamCorretor`). 23/23 testes passando. |
-| **DESENVOLVIMENTO** | 🏗️ Em Curso | Fase 4: Vitrine de Prêmios | `feature/vitrine-premios` | Migração, `PremioService`, `PremioController`, rotas e testes iniciais adicionados; 2 testes novos passando. |
+| **DESENVOLVIMENTO** | ✅ Concluído | Fase 4: Vitrine de Prêmios | develop | Frontend do Admin (admin-premios.html) e do Colaborador (vitrine.html) 100% integrados; Toasts modernizados; 27/27 testes Jest passando. |
 
 ---
 

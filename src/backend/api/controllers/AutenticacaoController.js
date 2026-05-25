@@ -18,12 +18,27 @@ class AutenticacaoController {
   }
 
   async me(req, res) {
-    // Rota protegida pelo middleware
-    return res.json({
-      usuario_id: req.usuario_id,
-      empresa_id: req.empresa_id,
-      perfil: req.usuario_perfil
-    });
+    try {
+      const db = require('../../infra/db');
+      const usuario = await db('GamUsuario')
+        .where({ id: req.usuario_id })
+        .first();
+      
+      if (!usuario) {
+        return res.status(404).json({ error: 'Usuário não encontrado' });
+      }
+
+      return res.json({
+        usuario_id: usuario.id,
+        nome: usuario.nome,
+        email: usuario.email,
+        saldo_disponivel: usuario.saldo_disponivel,
+        empresa_id: usuario.empresa_id,
+        perfil: usuario.perfil
+      });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
   }
 }
 

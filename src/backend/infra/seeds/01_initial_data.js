@@ -36,4 +36,16 @@ exports.seed = async function(knex) {
     saldo_disponivel: 0,
     saldo_a_receber: 0
   });
+
+  // Insere Usuário Exemplo (Corretor / Colaborador)
+  await knex('GamUsuario').insert({
+    id: 'c2c2c2c2-c2c2-c2c2-c2c2-c2c2c2c2c2c2',
+    empresa_id: empresaId,
+    nome: 'Corretor Haja',
+    email: 'corretor@haja.com.br',
+    senha_hash: senhaHash,
+    perfil: 'CORRETOR',
+    saldo_disponivel: 1500.00,
+    saldo_a_receber: 0
+  });
 };

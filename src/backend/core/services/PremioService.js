@@ -1,22 +1,49 @@
+// Origem: specs/09-VITRINE-DE-PREMIOS.md (Seção 5 e 7)
+// Governança: specs/06-IA-GOVERNANCE.md — Domínio de Negócio em Português
 const db = require('../../infra/db');
 
 class PremioService {
-  async list(empresa_id) {
-    // Lista prêmios ativos (pode ser filtrado por empresa futuramente)
+  async list() {
     return db('Premio').where({ ativo: true }).select('*');
   }
 
-  async create({ titulo, descricao, quantidade_disponivel, custo_pontos }) {
+  async listAdmin() {
+    return db('Premio').select('*').orderBy('id', 'desc');
+  }
+
+  async create({ titulo, descricao, quantidade_disponivel, custo_pontos, ativo = true }) {
     const [id] = await db('Premio').insert({
       titulo,
       descricao,
       quantidade_disponivel,
       custo_pontos,
-      ativo: true,
+      ativo,
       created_at: db.fn.now(),
       updated_at: db.fn.now()
     });
     return { id };
+  }
+
+  async update(id, data) {
+    const payload = {
+      ...data,
+      updated_at: db.fn.now()
+    };
+    await db('Premio').where({ id }).update(payload);
+    return { id };
+  }
+
+  async remove(id) {
+    await db('Premio').where({ id }).update({ ativo: false, updated_at: db.fn.now() });
+    return { id };
+  }
+
+  async listResgatesByUser(usuario_id) {
+    return db('Resgate')
+      .where({ 'Resgate.usuario_id': usuario_id })
+      .join('Premio', 'Resgate.premio_id', 'Premio.id')
+      .select('Resgate.*', 'Premio.titulo as premio_titulo')
+      .orderBy('Resgate.created_at', 'desc');
   }
 
   async requestResgate({ usuario_id, premio_id, quantidade }) {
@@ -24,7 +51,6 @@ class PremioService {
       return { success: false, code: 'QUANTIDADE_INVALIDA', message: 'Quantidade deve ser >= 1' };
     }
 
-    // Carrega premio e usuario
     const premio = await db('Premio').where({ id: premio_id }).first();
     if (!premio || !premio.ativo) {
       return { success: false, code: 'PREMIO_INDISPONIVEL', message: 'Prêmio indisponível' };
@@ -35,8 +61,6 @@ class PremioService {
     }
 
     const custo_total = premio.custo_pontos * quantidade;
-
-    // Verificar saldo do usuário
     const usuario = await db('GamUsuario').where({ id: usuario_id }).first();
     if (!usuario) {
       return { success: false, code: 'USUARIO_NAO_ENCONTRADO', message: 'Usuário não encontrado' };
@@ -46,10 +70,8 @@ class PremioService {
       return { success: false, code: 'SALDO_INSUFICIENTE', message: 'Saldo insuficiente para resgate' };
     }
 
-    // Executa em transação
     try {
       const result = await db.transaction(async (trx) => {
-        // Cria resgate pendente
         const [resgateId] = await trx('Resgate').insert({
           usuario_id,
           premio_id,
@@ -60,7 +82,6 @@ class PremioService {
           updated_at: db.fn.now()
         });
 
-        // Atualiza saldo do usuario (insere transacao de débito em GamTransacao)
         const transacaoId = require('crypto').randomUUID();
         await trx('GamTransacao').insert({
           id: transacaoId,
@@ -74,14 +95,9 @@ class PremioService {
           created_at: db.fn.now()
         });
 
-        // Atualiza saldo do usuario
         const novoSaldo = parseFloat(usuario.saldo_disponivel) - custo_total;
         await trx('GamUsuario').where({ id: usuario_id }).update({ saldo_disponivel: novoSaldo, updated_at: db.fn.now() });
-
-        // Decrementa quantidade disponivel
         await trx('Premio').where({ id: premio_id }).update({ quantidade_disponivel: premio.quantidade_disponivel - quantidade, updated_at: db.fn.now() });
-
-        // Marca resgate como confirmado (negócio simples; em impl real poderia haver verificação)
         await trx('Resgate').where({ id: resgateId }).update({ status: 'confirmado', updated_at: db.fn.now() });
 
         return { resgateId, transacaoId, novoSaldo };

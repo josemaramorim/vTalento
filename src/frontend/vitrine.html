@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>V-TALENTOS | Vitrine de Prêmios</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <style>
+        .vitrine-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+            margin-top: 20px;
+        }
+        
+        .premio-card {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 24px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .premio-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--accent-primary);
+        }
+        
+        .premio-icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            display: inline-block;
+        }
+        
+        .premio-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+            font-family: var(--font-heading);
+        }
+        
+        .premio-desc {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+            flex-grow: 1;
+            line-height: 1.5;
+        }
+        
+        .premio-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-top: 1px solid var(--glass-border);
+            padding-top: 15px;
+        }
+        
+        .premio-cost {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--accent-primary);
+            font-family: var(--font-heading);
+        }
+        
+        .premio-stock {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            background: rgba(255, 255, 255, 0.05);
+            padding: 2px 8px;
+            border-radius: 20px;
+        }
+        
+        .badge-status {
+            font-size: 0.75rem;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        
+        .badge-confirmado {
+            background: rgba(46, 204, 113, 0.15);
+            color: var(--success);
+        }
+        
+        .badge-pendente {
+            background: rgba(230, 126, 34, 0.15);
+            color: var(--warning);
+        }
+        
+        .badge-falha {
+            background: rgba(231, 76, 60, 0.15);
+            color: var(--error);
+        }
+        
+        /* Modal Overlay */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+        
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+        
+        .modal-card {
+            width: 100%;
+            max-width: 450px;
+            padding: 30px;
+            transform: scale(0.9);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .modal-overlay.active .modal-card {
+            transform: scale(1);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--glass-border);
+            padding-bottom: 15px;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+        
+        .modal-close:hover {
+            color: var(--text-primary);
+        }
+        
+        .calc-box {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-sm);
+            padding: 15px;
+            margin: 15px 0;
+            text-align: center;
+        }
+        
+        .calc-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+        
+        .calc-row.total {
+            border-top: 1px solid var(--glass-border);
+            padding-top: 8px;
+            margin-top: 8px;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+    </style>
+</head>
+<body data-theme="dark">
+    <div class="app-layout">
+        <aside class="sidebar">
+            <div class="logo" style="font-size: 1.5rem; margin-bottom: 50px;">V-<span>TALENTOS</span></div>
+            <nav id="navLinks" style="display: flex; flex-direction: column; gap: 15px;">
+                <p style="color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; margin-bottom: 10px;">MENU PRINCIPAL</p>
+                <a href="dashboard.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">🏠 Dashboard</a>
+                <a href="vitrine.html" style="color: var(--accent-primary); text-decoration: none; font-weight: 600;">🎁 Vitrine de Prêmios</a>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="header">
+                <div>
+                    <h1 style="font-size: 1.8rem; margin-bottom: 5px;">Vitrine de Recompensas</h1>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem;">Troque seus Talentos por prêmios e experiências incríveis</p>
+                </div>
+                <div class="user-info">
+                    <div style="text-align: right; margin-right: 5px;">
+                        <span id="userName" style="display: block; font-weight: 600;">Colaborador</span>
+                        <small id="userSaldoHeader" style="color: var(--accent-primary); font-weight: 700; font-family: var(--font-heading);">Carregando saldo...</small>
+                    </div>
+                    <div class="user-avatar" id="userInitial">C</div>
+                    <button class="theme-toggle" id="themeToggle" title="Alternar Tema">🌓</button>
+                    <button class="btn" onclick="logout()" style="padding: 8px 16px; font-size: 0.8rem; background: rgba(255,0,0,0.1); color: var(--error);">SAIR</button>
+                </div>
+            </header>
+
+            <!-- Banner informativo para administradores -->
+            <div id="adminBanner" class="glass" style="display: none; padding: 15px 25px; margin-bottom: 25px; border-left: 4px solid var(--accent-primary); align-items: center; justify-content: space-between; gap: 20px; animation: fadeIn 0.4s ease-out;">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <span style="font-size: 1.5rem;">⚙️</span>
+                    <div>
+                        <strong style="color: var(--accent-primary); display: block; margin-bottom: 2px;">Modo Visualização (Administrador)</strong>
+                        <span style="font-size: 0.85rem; color: var(--text-secondary);">Esta é a vitrine pública que os corretores visualizam. Para gerenciar, cadastrar ou editar o catálogo, acesse o painel admin.</span>
+                    </div>
+                </div>
+                <a href="admin-premios.html" class="btn btn-primary" style="padding: 8px 16px; font-size: 0.8rem; flex-shrink: 0; white-space: nowrap;">GERENCIAR PRÊMIOS</a>
+            </div>
+
+            <!-- Grid de Prêmios -->
+            <section>
+                <h2 style="font-size: 1.4rem; margin-bottom: 10px; color: var(--text-primary);">Prêmios Disponíveis</h2>
+                <div class="vitrine-grid" id="vitrineGrid">
+                    <p style="grid-column: 1/-1; text-align: center; color: var(--text-secondary);">Carregando vitrine...</p>
+                </div>
+            </section>
+
+            <!-- Histórico de Resgates -->
+            <section class="history-card glass" style="margin-top: 40px; padding: 25px;">
+                <h2 style="font-size: 1.2rem; margin-bottom: 15px; color: var(--text-primary);">Meu Histórico de Resgates</h2>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Data</th>
+                                <th>Prêmio</th>
+                                <th>Quantidade</th>
+                                <th>Custo Total</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resgatesTableBody">
+                            <tr>
+                                <td colspan="5" style="text-align: center; color: var(--text-secondary);">Carregando histórico de resgates...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modal de Confirmação de Resgate -->
+    <div class="modal-overlay" id="confirmModal">
+        <div class="modal-card glass animate-fade">
+            <div class="modal-header">
+                <h3 id="modalPremioTitle" style="font-size: 1.2rem; color: var(--accent-primary);">Confirmar Resgate</h3>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            
+            <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px;">
+                <span id="modalPremioIcon" style="font-size: 2.5rem;">🎁</span>
+                <div>
+                    <h4 id="modalPremioName" style="font-size: 1.1rem; color: var(--text-primary);">Nome do Prêmio</h4>
+                    <p id="modalPremioDesc" style="font-size: 0.85rem; color: var(--text-secondary);">Descrição do prêmio</p>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 15px;">
+                <label for="resgateQtd">Quantidade a Resgatar</label>
+                <input type="number" id="resgateQtd" value="1" min="1" step="1" oninput="calculateTotal()" style="font-size: 1.1rem; text-align: center;">
+                <small id="modalStockLabel" style="color: var(--text-secondary); text-align: right; display: block; margin-top: 5px;">Disponível: 0 un.</small>
+            </div>
+
+            <div class="calc-box">
+                <div class="calc-row">
+                    <span>Custo unitário:</span>
+                    <span id="modalUnitCost">0 T$</span>
+                </div>
+                <div class="calc-row">
+                    <span>Quantidade:</span>
+                    <span id="modalQtdLabel">1x</span>
+                </div>
+                <div class="calc-row total">
+                    <span>Total a Debitar:</span>
+                    <span id="modalTotalCost" style="color: var(--accent-primary)">0 T$</span>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 15px; justify-content: flex-end; margin-top: 25px;">
+                <button class="btn" style="background: var(--bg-card); color: var(--text-primary);" onclick="closeModal()">CANCELAR</button>
+                <button class="btn btn-primary" id="btnConfirmRedeem" onclick="submitResgate()">CONFIRMAR RESGATE</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/auth.js"></script>
+    <script>
+        const token = localStorage.getItem('@VTalentos:token');
+        const userStr = localStorage.getItem('@VTalentos:user');
+
+        if (!token || !userStr) {
+            window.location.href = 'login.html';
+        }
+
+        let currentUser = JSON.parse(userStr);
+        let activePremios = [];
+        let selectedPremio = null;
+
+        // Emojis mapping for premium look
+        const emojiMap = {
+            'voucher': '🎫',
+            'ifood': '🍔',
+            'netflix': '🎬',
+            'spotify': '🎵',
+            'uber': '🚗',
+            'viagem': '✈️',
+            'café': '☕',
+            'ingresso': '🎟️',
+            'fone': '🎧',
+            'gift': '🎁',
+            'relogio': '⌚'
+        };
+
+        function getPremioEmoji(titulo) {
+            const lowerTitle = titulo.toLowerCase();
+            for (const key in emojiMap) {
+                if (lowerTitle.includes(key)) {
+                    return emojiMap[key];
+                }
+            }
+            return '🎁';
+        }
+
+
+
+        function logout() {
+            localStorage.removeItem('@VTalentos:token');
+            localStorage.removeItem('@VTalentos:user');
+            window.location.href = 'login.html';
+        }
+
+        // Render Dynamic Sidebar links matching dashboard structure
+        function renderSidebar() {
+            const nav = document.getElementById('navLinks');
+            nav.innerHTML = `
+                <p style="color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; margin-bottom: 10px;">MENU PRINCIPAL</p>
+                <a href="dashboard.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">🏠 Dashboard</a>
+                <a href="vitrine.html" class="active" style="color: var(--accent-primary); text-decoration: none; font-weight: 600;">🎁 Vitrine de Prêmios</a>
+            `;
+
+            if (currentUser.perfil === 'ADMIN_EMPRESA' || currentUser.perfil === 'SUPER_ADMIN') {
+                nav.innerHTML += `
+                    <p style="color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; margin-top: 15px; margin-bottom: 10px;">ADMINISTRAÇÃO</p>
+                    <a href="admin-lancamento.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">💎 Lançamento Manual</a>
+                    <a href="admin-importacao.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">📤 Importação Excel</a>
+                    <a href="admin-premios.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">⚙️ Gerenciar Prêmios</a>
+                `;
+                // Show informative banner for Admin
+                document.getElementById('adminBanner').style.display = 'flex';
+            }
+        }
+
+        // Fetch User profile to ensure latest balance is shown
+        async function updateProfile() {
+            try {
+                const response = await fetch('http://localhost:3001/api/auth/me', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    const latestData = await response.json();
+                    currentUser.saldo_disponivel = latestData.saldo_disponivel;
+                    currentUser.nome = latestData.nome;
+                    currentUser.perfil = latestData.perfil;
+                    localStorage.setItem('@VTalentos:user', JSON.stringify(currentUser));
+                }
+            } catch (err) {
+                console.error('Erro ao atualizar dados do usuário:', err);
+            }
+
+            document.getElementById('userName').innerText = currentUser.nome;
+            document.getElementById('userInitial').innerText = currentUser.nome.charAt(0);
+            document.getElementById('userSaldoHeader').innerText = `${parseFloat(currentUser.saldo_disponivel || 0).toFixed(2)} T$`;
+        }
+
+        // Fetch Active Awards
+        async function fetchVitrine() {
+            try {
+                const response = await fetch('http://localhost:3001/api/premios');
+                const resData = await response.json();
+
+                const grid = document.getElementById('vitrineGrid');
+                grid.innerHTML = '';
+
+                if (!resData.success || resData.data.length === 0) {
+                    grid.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: var(--text-secondary); padding: 40px 0;">Nenhum prêmio disponível no momento.</p>`;
+                    activePremios = [];
+                    return;
+                }
+
+                activePremios = resData.data;
+
+                activePremios.forEach(premio => {
+                    const card = document.createElement('div');
+                    card.className = 'premio-card glass animate-fade';
+                    
+                    const emoji = getPremioEmoji(premio.titulo);
+                    const isOutOfStock = premio.quantidade_disponivel <= 0;
+                    const canAfford = parseFloat(currentUser.saldo_disponivel) >= premio.custo_pontos;
+                    
+                    let buttonHtml = '';
+                    if (isOutOfStock) {
+                        buttonHtml = `<button class="btn" style="width: 100%; background: rgba(255,255,255,0.05); color: var(--text-secondary); cursor: not-allowed;" disabled>ESGOTADO</button>`;
+                    } else if (!canAfford) {
+                        buttonHtml = `<button class="btn" style="width: 100%; background: rgba(231,76,60,0.1); color: var(--error); cursor: not-allowed;" disabled title="Saldo insuficiente">SALDO INSUFICIENTE</button>`;
+                    } else {
+                        buttonHtml = `<button class="btn btn-primary" style="width: 100%;" onclick="openRedeemModal(${premio.id})">RESGATAR</button>`;
+                    }
+
+                    card.innerHTML = `
+                        <div>
+                            <span class="premio-icon">${emoji}</span>
+                            <h3 class="premio-title">${premio.titulo}</h3>
+                            <p class="premio-desc">${premio.descricao}</p>
+                        </div>
+                        <div>
+                            <div class="premio-meta">
+                                <span class="premio-cost">${premio.custo_pontos} T$</span>
+                                <span class="premio-stock">${premio.quantidade_disponivel} un. disp.</span>
+                            </div>
+                            ${buttonHtml}
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+            } catch (err) {
+                console.error('Erro ao buscar vitrine:', err);
+                document.getElementById('vitrineGrid').innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: var(--error); padding: 40px 0;">Erro ao carregar catálogo de recompensas.</p>`;
+            }
+        }
+
+        // Fetch User Redemptions History
+        async function fetchHistoricoResgates() {
+            try {
+                const response = await fetch(`http://localhost:3001/api/users/${currentUser.id}/resgates`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const resData = await response.json();
+                
+                const tbody = document.getElementById('resgatesTableBody');
+                tbody.innerHTML = '';
+
+                if (!resData.success || resData.data.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-secondary);">Você ainda não realizou nenhum resgate.</td></tr>`;
+                    return;
+                }
+
+                resData.data.forEach(resgate => {
+                    const tr = document.createElement('tr');
+                    const formattedDate = new Date(resgate.created_at).toLocaleDateString('pt-BR', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                    
+                    let badgeClass = 'badge-pendente';
+                    if (resgate.status === 'confirmado') badgeClass = 'badge-confirmado';
+                    if (resgate.status === 'falha' || resgate.status === 'cancelado') badgeClass = 'badge-falha';
+
+                    tr.innerHTML = `
+                        <td>${formattedDate}</td>
+                        <td><strong>${resgate.premio_titulo || 'Prêmio #' + resgate.premio_id}</strong></td>
+                        <td>${resgate.quantidade} un.</td>
+                        <td><strong style="color: var(--accent-primary)">${resgate.custo_total} T$</strong></td>
+                        <td><span class="badge ${badgeClass}">${resgate.status.toUpperCase()}</span></td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (err) {
+                console.error('Erro ao carregar histórico de resgates:', err);
+                document.getElementById('resgatesTableBody').innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--error);">Erro ao carregar histórico de resgates.</td></tr>`;
+            }
+        }
+
+        // Modal Controls
+        const confirmModal = document.getElementById('confirmModal');
+
+        function openRedeemModal(premioId) {
+            selectedPremio = activePremios.find(p => p.id === premioId);
+            if (!selectedPremio) return;
+
+            document.getElementById('modalPremioIcon').innerText = getPremioEmoji(selectedPremio.titulo);
+            document.getElementById('modalPremioName').innerText = selectedPremio.titulo;
+            document.getElementById('modalPremioDesc').innerText = selectedPremio.descricao;
+            document.getElementById('modalUnitCost').innerText = `${selectedPremio.custo_pontos} T$`;
+            document.getElementById('modalStockLabel').innerText = `Disponível: ${selectedPremio.quantidade_disponivel} un.`;
+            
+            const resgateQtdInput = document.getElementById('resgateQtd');
+            resgateQtdInput.value = 1;
+            resgateQtdInput.max = selectedPremio.quantidade_disponivel;
+            
+            calculateTotal();
+            confirmModal.classList.add('active');
+        }
+
+        function closeModal() {
+            confirmModal.classList.remove('active');
+            selectedPremio = null;
+        }
+
+        function calculateTotal() {
+            if (!selectedPremio) return;
+            
+            const qtdInput = document.getElementById('resgateQtd');
+            let quantity = parseInt(qtdInput.value, 10) || 1;
+            
+            // Constrain
+            if (quantity < 1) quantity = 1;
+            if (quantity > selectedPremio.quantidade_disponivel) quantity = selectedPremio.quantidade_disponivel;
+            qtdInput.value = quantity;
+
+            const total = selectedPremio.custo_pontos * quantity;
+            document.getElementById('modalQtdLabel').innerText = `${quantity}x`;
+            document.getElementById('modalTotalCost').innerText = `${total} T$`;
+            
+            const btnConfirm = document.getElementById('btnConfirmRedeem');
+            if (total > parseFloat(currentUser.saldo_disponivel)) {
+                btnConfirm.disabled = true;
+                btnConfirm.innerText = 'SALDO INSUFICIENTE';
+                btnConfirm.style.background = 'rgba(231,76,60,0.2)';
+            } else {
+                btnConfirm.disabled = false;
+                btnConfirm.innerText = 'CONFIRMAR RESGATE';
+                btnConfirm.style.background = '';
+            }
+        }
+
+        async function submitResgate() {
+            if (!selectedPremio) return;
+
+            const quantity = parseInt(document.getElementById('resgateQtd').value, 10);
+            const btnConfirm = document.getElementById('btnConfirmRedeem');
+
+            try {
+                btnConfirm.disabled = true;
+                btnConfirm.innerText = 'PROCESSANDO...';
+
+                const response = await fetch(`http://localhost:3001/api/premios/${selectedPremio.id}/resgates`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ quantidade: quantity })
+                });
+
+                const data = await response.json();
+                
+                if (!response.ok || !data.success) {
+                    throw new Error(data.error || 'Falha ao solicitar resgate');
+                }
+
+                showToast('Resgate realizado com sucesso! Recompensa confirmada.', 'success');
+                closeModal();
+                
+                // Refresh all
+                await updateProfile();
+                await fetchVitrine();
+                await fetchHistoricoResgates();
+
+            } catch (err) {
+                showToast(err.message, 'error');
+            } finally {
+                btnConfirm.disabled = false;
+                btnConfirm.innerText = 'CONFIRMAR RESGATE';
+            }
+        }
+
+        // Initialize Page
+        window.addEventListener('DOMContentLoaded', async () => {
+            renderSidebar();
+            await updateProfile();
+            await fetchVitrine();
+            await fetchHistoricoResgates();
+        });
+    </script>
+</body>
+</html>

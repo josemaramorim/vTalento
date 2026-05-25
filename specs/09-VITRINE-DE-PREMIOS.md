@@ -48,24 +48,25 @@ Especificar a Vitrine de Prêmios (catálogo de recompensas) e o fluxo de resgat
 
 Observação: nomes de tabelas e campos em Português (requisito de domínio).
 
-## 5. Pastas e arquivos (Infra — Inglês)
+## 5. Pastas e arquivos (Infra — Inglês/Português)
 
-- `src/backend/api/controllers/prizesController.js`
-- `src/backend/core/services/prizeService.js`
+- `src/backend/api/controllers/PremioController.js`
+- `src/backend/core/services/PremioService.js`
 - `src/backend/infra/migrations/2026xxxxxx_create_premios.js`
-- `src/backend/api/routes/prizes.js` (admin e public)
+- `src/backend/api/routes/premios.js` (apenas rotas public/cliente)
+- `src/backend/api/routes/admin.js` (novas rotas admin/premios)
 
 ## 6. Endpoints (contratos HTTP)
 
 - Admin (require admin middleware):
-  - `GET /admin/prizes` — lista paginada de `Premio`.
-  - `POST /admin/prizes` — criar `Premio` (body: `titulo, descricao, quantidade_disponivel, custo_pontos, ativo`).
-  - `PUT /admin/prizes/:id` — atualizar.
-  - `DELETE /admin/prizes/:id` — remover (soft delete preferível).
+  - `GET /admin/premios` — lista paginada de `Premio`.
+  - `POST /admin/premios` — criar `Premio` (body: `titulo, descricao, quantidade_disponivel, custo_pontos, ativo`).
+  - `PUT /admin/premios/:id` — atualizar.
+  - `DELETE /admin/premios/:id` — remover (soft delete preferível).
 
 - Client / Public:
-  - `GET /prizes` — listar vitrine ativa (usa `VitrineItem` ordem se existir).
-  - `POST /prizes/:id/resgates` — solicitar resgate (body: `quantidade`).
+  - `GET /premios` — listar vitrine ativa (usa `VitrineItem` ordem se existir).
+  - `POST /premios/:id/resgates` — solicitar resgate (body: `quantidade`).
   - `GET /users/:userId/resgates` — histórico de resgates do usuário.
 
 Resposta padrão de sucesso: `{ success: true, data: ... }`.
@@ -96,13 +97,13 @@ Erros de negócio devem usar retornos estruturados (`Result<T>`) com códigos e 
 
 ## 10. Testes Obrigatórios (Jest / Supertest)
 
-- `prizeService.test.js`:
+- `PremioService.test.js`:
   - Teste caminho feliz: resgate com saldo suficiente cria `Resgate` e decrementa saldo/premio.
   - Teste erro: saldo insuficiente -> retorna `SaldoInsuficiente` sem criar `Resgate`.
   - Teste concorrência: duas requisições paralelas não permitem vender além da `quantidade_disponivel`.
 
-- `prizesController.test.js` (integração usando Supertest):
-  - `POST /prizes/:id/resgates` retorna 200 + body esperado no caminho feliz.
+- `PremioController.test.js` (integração usando Supertest):
+  - `POST /premios/:id/resgates` retorna 200 + body esperado no caminho feliz.
   - Erros retornam status e estrutura esperada.
 
 Cobertura mínima: um teste unitário do Service + um teste de integração do Controller.
@@ -118,6 +119,6 @@ Cobertura mínima: um teste unitário do Service + um teste de integração do C
 ## 12. Próximos passos (sugestão)
 
 1. Criar migração inicial e modelos (infra). 
-2. Implementar `prizeService` com métodos: `list`, `create`, `update`, `requestResgate`.
-3. Implementar `prizesController` + rotas e testes.
+2. Implementar `PremioService` com métodos: `list`, `create`, `update`, `requestResgate`.
+3. Implementar `PremioController` + rotas e testes.
 4. Rodar testes locais e commitar em `feature/vitrine-premios`.

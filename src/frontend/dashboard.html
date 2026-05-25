@@ -21,6 +21,7 @@
                 <div class="user-info">
                     <span id="userName">Usuário</span>
                     <div class="user-avatar" id="userInitial">U</div>
+                    <button class="theme-toggle" id="themeToggle" title="Alternar Tema">🌓</button>
                     <button class="btn" onclick="logout()" style="padding: 8px 16px; font-size: 0.8rem; background: rgba(255,0,0,0.1); color: var(--error);">SAIR</button>
                 </div>
             </header>
@@ -54,6 +55,7 @@
             nav.innerHTML = `
                 <p style="color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; margin-bottom: 10px;">MENU PRINCIPAL</p>
                 <a href="dashboard.html" class="active" style="color: var(--accent-primary); text-decoration: none; font-weight: 600;">🏠 Dashboard</a>
+                <a href="vitrine.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">🎁 Vitrine de Prêmios</a>
             `;
 
             if (user.perfil === 'ADMIN_EMPRESA' || user.perfil === 'SUPER_ADMIN') {
@@ -61,6 +63,7 @@
                     <p style="color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; margin-top: 15px; margin-bottom: 10px;">ADMINISTRAÇÃO</p>
                     <a href="admin-lancamento.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">💎 Lançamento Manual</a>
                     <a href="admin-importacao.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">📤 Importação Excel</a>
+                    <a href="admin-premios.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">🎁 Vitrine de Prêmios</a>
                 `;
             }
         }

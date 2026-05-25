@@ -2,7 +2,7 @@
 
 :root {
     /* Color Tokens - Light Mode (Default) */
-    --bg-primary: #F8F9FA;
+    --bg-primary: #F4F6F8;
     --bg-secondary: #FFFFFF;
     --text-primary: #1A1A2E;
     --text-secondary: #6C757D;
@@ -12,11 +12,11 @@
     --error: #E74C3C;
     --warning: #E67E22;
     
-    /* UI Tokens */
+    /* UI Tokens - Light Mode */
     --glass-bg: rgba(255, 255, 255, 0.7);
-    --glass-border: rgba(255, 255, 255, 0.3);
-    --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
-    --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+    --glass-border: rgba(0, 0, 0, 0.08);
+    --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.03);
+    --shadow-md: 0 8px 32px rgba(0, 0, 0, 0.06);
     --radius-sm: 8px;
     --radius-md: 12px;
     --radius-lg: 24px;
@@ -67,6 +67,8 @@ h1, h2, h3, h4, .heading {
     -webkit-backdrop-filter: blur(12px);
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+    transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .container {
@@ -329,5 +331,62 @@ th {
 .badge-estorno {
     background: rgba(230, 126, 34, 0.15);
     color: var(--warning);
+}
+
+/* Custom Premium Toasts */
+.toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: none;
+}
+
+.toast {
+    pointer-events: auto;
+    min-width: 300px;
+    max-width: 400px;
+    padding: 16px 20px;
+    border-radius: var(--radius-sm);
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow-md);
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transform: translateX(120%);
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.toast.active {
+    transform: translateX(0);
+}
+
+.toast-success {
+    border-left: 4px solid var(--success);
+}
+
+.toast-error {
+    border-left: 4px solid var(--error);
+}
+
+.toast-info {
+    border-left: 4px solid var(--accent-primary);
+}
+
+.toast-icon {
+    font-size: 1.25rem;
+}
+
+.toast-message {
+    font-size: 0.9rem;
+    font-weight: 500;
+    line-height: 1.4;
 }
 
