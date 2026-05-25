@@ -100,12 +100,10 @@
             border-radius: 50%;
             background: var(--glass-bg);
             border: 1px solid var(--glass-border);
-            color: var(--text-primary);
         }
     </style>
 </head>
 <body data-theme="dark">
-    <button class="theme-toggle" id="themeToggle" title="Alternar Tema">🌓</button>
 
     <div class="login-card glass">
         <div class="logo">V-<span>TALENTOS</span></div>
@@ -131,23 +129,5 @@
     </div>
 
     <script src="assets/js/auth.js"></script>
-    <script>
-        // Simple Theme Toggle
-        const themeToggle = document.getElementById('themeToggle');
-        const body = document.body;
-
-        themeToggle.addEventListener('click', () => {
-            const currentTheme = body.getAttribute('data-theme');
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            body.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
-        });
-
-        // Load saved theme
-        const savedTheme = localStorage.getItem('theme');
-        if (savedTheme) {
-            body.setAttribute('data-theme', savedTheme);
-        }
-    </script>
 </body>
 </html>

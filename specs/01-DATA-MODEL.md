@@ -86,3 +86,38 @@ Registro detalhado de cada entrada e saída de talentos.
 - `linha_cabecalho`: Int (Linha onde estão os títulos das colunas)
 - `created_at`: DateTime
 - `updated_at`: DateTime
+
+---
+
+## 3. Módulo de Vitrine e Prêmios (Tabelas do Banco - Fase 4)
+
+Para manter a conformidade do domínio e isolamento Multi-Tenant rigoroso, as tabelas físicas deste módulo estão especificadas abaixo:
+
+### 3.1. `Premio` (Catálogo de Recompensas)
+- `id`: Integer (PK, Auto-incremento)
+- `empresa_id`: UUID (FK -> `GamEmpresa.id`, Not Null) — garante o isolamento do tenant
+- `titulo`: String (Not Null)
+- `descricao`: Text (Nullable)
+- `quantidade_disponivel`: Integer (Not Null, Default: 0)
+- `custo_pontos`: Integer (Not Null, Default: 0)
+- `ativo`: Boolean (Not Null, Default: true)
+- `created_at`: DateTime
+- `updated_at`: DateTime
+
+### 3.2. `VitrineItem` (Camada de Exibição / Ordem)
+- `id`: Integer (PK, Auto-incremento)
+- `empresa_id`: UUID (FK -> `GamEmpresa.id`, Not Null) — garante o isolamento do painel e ordenação por tenant
+- `premio_id`: Integer (FK -> `Premio.id`, Cascade, Not Null)
+- `ordem`: Integer (Not Null, Default: 0)
+- `ativo`: Boolean (Not Null, Default: true)
+
+### 3.3. `Resgate` (Histórico de Trocas)
+- `id`: Integer (PK, Auto-incremento)
+- `usuario_id`: UUID (FK -> `GamUsuario.id`, Not Null)
+- `premio_id`: Integer (FK -> `Premio.id`, Set Null)
+- `quantidade`: Integer (Not Null, Default: 1)
+- `custo_total`: Integer (Not Null, Default: 0)
+- `status`: Enum (`pendente`, `confirmado`, `cancelado`, `falha`) (Default: `pendente`)
+- `motivo`: Text (Nullable)
+- `created_at`: DateTime
+- `updated_at`: DateTime

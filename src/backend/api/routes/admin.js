@@ -1,6 +1,7 @@
 const { Router } = require('express');
 const LancamentoController = require('../controllers/LancamentoController');
 const ImportacaoController = require('../controllers/ImportacaoController');
+const PremioController = require('../controllers/PremioController');
 const tenantMiddleware = require('../../infra/middlewares/TenantMiddleware');
 const adminMiddleware = require('../../infra/middlewares/AdminMiddleware');
 
@@ -28,5 +29,11 @@ routes.delete('/importacao/perfis/:id', ImportacaoController.deletarPerfil);
 // Endpoints do motor de importação
 routes.post('/importacao/preview', ImportacaoController.previewImportacao);
 routes.post('/importacao/confirm', ImportacaoController.confirmarImportacao);
+
+// Endpoints da Vitrine de Prêmios (CRUD Admin)
+routes.get('/premios', PremioController.listAdmin);
+routes.post('/premios', PremioController.create);
+routes.put('/premios/:id', PremioController.update);
+routes.delete('/premios/:id', PremioController.delete);
 
 module.exports = routes;

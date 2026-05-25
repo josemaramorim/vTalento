@@ -10,8 +10,7 @@
     <div class="app-layout">
         <aside class="sidebar">
             <div class="logo" style="font-size: 1.5rem; margin-bottom: 50px;">V-<span>TALENTOS</span></div>
-            <nav>
-                <!-- Links virão aqui -->
+            <nav id="navLinks" style="display: flex; flex-direction: column; gap: 15px;">
                 <p style="color: var(--text-secondary); font-size: 0.8rem;">MENU PRINCIPAL</p>
             </nav>
         </aside>
@@ -22,13 +21,14 @@
                 <div class="user-info">
                     <span id="userName">Usuário</span>
                     <div class="user-avatar" id="userInitial">U</div>
+                    <button class="theme-toggle" id="themeToggle" title="Alternar Tema">🌓</button>
                     <button class="btn" onclick="logout()" style="padding: 8px 16px; font-size: 0.8rem; background: rgba(255,0,0,0.1); color: var(--error);">SAIR</button>
                 </div>
             </header>
 
             <section class="overview">
                 <div class="glass" style="padding: 30px; border-radius: var(--radius-lg); text-align: center;">
-                    <h2 style="color: var(--accent-primary); font-size: 3rem; margin-bottom: 10px;">0</h2>
+                    <h2 id="saldoDisponivel" style="color: var(--accent-primary); font-size: 3rem; margin-bottom: 10px;">0</h2>
                     <p style="text-transform: uppercase; letter-spacing: 2px; font-size: 0.8rem; color: var(--text-secondary);">Talentos Disponíveis</p>
                 </div>
             </section>
@@ -48,6 +48,24 @@
             document.getElementById('userName').innerText = user.nome;
             document.getElementById('userInitial').innerText = user.nome.charAt(0);
             document.getElementById('welcomeText').innerText = `Olá, ${user.nome.split(' ')[0]}!`;
+            document.getElementById('saldoDisponivel').innerText = parseFloat(user.saldo_disponivel || 0).toFixed(2);
+
+            // Render navigation links dynamically
+            const nav = document.getElementById('navLinks');
+            nav.innerHTML = `
+                <p style="color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; margin-bottom: 10px;">MENU PRINCIPAL</p>
+                <a href="dashboard.html" class="active" style="color: var(--accent-primary); text-decoration: none; font-weight: 600;">🏠 Dashboard</a>
+                <a href="vitrine.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">🎁 Vitrine de Prêmios</a>
+            `;
+
+            if (user.perfil === 'ADMIN_EMPRESA' || user.perfil === 'SUPER_ADMIN') {
+                nav.innerHTML += `
+                    <p style="color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; margin-top: 15px; margin-bottom: 10px;">ADMINISTRAÇÃO</p>
+                    <a href="admin-lancamento.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">💎 Lançamento Manual</a>
+                    <a href="admin-importacao.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">📤 Importação Excel</a>
+                    <a href="admin-premios.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">🎁 Vitrine de Prêmios</a>
+                `;
+            }
         }
 
         function logout() {

@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>V-TALENTOS | Motor de Importação SaaS</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <style>
+        .page-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 30px;
+        }
+        @media(min-width: 1024px) {
+            .page-grid {
+                grid-template-columns: 350px 1fr;
+            }
+        }
+        .upload-area {
+            border: 2px dashed var(--glass-border);
+            border-radius: var(--radius-md);
+            padding: 40px 20px;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.01);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+        .upload-area:hover, .upload-area.dragover {
+            border-color: var(--accent-primary);
+            background: rgba(255, 255, 255, 0.04);
+        }
+        .upload-icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            color: var(--accent-primary);
+            animation: bounce 2s infinite;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+        .form-mini-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+        .stat-card {
+            padding: 20px;
+            border-radius: var(--radius-sm);
+            text-align: center;
+        }
+        .stat-val {
+            font-size: 1.8rem;
+            font-weight: 700;
+            font-family: var(--font-heading);
+            color: var(--accent-primary);
+            margin-top: 5px;
+        }
+        .badge-found {
+            background: rgba(46, 204, 113, 0.15);
+            color: var(--success);
+        }
+        .badge-missing {
+            background: rgba(231, 76, 60, 0.15);
+            color: var(--error);
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+        .alert-card {
+            background: rgba(231, 76, 60, 0.08);
+            border: 1px solid rgba(231, 76, 60, 0.2);
+            border-radius: var(--radius-sm);
+            padding: 15px 20px;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .alert-icon {
+            font-size: 1.5rem;
+            color: var(--error);
+        }
+        .preview-wrapper {
+            margin-top: 20px;
+        }
+        .balao-tag {
+            background: rgba(212, 175, 55, 0.1);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            color: var(--accent-primary);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            display: inline-block;
+            margin-right: 5px;
+            margin-top: 3px;
+        }
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        /* Glassmorphism sidebar highlight */
+        .sidebar nav a.active {
+            color: var(--accent-primary);
+            background: rgba(255, 255, 255, 0.05);
+            border-left: 3px solid var(--accent-primary);
+        }
+    </style>
+</head>
+<body data-theme="dark">
+    <div class="app-layout">
+        <aside class="sidebar">
+            <div class="logo">V-<span>TALENTOS</span></div>
+            <nav>
+                <p style="color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; margin-bottom: 10px;">MENU PRINCIPAL</p>
+                <a href="dashboard.html">🏠 Dashboard</a>
+                <a href="vitrine.html">🎁 Vitrine de Prêmios</a>
+
+                <p style="color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; margin-top: 15px; margin-bottom: 10px;">ADMINISTRAÇÃO</p>
+                <a href="admin-lancamento.html">💎 Lançamento Manual</a>
+                <a href="admin-importacao.html" class="active">📤 Importação Excel</a>
+                <a href="admin-premios.html">⚙️ Gerenciar Prêmios</a>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="header">
+                <div>
+                    <h1 style="font-size: 1.8rem; margin-bottom: 5px;">Motor de Importação</h1>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem;">Mapeamento dinâmico e distribuição de pontos de vendas imobiliárias</p>
+                </div>
+                <div style="display: flex; align-items: center; gap: 20px;">
+                    <button class="theme-toggle" id="themeToggle" title="Alternar Tema">🌓</button>
+                    <button class="btn" onclick="logout()" style="padding: 8px 16px; font-size: 0.8rem; background: rgba(255,0,0,0.1); color: var(--error);">SAIR</button>
+                </div>
+            </header>
+
+            <div class="page-grid">
+                <!-- Coluna da Esquerda: Configurações e Perfil -->
+                <div style="display: flex; flex-direction: column; gap: 30px;">
+                    <section class="form-card glass">
+                        <h2 style="font-size: 1.2rem; margin-bottom: 20px; color: var(--accent-primary);">1. Perfil de Mapeamento</h2>
+                        
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label for="perfilSelect">Selecionar Perfil Existente</label>
+                            <div style="display: flex; gap: 10px;">
+                                <select id="perfilSelect" style="flex: 1;">
+                                    <option value="" disabled selected>Carregando perfis...</option>
+                                </select>
+                                <button type="button" class="btn" id="btnEditarPerfil" style="background: rgba(255,255,255,0.05); color: var(--accent-primary); padding: 12px;" title="Editar Perfil Selecionado">✏️</button>
+                                <button type="button" class="btn" id="btnExcluirPerfil" style="background: rgba(255,0,0,0.1); color: var(--error); padding: 12px;" title="Excluir Perfil">🗑️</button>
+                            </div>
+                        </div>
+
+                        <div style="border-top: 1px solid var(--glass-border); padding-top: 20px;">
+                            <h3 id="formPerfilTitle" style="font-size: 1rem; margin-bottom: 15px; color: var(--text-primary);">Criar Novo Perfil</h3>
+                            <form id="perfilForm">
+                                <div class="form-group" style="margin-bottom: 12px;">
+                                    <label for="nomePerfilInput">Nome do Perfil</label>
+                                    <input type="text" id="nomePerfilInput" placeholder="Ex: Modelo Haja" required>
+                                </div>
+                                <div class="form-mini-row">
+                                    <div class="form-group">
+                                        <label for="linhaCabecalhoInput">Linha do Cabeçalho</label>
+                                        <input type="number" id="linhaCabecalhoInput" min="1" value="3" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="separadorInput">Separador de Balões</label>
+                                        <input type="text" id="separadorInput" value="|" required>
+                                    </div>
+                                </div>
+
+                                <p style="font-size: 0.75rem; color: var(--accent-primary); margin-top: 10px; margin-bottom: 10px; font-weight: 600;">MAPEAMENTO DE COLUNAS (NOME EXATO)</p>
+                                
+                                <div class="form-group" style="margin-bottom: 10px;">
+                                    <label for="mapCorretor">Coluna Corretor (Nome/CPF)</label>
+                                    <input type="text" id="mapCorretor" placeholder="Ex: Corretor Responsável" required>
+                                </div>
+                                <div class="form-group" style="margin-bottom: 10px;">
+                                    <label for="mapCreci">Coluna CRECI Corretor</label>
+                                    <input type="text" id="mapCreci" placeholder="Ex: CRECI do Corretor" required>
+                                </div>
+                                <div class="form-group" style="margin-bottom: 10px;">
+                                    <label for="mapValorVenda">Coluna Valor Total da Venda</label>
+                                    <input type="text" id="mapValorVenda" placeholder="Ex: Valor Total da Venda (R$)" required>
+                                </div>
+                                <div class="form-group" style="margin-bottom: 10px;">
+                                    <label for="mapValorPago">Coluna Valor Pago Atual</label>
+                                    <input type="text" id="mapValorPago" placeholder="Ex: Valor Pago Atual (R$)" required>
+                                </div>
+                                <div class="form-group" style="margin-bottom: 10px;">
+                                    <label for="mapEmpreendimento">Coluna Empreendimento</label>
+                                    <input type="text" id="mapEmpreendimento" placeholder="Ex: Empreendimento" required>
+                                </div>
+                                <div class="form-group" style="margin-bottom: 10px;">
+                                    <label for="mapUnidade">Coluna Unidade</label>
+                                    <input type="text" id="mapUnidade" placeholder="Ex: Unidade">
+                                </div>
+                                <div class="form-group" style="margin-bottom: 10px;">
+                                    <label for="mapCliente">Coluna Nome Cliente</label>
+                                    <input type="text" id="mapCliente" placeholder="Ex: Nome do Cliente">
+                                </div>
+                                <div class="form-group" style="margin-bottom: 10px;">
+                                    <label for="mapBalaoValor">Coluna Valor do Balão</label>
+                                    <input type="text" id="mapBalaoValor" placeholder="Ex: Valor do Balão/Reforço (R$)">
+                                </div>
+                                <div class="form-group" style="margin-bottom: 10px;">
+                                    <label for="mapBalaoDatas">Coluna Datas dos Balões</label>
+                                    <input type="text" id="mapBalaoDatas" placeholder="Ex: Datas Previstas Balões/Reforços">
+                                </div>
+                                <div class="form-group" style="margin-bottom: 15px;">
+                                    <label for="mapBalaoQtd">Coluna Qtd de Balões</label>
+                                    <input type="text" id="mapBalaoQtd" placeholder="Ex: Qtd. Balões/Reforços">
+                                </div>
+
+                                <div style="display: flex; gap: 10px;">
+                                    <button type="submit" id="btnSubmitPerfil" class="btn btn-primary" style="flex: 1;">SALVAR NOVO PERFIL</button>
+                                    <button type="button" id="btnCancelarEdicao" class="btn" style="display: none; background: rgba(255,255,255,0.05); color: var(--text-primary); padding: 12px 20px;">CANCELAR</button>
+                                </div>
+                            </form>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- Coluna da Direita: Seleção de Arquivo e Preview de Linhas -->
+                <div style="display: flex; flex-direction: column; gap: 30px;">
+                    <section class="form-card glass">
+                        <h2 style="font-size: 1.2rem; margin-bottom: 20px; color: var(--accent-primary);">2. Carregar Planilha</h2>
+                        
+                        <div class="upload-area" id="uploadArea">
+                            <input type="file" id="fileInput" accept=".xlsx, .xls, .csv" style="display: none;">
+                            <div class="upload-icon">📤</div>
+                            <h3 style="font-size: 1.1rem; margin-bottom: 5px;">Arraste e solte o arquivo aqui</h3>
+                            <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 15px;">Suporta arquivos Excel (.xlsx, .xls) ou CSV</p>
+                            <span class="btn" style="background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); padding: 8px 16px; font-size: 0.8rem;">SELECIONAR ARQUIVO</span>
+                            <div id="fileInfo" style="margin-top: 15px; font-weight: 600; font-size: 0.9rem; color: var(--accent-primary); display: none;"></div>
+                        </div>
+
+                        <div style="text-align: right; margin-top: 20px;">
+                            <button class="btn btn-primary" id="btnPreview" disabled>GERAR PREVIEW DA IMPORTAÇÃO</button>
+                        </div>
+                    </section>
+
+                    <!-- Preview Card (Oculto inicialmente) -->
+                    <section class="form-card glass preview-wrapper" id="previewSection" style="display: none;">
+                        <div class="section-header">
+                            <h2 style="font-size: 1.2rem; color: var(--text-primary);">3. Preview do Lote imobiliário</h2>
+                            <button class="btn btn-primary" id="btnConfirmarImportacao" style="background: var(--success); box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);">CONFIRMAR IMPORTAÇÃO DEFINITIVA</button>
+                        </div>
+
+                        <!-- Stats do Preview -->
+                        <div class="stats-grid">
+                            <div class="glass stat-card">
+                                <p style="font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase;">Total de Vendas</p>
+                                <div class="stat-val" id="statVendas">0</div>
+                            </div>
+                            <div class="glass stat-card">
+                                <p style="font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase;">Corretores Resolvidos</p>
+                                <div class="stat-val" id="statResolvidos" style="color: var(--success);">0</div>
+                            </div>
+                            <div class="glass stat-card">
+                                <p style="font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase;">Inconsistências (Pendentes)</p>
+                                <div class="stat-val" id="statPendentes" style="color: var(--error);">0</div>
+                            </div>
+                        </div>
+
+                        <!-- Alerta de Inconsistência -->
+                        <div class="alert-card" id="alertInconsistencia" style="display: none;">
+                            <div class="alert-icon">⚠️</div>
+                            <div>
+                                <h4 style="font-size: 0.95rem; margin-bottom: 2px;">Corretores não localizados no sistema!</h4>
+                                <p style="font-size: 0.82rem; color: var(--text-secondary);">Cadastre os corretores na lista administrativa antes de efetuar a importação definitiva do lote imobiliário.</p>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Linha</th>
+                                        <th>Empreendimento / Unidade</th>
+                                        <th>Cliente</th>
+                                        <th>Corretor na Planilha</th>
+                                        <th>Mapeamento no Sistema</th>
+                                        <th>Distribuição de Talentos</th>
+                                        <th>Balões Futuros</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="previewTableBody">
+                                    <!-- Dinâmico -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="assets/js/auth.js"></script>
+    <script>
+        // Check Admin Auth
+        const token = localStorage.getItem('@VTalentos:token');
+        const userStr = localStorage.getItem('@VTalentos:user');
+
+        if (!token || !userStr) {
+            window.location.href = 'login.html';
+        } else {
+            const user = JSON.parse(userStr);
+            if (user.perfil !== 'ADMIN_EMPRESA' && user.perfil !== 'SUPER_ADMIN') {
+                alert('Acesso restrito a administradores.');
+                window.location.href = 'dashboard.html';
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('@VTalentos:token');
+            localStorage.removeItem('@VTalentos:user');
+            window.location.href = 'login.html';
+        }
+
+        // Toggle Theme
+        const themeToggle = document.getElementById('themeToggle');
+        const body = document.body;
+
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = body.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            body.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+        });
+
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme) {
+            body.setAttribute('data-theme', savedTheme);
+        }
+
+        // API Configuration
+        const API_BASE = 'http://localhost:3001/api/admin/importacao';
+        let perfisCached = [];
+        let selectedFileBase64 = null;
+        let editPerfilId = null;
+
+        function resetFormState() {
+            document.getElementById('perfilForm').reset();
+            document.getElementById('linhaCabecalhoInput').value = "3";
+            document.getElementById('separadorInput').value = "|";
+            editPerfilId = null;
+            document.getElementById('formPerfilTitle').textContent = 'Criar Novo Perfil';
+            document.getElementById('btnSubmitPerfil').textContent = 'SALVAR NOVO PERFIL';
+            document.getElementById('btnCancelarEdicao').style.display = 'none';
+        }
+
+        // Load profiles from backend
+        async function loadPerfis() {
+            try {
+                const response = await fetch(`${API_BASE}/perfis`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
+                perfisCached = data;
+
+                const select = document.getElementById('perfilSelect');
+                select.innerHTML = '';
+
+                if (data.length === 0) {
+                    select.innerHTML = '<option value="" disabled selected>Nenhum perfil cadastrado.</option>';
+                    document.getElementById('btnPreview').disabled = true;
+                    return;
+                }
+
+                data.forEach(p => {
+                    const option = document.createElement('option');
+                    option.value = p.id;
+                    option.textContent = p.nome_perfil;
+                    select.appendChild(option);
+                });
+
+                select.selectedIndex = 0;
+                checkCanPreview();
+            } catch (err) {
+                console.error('Erro ao carregar perfis:', err);
+            }
+        }
+
+        // Edit selected profile
+        document.getElementById('btnEditarPerfil').addEventListener('click', () => {
+            const select = document.getElementById('perfilSelect');
+            const id = select.value;
+            if (!id) return;
+
+            const perfil = perfisCached.find(p => p.id === id);
+            if (!perfil) return;
+
+            editPerfilId = perfil.id;
+            
+            // Parse JSON mapping if it is string
+            let mapJson = perfil.mapeamento_json;
+            if (typeof mapJson === 'string') {
+                try { mapJson = JSON.parse(mapJson); } catch(e) {}
+            }
+
+            document.getElementById('nomePerfilInput').value = perfil.nome_perfil;
+            document.getElementById('linhaCabecalhoInput').value = perfil.linha_cabecalho;
+            document.getElementById('separadorInput').value = perfil.separador_multiplo;
+
+            document.getElementById('mapCorretor').value = mapJson.corretor_identificador || '';
+            document.getElementById('mapCreci').value = mapJson.corretor_creci || '';
+            document.getElementById('mapValorVenda').value = mapJson.valor_venda || '';
+            document.getElementById('mapValorPago').value = mapJson.valor_pago || '';
+            document.getElementById('mapEmpreendimento').value = mapJson.empreendimento || '';
+            document.getElementById('mapUnidade').value = mapJson.unidade || '';
+            document.getElementById('mapCliente').value = mapJson.cliente_nome || '';
+            document.getElementById('mapBalaoValor').value = mapJson.balao_valor || '';
+            document.getElementById('mapBalaoDatas').value = mapJson.balao_datas || '';
+            document.getElementById('mapBalaoQtd').value = mapJson.balao_qtd || '';
+
+            document.getElementById('formPerfilTitle').textContent = `Editando Perfil: ${perfil.nome_perfil}`;
+            document.getElementById('btnSubmitPerfil').textContent = 'ATUALIZAR PERFIL';
+            document.getElementById('btnCancelarEdicao').style.display = 'block';
+        });
+
+        // Cancel Edit
+        document.getElementById('btnCancelarEdicao').addEventListener('click', () => {
+            resetFormState();
+        });
+
+        // Delete selected profile
+        document.getElementById('btnExcluirPerfil').addEventListener('click', async () => {
+            const select = document.getElementById('perfilSelect');
+            const id = select.value;
+            if (!id) return;
+
+            if (!confirm('Deseja realmente excluir este perfil de mapeamento?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/perfis/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.error || 'Falha ao excluir perfil');
+                }
+
+                alert('Perfil excluído com sucesso!');
+                if (editPerfilId === id) resetFormState();
+                await loadPerfis();
+            } catch (err) {
+                alert(err.message);
+            }
+        });
+
+        // Add or Update profile
+        document.getElementById('perfilForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const nome_perfil = document.getElementById('nomePerfilInput').value;
+            const linha_cabecalho = parseInt(document.getElementById('linhaCabecalhoInput').value, 10);
+            const separador_multiplo = document.getElementById('separadorInput').value;
+
+            const mapeamento_json = {
+                corretor_identificador: document.getElementById('mapCorretor').value,
+                corretor_creci: document.getElementById('mapCreci').value,
+                valor_venda: document.getElementById('mapValorVenda').value,
+                valor_pago: document.getElementById('mapValorPago').value,
+                empreendimento: document.getElementById('mapEmpreendimento').value,
+                unidade: document.getElementById('mapUnidade').value,
+                cliente_nome: document.getElementById('mapCliente').value,
+                balao_valor: document.getElementById('mapBalaoValor').value,
+                balao_datas: document.getElementById('mapBalaoDatas').value,
+                balao_qtd: document.getElementById('mapBalaoQtd').value
+            };
+
+            const isEdit = !!editPerfilId;
+            const endpoint = isEdit ? `${API_BASE}/perfis/${editPerfilId}` : `${API_BASE}/perfis`;
+            const method = isEdit ? 'PUT' : 'POST';
+
+            try {
+                const response = await fetch(endpoint, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        nome_perfil,
+                        linha_cabecalho,
+                        separador_multiplo,
+                        mapeamento_json
+                    })
+                });
+
+                if (!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.error || `Erro ao ${isEdit ? 'atualizar' : 'salvar'} perfil`);
+                }
+
+                alert(`Perfil ${isEdit ? 'atualizado' : 'cadastrado'} com sucesso!`);
+                resetFormState();
+                await loadPerfis();
+            } catch (err) {
+                alert(err.message);
+            }
+        });
+
+        // Drag and drop / select files
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileInfo = document.getElementById('fileInfo');
+
+        uploadArea.addEventListener('click', () => fileInput.click());
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            
+            if (e.dataTransfer.files.length > 0) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        function handleFile(file) {
+            fileInfo.style.display = 'block';
+            fileInfo.textContent = `📄 ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+            
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                selectedFileBase64 = event.target.result;
+                checkCanPreview();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function checkCanPreview() {
+            const perfil_id = document.getElementById('perfilSelect').value;
+            const btn = document.getElementById('btnPreview');
+            
+            if (perfil_id && selectedFileBase64) {
+                btn.disabled = false;
+            } else {
+                btn.disabled = true;
+            }
+        }
+
+        // Generate Preview
+        document.getElementById('btnPreview').addEventListener('click', async () => {
+            const perfil_id = document.getElementById('perfilSelect').value;
+            const btn = document.getElementById('btnPreview');
+
+            try {
+                btn.disabled = true;
+                btn.textContent = 'ANALISANDO PLANILHA...';
+
+                const response = await fetch(`${API_BASE}/preview`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        fileBase64: selectedFileBase64,
+                        perfil_id
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Falha ao processar planilha para preview');
+                }
+
+                // Render statistics
+                document.getElementById('statVendas').textContent = data.total_linhas;
+                document.getElementById('statResolvidos').textContent = data.total_linhas - data.inconsistencias;
+                document.getElementById('statPendentes').textContent = data.inconsistencias;
+
+                // Render warnings if broker missing
+                const alertCard = document.getElementById('alertInconsistencia');
+                const btnConfirm = document.getElementById('btnConfirmarImportacao');
+                
+                if (data.inconsistencias > 0) {
+                    alertCard.style.display = 'flex';
+                    btnConfirm.disabled = true;
+                    btnConfirm.style.opacity = 0.5;
+                } else {
+                    alertCard.style.display = 'none';
+                    btnConfirm.disabled = false;
+                    btnConfirm.style.opacity = 1;
+                }
+
+                // Render Table rows
+                const tbody = document.getElementById('previewTableBody');
+                tbody.innerHTML = '';
+
+                data.linhas.forEach(row => {
+                    const tr = document.createElement('tr');
+                    
+                    // Column mapping indicators
+                    const corretorBadge = row.corretor_encontrado 
+                        ? `<span class="badge badge-found">✔️ LOCALIZADO</span>`
+                        : `<span class="badge badge-missing">❌ NÃO LOCALIZADO</span>`;
+
+                    const corretorSistema = row.corretor_encontrado
+                        ? `<strong>${row.corretor_nome_sistema}</strong><br><span style="font-size:0.75rem; color:var(--text-secondary);">${row.corretor_email_sistema}</span>`
+                        : `<span style="color:var(--error);">Nenhum usuário correspondente</span>`;
+
+                    // Talentos calculations
+                    const totalTalentos = row.valores.total_talentos;
+                    const disponivel = row.valores.talentos_disponiveis;
+                    const aReceber = row.valores.talentos_a_receber;
+
+                    // Balões markup
+                    let baloesMarkup = '';
+                    if (row.baloes.length > 0) {
+                        row.baloes.forEach(b => {
+                            const dataBalao = b.data_vencimento ? new Date(b.data_vencimento).toLocaleDateString('pt-BR') : 'Sem data';
+                            baloesMarkup += `<span class="balao-tag" title="Valor RS: ${b.valor_rs.toFixed(2)}">${dataBalao}: <strong>${b.valor_talentos} T</strong></span>`;
+                        });
+                    } else {
+                        baloesMarkup = '<span style="color:var(--text-secondary); font-size:0.8rem;">Sem balões futuros</span>';
+                    }
+
+                    tr.innerHTML = `
+                        <td><strong>#${row.linha}</strong></td>
+                        <td><strong>${row.empreendimento}</strong><br><span style="font-size:0.8rem; color:var(--text-secondary);">Unidade: ${row.unidade}</span></td>
+                        <td>${row.cliente_nome}</td>
+                        <td>${row.corretor_nome_planilha}<br><span style="font-size:0.75rem; color:var(--text-secondary);">${row.corretor_creci_planilha || ''}</span></td>
+                        <td>${corretorBadge}<br>${corretorSistema}</td>
+                        <td>
+                            <span style="font-size:0.82rem;">Venda: <strong>${totalTalentos} T</strong></span><br>
+                            <span style="font-size:0.82rem; color:var(--success);">Pago: <strong>${disponivel} T</strong></span><br>
+                            <span style="font-size:0.82rem; color:var(--warning);">A Receber: <strong>${aReceber} T</strong></span>
+                        </td>
+                        <td>${baloesMarkup}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                document.getElementById('previewSection').style.display = 'block';
+
+            } catch (err) {
+                alert(err.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'GERAR PREVIEW DA IMPORTAÇÃO';
+            }
+        });
+
+        // Confirm Import
+        document.getElementById('btnConfirmarImportacao').addEventListener('click', async () => {
+            const perfil_id = document.getElementById('perfilSelect').value;
+            const btnConfirm = document.getElementById('btnConfirmarImportacao');
+
+            if (!confirm('Deseja realmente processar a importação definitiva de todo o lote? Esta operação criará lançamentos e atualizará o saldo dos corretores.')) {
+                return;
+            }
+
+            try {
+                btnConfirm.disabled = true;
+                btnConfirm.textContent = 'PROCESSANDO TRANSAÇÕES...';
+
+                const response = await fetch(`${API_BASE}/confirm`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        fileBase64: selectedFileBase64,
+                        perfil_id
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Erro ao processar importação definitiva');
+                }
+
+                alert(`Importação concluída com sucesso!\n- ${data.total_vendas_processadas} Vendas Processadas\n- ${data.transacoes_criadas} Novas Transações Criadas\n- ${data.corretores_atualizados} Corretores Atualizados com seus respectivos saldos.`);
+                
+                // Hide preview and clear file upload
+                document.getElementById('previewSection').style.display = 'none';
+                document.getElementById('fileInfo').style.display = 'none';
+                selectedFileBase64 = null;
+                fileInput.value = '';
+                checkCanPreview();
+
+            } catch (err) {
+                alert(err.message);
+            } finally {
+                btnConfirm.disabled = false;
+                btnConfirm.textContent = 'CONFIRMAR IMPORTAÇÃO DEFINITIVA';
+            }
+        });
+
+        // Init
+        window.addEventListener('DOMContentLoaded', () => {
+            loadPerfis();
+        });
+    </script>
+</body>
+</html>

@@ -72,4 +72,20 @@ Este documento é o guia de execução do projeto. Nenhuma tarefa deve ser inici
 ---
 
 ## FASE 4: Vitrine de Prêmios e Resgate
-*(A ser detalhado após conclusão da Fase 3)*
+*Como usuário, quero acessar uma vitrine de recompensas e solicitar resgates com saldo validado e transações registradas.*
+
+- [x] **Tarefa 4.1:** Criar SPEC de Vitrine de Prêmios em `specs/09-VITRINE-DE-PREMIOS.md`.
+- [x] **Tarefa 4.2:** Criar migração inicial para tabelas `Premio`, `VitrineItem` e `Resgate`.
+- [x] **Tarefa 4.3:** Implementar `PremioService` com métodos `list`, `create` e `requestResgate`.
+- [x] **Tarefa 4.4:** Implementar `PremioController` e rotas públicas/admin.
+- [x] **Tarefa 4.5:** Escrever testes para `PremioService` e `PremioController` (`supertest`).
+- [x] **Tarefa 4.6:** Implementar Frontend Admin para CRUD de prêmios (`admin-premios.html`).
+- [x] **Tarefa 4.7:** Integrar navegação lateral consistente (Sidebar) em `dashboard.html`, `admin-lancamento.html`, `admin-importacao.html` e `admin-premios.html`.
+- [x] **Tarefa 4.8:** Implementar Frontend do Colaborador para visualização e resgate de recompensas (`vitrine.html`).
+- [x] **Tarefa 4.9:** Atualizar endpoint `/api/auth/me` para prover dados de perfil e saldo em tempo real no frontend.
+- [x] **Tarefa 4.10 (Segurança / Multi-Tenant): Refatoração para Isolamento Estrito por Tenant:**
+    - [x] **Tarefa 4.10.1:** Atualizar a migration `202605250001_create_premios_resgates.js` para adicionar `empresa_id` em `Premio` e `VitrineItem`.
+    - [x] **Tarefa 4.10.2:** Atualizar a semente `01_initial_data.js` para atrelar prêmios a `empresaId` e atualizar banco local.
+    - [x] **Tarefa 4.10.3:** Refatorar `PremioService` e `PremioController` para isolar listagem, criação, edição, deleção e resgates por `empresa_id`.
+    - [x] **Tarefa 4.10.4:** Proteger rota `GET /premios` com `tenantMiddleware` e incluir cabeçalhos no frontend `vitrine.html`.
+    - [x] **Tarefa 4.10.5:** Refatorar as suítes de testes (`Jest/Supertest`) para incluir o contexto e asserts de `empresa_id`.
