@@ -54,7 +54,7 @@ Para garantir a integridade do código, evitar conflitos massivos e facilitar o 
     - `fix(escopo):` Correção de erro.
     - `docs(escopo):` Alteração em documentação/SPECs.
     - `refactor(escopo):` Refatoração de código.
-4. **Fluxo Estrito:** Abrir micro-branch -> Executar tarefa única -> Validar testes locais -> Commitar -> Merge para `develop` -> Deletar micro-branch.
+4. **Fluxo Estrito:** Abrir micro-branch -> Executar tarefa única -> Validar testes locais -> Commitar -> **Merge para `develop` (Apenas após todos os testes passarem 100% E com aprovação explícita do usuário)** -> Deletar micro-branch.
 
 ---
 
