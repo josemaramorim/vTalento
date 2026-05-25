@@ -23,7 +23,7 @@ describe('PremioController (integração mínima)', () => {
   it('POST /api/premios/:id/resgates - saldo insuficiente retorna 400', async () => {
     db.mockImplementation((table) => {
       if (table === 'Premio') {
-        return { where: () => ({ first: () => Promise.resolve({ id: 1, ativo: true, quantidade_disponivel: 10, custo_pontos: 100 }) }) };
+        return { where: () => ({ first: () => Promise.resolve({ id: 1, empresa_id: 'e1', ativo: true, quantidade_disponivel: 10, custo_pontos: 100 }) }) };
       }
       if (table === 'GamUsuario') {
         return { where: () => ({ first: () => Promise.resolve({ id: 'u1', saldo_disponivel: 50.00, empresa_id: 'e1' }) }) };

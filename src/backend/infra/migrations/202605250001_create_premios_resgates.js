@@ -6,6 +6,7 @@ exports.up = function(knex) {
   return knex.schema
     .createTable('Premio', table => {
       table.increments('id').primary();
+      table.uuid('empresa_id').notNullable().references('id').inTable('GamEmpresa').onDelete('CASCADE');
       table.string('titulo').notNullable();
       table.text('descricao');
       table.integer('quantidade_disponivel').notNullable().defaultTo(0);
@@ -16,6 +17,7 @@ exports.up = function(knex) {
     })
     .createTable('VitrineItem', table => {
       table.increments('id').primary();
+      table.uuid('empresa_id').notNullable().references('id').inTable('GamEmpresa').onDelete('CASCADE');
       table.integer('premio_id').unsigned().references('id').inTable('Premio').onDelete('CASCADE');
       table.integer('ordem').notNullable().defaultTo(0);
       table.boolean('ativo').notNullable().defaultTo(true);

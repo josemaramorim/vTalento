@@ -19,7 +19,7 @@ describe('PremioService - caminho feliz e concorrência leve', () => {
   it('resgate com saldo suficiente confirma e atualiza saldo/premio', async () => {
     db.mockImplementation((table) => {
       if (table === 'Premio') {
-        return { where: () => ({ first: () => Promise.resolve({ id: 2, ativo: true, quantidade_disponivel: 5, custo_pontos: 10 }), update: () => Promise.resolve(1) }) };
+        return { where: () => ({ first: () => Promise.resolve({ id: 2, empresa_id: 'e1', ativo: true, quantidade_disponivel: 5, custo_pontos: 10 }), update: () => Promise.resolve(1) }) };
       }
       if (table === 'GamUsuario') {
         return { where: () => ({ first: () => Promise.resolve({ id: 'u2', saldo_disponivel: 100.00, empresa_id: 'e1' }), update: () => Promise.resolve(1) }) };
@@ -47,7 +47,7 @@ describe('PremioService - caminho feliz e concorrência leve', () => {
     db.mockImplementation((table) => {
       if (table === 'Premio') {
         return {
-          where: () => ({ first: () => Promise.resolve({ id: 3, ativo: true, quantidade_disponivel: premioQtd, custo_pontos: 5 }), update: () => { premioQtd = Math.max(0, premioQtd - 1); return Promise.resolve(1); } })
+          where: () => ({ first: () => Promise.resolve({ id: 3, empresa_id: 'e1', ativo: true, quantidade_disponivel: premioQtd, custo_pontos: 5 }), update: () => { premioQtd = Math.max(0, premioQtd - 1); return Promise.resolve(1); } })
         };
       }
       if (table === 'GamUsuario') {

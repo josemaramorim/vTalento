@@ -26,6 +26,13 @@ A IA nunca deve implementar, refatorar, adicionar sementes de dados (seeds), ou 
 ### D. Nomes de Tabelas são Sagrados
 Nunca renomear tabelas ou colunas que façam parte do legado de integração (planilha/financeiro).
 
+### E. Protocolo de Validação de Spec-First (OBRIGATÓRIO E IMUTÁVEL)
+Antes de realizar QUALQUER chamada de ferramenta que modifique arquivos de código (ex: `replace_file_content`, `multi_replace_file_content`, `write_to_file` em arquivos fora de `specs/` ou `artifacts/`), a IA DEVE obrigatoriamente realizar e exibir a validação deste checklist no chat:
+1. **[Roadmap Check]:** Qual é o ID exato da tarefa em `specs/08-IMPLEMENTATION-TASKS.md` que esta modificação atende? (Ex: `Tarefa 4.10.5`).
+2. **[Status Check]:** Essa tarefa já foi atualizada no arquivo físico `specs/08-IMPLEMENTATION-TASKS.md` para "Em Andamento" (`[/]`) ou "Concluída" (`[x]`)? (O código NUNCA deve ser modificado se a tarefa estiver marcada como pendente `[ ]` no roadmap).
+3. **[Design Spec Check]:** As modificações estruturais (tabelas, campos, endpoints, erros ou regras de negócio) já foram integralmente descritas e detalhadas nas respectivas especificações (ex: `specs/01-DATA-MODEL.md` ou `specs/09-VITRINE-DE-PREMIOS.md`)?
+*Se a resposta para qualquer um dos 3 itens for NÃO, a IA está terminantemente bloqueada e PROIBIDA de editar qualquer arquivo de código. Ela deve parar imediatamente, atualizar/criar as SPECs necessárias no repositório, e aguardar autorização explícita do usuário.*
+
 ---
 
 ## 2. Regras Anti-Alucinação

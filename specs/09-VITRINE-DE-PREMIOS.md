@@ -26,6 +26,7 @@ Especificar a Vitrine de Prêmios (catálogo de recompensas) e o fluxo de resgat
 
 - `Premio` (tabela: `Premio`)
   - `id` (integer, PK)
+  - `empresa_id` (uuid, FK -> GamEmpresa.id) — isolamento multi-tenant obrigatório
   - `titulo` (string)
   - `descricao` (text)
   - `quantidade_disponivel` (integer)
@@ -33,8 +34,12 @@ Especificar a Vitrine de Prêmios (catálogo de recompensas) e o fluxo de resgat
   - `ativo` (boolean)
   - `created_at`, `updated_at`
 
-- `VitrineItem` (tabela: `VitrineItem`) — ponte (opcional) para exibir ordens/posições
-  - `id`, `premio_id` (FK -> Premio.id), `ordem` (integer), `ativo`
+- `VitrineItem` (tabela: `VitrineItem`) — ponte para exibir ordens/posições customizadas
+  - `id` (integer, PK)
+  - `empresa_id` (uuid, FK -> GamEmpresa.id) — isolamento de exibição por tenant
+  - `premio_id` (integer, FK -> Premio.id)
+  - `ordem` (integer)
+  - `ativo` (boolean)
 
 - `Resgate` (tabela: `Resgate`)
   - `id` (integer, PK)
@@ -53,19 +58,19 @@ Observação: nomes de tabelas e campos em Português (requisito de domínio).
 - `src/backend/api/controllers/PremioController.js`
 - `src/backend/core/services/PremioService.js`
 - `src/backend/infra/migrations/2026xxxxxx_create_premios.js`
-- `src/backend/api/routes/premios.js` (apenas rotas public/cliente)
+- `src/backend/api/routes/premios.js` (rotas public/cliente protegidas por Tenant)
 - `src/backend/api/routes/admin.js` (novas rotas admin/premios)
 
 ## 6. Endpoints (contratos HTTP)
 
 - Admin (require admin middleware):
-  - `GET /admin/premios` — lista paginada de `Premio`.
-  - `POST /admin/premios` — criar `Premio` (body: `titulo, descricao, quantidade_disponivel, custo_pontos, ativo`).
-  - `PUT /admin/premios/:id` — atualizar.
-  - `DELETE /admin/premios/:id` — remover (soft delete preferível).
+  - `GET /admin/premios` — lista paginada de `Premio` filtrados por Tenant.
+  - `POST /admin/premios` — criar `Premio` atrelado ao Tenant (body: `titulo, descricao, quantidade_disponivel, custo_pontos, ativo`).
+  - `PUT /admin/premios/:id` — atualizar (restrito ao Tenant).
+  - `DELETE /admin/premios/:id` — remover (soft delete restrito ao Tenant).
 
-- Client / Public:
-  - `GET /premios` — listar vitrine ativa (usa `VitrineItem` ordem se existir).
+- Client / Public (com tenantMiddleware):
+  - `GET /premios` — listar vitrine ativa filtrada pelo tenant logado (usa `VitrineItem` ordem se existir).
   - `POST /premios/:id/resgates` — solicitar resgate (body: `quantidade`).
   - `GET /users/:userId/resgates` — histórico de resgates do usuário.
 

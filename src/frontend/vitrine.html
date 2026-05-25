@@ -389,7 +389,9 @@
         // Fetch Active Awards
         async function fetchVitrine() {
             try {
-                const response = await fetch('http://localhost:3001/api/premios');
+                const response = await fetch('http://localhost:3001/api/premios', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
                 const resData = await response.json();
 
                 const grid = document.getElementById('vitrineGrid');

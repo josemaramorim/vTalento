@@ -4,19 +4,22 @@ const PremioService = require('../../core/services/PremioService');
 
 class PremioController {
   async listPublic(req, res) {
-    const premios = await PremioService.list();
+    const empresa_id = req.empresa_id;
+    const premios = await PremioService.list(empresa_id);
     return res.json({ success: true, data: premios });
   }
 
   async listAdmin(req, res) {
-    const premios = await PremioService.listAdmin();
+    const empresa_id = req.empresa_id;
+    const premios = await PremioService.listAdmin(empresa_id);
     return res.json({ success: true, data: premios });
   }
 
   async create(req, res) {
     try {
+      const empresa_id = req.empresa_id;
       const { titulo, descricao, quantidade_disponivel, custo_pontos, ativo } = req.body;
-      const result = await PremioService.create({ titulo, descricao, quantidade_disponivel, custo_pontos, ativo });
+      const result = await PremioService.create({ empresa_id, titulo, descricao, quantidade_disponivel, custo_pontos, ativo });
       return res.json({ success: true, data: result });
     } catch (err) {
       return res.status(500).json({ success: false, error: err.message });
@@ -26,8 +29,9 @@ class PremioController {
   async update(req, res) {
     try {
       const id = parseInt(req.params.id, 10);
+      const empresa_id = req.empresa_id;
       const { titulo, descricao, quantidade_disponivel, custo_pontos, ativo } = req.body;
-      const result = await PremioService.update(id, { titulo, descricao, quantidade_disponivel, custo_pontos, ativo });
+      const result = await PremioService.update(id, empresa_id, { titulo, descricao, quantidade_disponivel, custo_pontos, ativo });
       return res.json({ success: true, data: result });
     } catch (err) {
       return res.status(500).json({ success: false, error: err.message });
@@ -37,7 +41,8 @@ class PremioController {
   async delete(req, res) {
     try {
       const id = parseInt(req.params.id, 10);
-      const result = await PremioService.remove(id);
+      const empresa_id = req.empresa_id;
+      const result = await PremioService.remove(id, empresa_id);
       return res.json({ success: true, data: result });
     } catch (err) {
       return res.status(500).json({ success: false, error: err.message });

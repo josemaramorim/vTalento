@@ -3,16 +3,17 @@
 const db = require('../../infra/db');
 
 class PremioService {
-  async list() {
-    return db('Premio').where({ ativo: true }).select('*');
+  async list(empresa_id) {
+    return db('Premio').where({ empresa_id, ativo: true }).select('*');
   }
 
-  async listAdmin() {
-    return db('Premio').select('*').orderBy('id', 'desc');
+  async listAdmin(empresa_id) {
+    return db('Premio').where({ empresa_id }).select('*').orderBy('id', 'desc');
   }
 
-  async create({ titulo, descricao, quantidade_disponivel, custo_pontos, ativo = true }) {
+  async create({ empresa_id, titulo, descricao, quantidade_disponivel, custo_pontos, ativo = true }) {
     const [id] = await db('Premio').insert({
+      empresa_id,
       titulo,
       descricao,
       quantidade_disponivel,
@@ -24,17 +25,17 @@ class PremioService {
     return { id };
   }
 
-  async update(id, data) {
+  async update(id, empresa_id, data) {
     const payload = {
       ...data,
       updated_at: db.fn.now()
     };
-    await db('Premio').where({ id }).update(payload);
+    await db('Premio').where({ id, empresa_id }).update(payload);
     return { id };
   }
 
-  async remove(id) {
-    await db('Premio').where({ id }).update({ ativo: false, updated_at: db.fn.now() });
+  async remove(id, empresa_id) {
+    await db('Premio').where({ id, empresa_id }).update({ ativo: false, updated_at: db.fn.now() });
     return { id };
   }
 
@@ -56,15 +57,20 @@ class PremioService {
       return { success: false, code: 'PREMIO_INDISPONIVEL', message: 'Prêmio indisponível' };
     }
 
+    const usuario = await db('GamUsuario').where({ id: usuario_id }).first();
+    if (!usuario) {
+      return { success: false, code: 'USUARIO_NAO_ENCONTRADO', message: 'Usuário não encontrado' };
+    }
+
+    if (premio.empresa_id !== usuario.empresa_id) {
+      return { success: false, code: 'ACESSO_NEGADO', message: 'Acesso negado a este prêmio' };
+    }
+
     if (premio.quantidade_disponivel < quantidade) {
       return { success: false, code: 'PREMIO_INDISPONIVEL', message: 'Quantidade insuficiente do prêmio' };
     }
 
     const custo_total = premio.custo_pontos * quantidade;
-    const usuario = await db('GamUsuario').where({ id: usuario_id }).first();
-    if (!usuario) {
-      return { success: false, code: 'USUARIO_NAO_ENCONTRADO', message: 'Usuário não encontrado' };
-    }
 
     if (parseFloat(usuario.saldo_disponivel) < custo_total) {
       return { success: false, code: 'SALDO_INSUFICIENTE', message: 'Saldo insuficiente para resgate' };
