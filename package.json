@@ -28,6 +28,7 @@
   "devDependencies": {
     "concurrently": "^9.2.1",
     "jest": "^30.4.2",
+    "playwright": "^1.60.0",
     "serve": "^14.2.6",
     "supertest": "^7.2.2"
   }
