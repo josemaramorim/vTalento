@@ -169,7 +169,7 @@ Este documento é o guia de execução do projeto. Nenhuma tarefa deve ser inici
 - [x] **Tarefa 11.6:** Modificar `vitrine.html` — lógica de renderização condicional por perfil:
   - **Se Admin:** Ocultar botão "RESGATAR" nos cards de prêmios; exibir banner informativo "Apenas corretores podem resgatar prêmios".
   - **Se Corretor:** Manter comportamento atual 100% intacto.
-- [/] **Tarefa 11.7:** Implementar no `vitrine.html` (visão Admin) o bloco "Painel de Resgates da Equipe" com:
+- [x] **Tarefa 11.7:** Implementar no `vitrine.html` (visão Admin) o bloco "Painel de Resgates da Equipe" com:
   - Formulário de filtros: Status (select), Corretor (select), Prêmio (select), Data Inicial (date input), Data Final (date input), Botão "Filtrar" e "Limpar Filtros".
   - Tabela com colunas: Data/Hora, Corretor, Prêmio, Qtd., Custo Total (T$), Status (badge colorido).
   - Controles de paginação: Combobox "Registros por página" com opções **10 / 50 / 100** (default: 10), Botões Anterior / Próximo, indicador "Página X de Y — N resgates no total". Ao alterar o combobox, a tabela recarrega automaticamente voltando para a página 1.
