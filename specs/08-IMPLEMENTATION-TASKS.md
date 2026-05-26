@@ -122,9 +122,9 @@ Este documento é o guia de execução do projeto. Nenhuma tarefa deve ser inici
 ### História 9: Experiência Premium e Histórico de Resgates do Corretor
 *Como corretor, quero que meu histórico de resgates reflita perfeitamente as minhas transações efetuadas e que meu painel inicial exiba saldos claros e extrato de talentos completo.*
 
-- [/] **Tarefa 9.1:** Ajustar e corrigir no backend (`PremioController.js`) a associação de `usuario_id` com base no token JWT (`req.usuario_id`), e criar teste unitário para validar resgate simulado de corretor logado.
-- [/] **Tarefa 9.2:** Melhorar o `dashboard.html` para corretores, exibindo em destaque tanto o "Saldo Disponível" quanto o "Saldo a Receber" daquele corretor de forma visualmente estimulante (premium).
-- [/] **Tarefa 9.3:** Integrar uma tabela de extrato com histórico recente das transações individuais de ganho/resgate do corretor diretamente no `dashboard.html` para total clareza.
+- [x] **Tarefa 9.1:** Ajustar e corrigir no backend (`PremioController.js`) a associação de `usuario_id` com base no token JWT (`req.usuario_id`), e criar teste unitário para validar resgate simulado de corretor logado.
+- [x] **Tarefa 9.2:** Melhorar o `dashboard.html` para corretores, exibindo em destaque tanto o "Saldo Disponível" quanto o "Saldo a Receber" daquele corretor de forma visualmente estimulante (premium).
+- [x] **Tarefa 9.3:** Integrar uma tabela de extrato com histórico recente das transações individuais de ganho/resgate do corretor diretamente no `dashboard.html` para total clareza.
 
 
 
