@@ -222,5 +222,21 @@ Esta fase visa eliminar a repetição de código no frontend unificando os cabe�
 - [x] **Tarefa 13.7:** Atualizar `admin-usuarios.html` para utilizar o cabeçalho unificado dinâmico.
 - [x] **Tarefa 13.8:** Atualizar `meu-perfil.html` para utilizar o cabeçalho unificado dinâmico.
 
+---
+
+### FASE 7: EXIBIÇÃO DE EMPRESA E RESPONSIVIDADE MOBILE GLOBAL (DRY)
+Esta fase implementa a exibição elegante da empresa logada no cabeçalho dinâmico e resolve os problemas de corte e responsividade em dispositivos móveis de forma global em todas as páginas da aplicação.
+
+#### Regras de Negócio e UX:
+- **Exibição da Empresa:** A pílula translúcida `🏢 [Nome da Empresa]` deve ser adicionada dinamicamente no cabeçalho.
+- **Responsividade Global:** As regras de empilhamento vertical do cabeçalho, empilhamento dos cards e a blindagem contra overflow de tabelas devem ser aplicadas globalmente em `style.css`, afetando automaticamente 100% das páginas da aplicação.
+
+#### Tarefas de Desenvolvimento
+
+- [x] **Tarefa 14.1:** Atualizar `/api/auth/me` no backend para retornar `empresa_nome` na resposta JSON.
+- [x] **Tarefa 14.2:** Atualizar `auth.js` no frontend para sincronizar e renderizar a pílula de empresa no cabeçalho.
+- [x] **Tarefa 14.3:** Adicionar as regras globais de responsividade mobile e blindagem contra overflow no `style.css`.
+
+
 
 
