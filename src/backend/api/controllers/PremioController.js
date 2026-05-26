@@ -66,6 +66,20 @@ class PremioController {
     const resgates = await PremioService.listResgatesByUser(usuario_id);
     return res.json({ success: true, data: resgates });
   }
+
+  // Tarefa 11.3 — FASE 4.9 — specs/09-VITRINE-DE-PREMIOS.md (Seção 6)
+  async listAllResgatesAdmin(req, res) {
+    try {
+      const empresa_id = req.empresa_id;
+      const { page, limit, status, corretor_id, premio_id, data_inicio, data_fim } = req.query;
+      const result = await PremioService.listAllResgatesAdmin({
+        empresa_id, page, limit, status, corretor_id, premio_id, data_inicio, data_fim
+      });
+      return res.json({ success: true, data: result.data, meta: result.meta });
+    } catch (err) {
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  }
 }
 
 module.exports = new PremioController();

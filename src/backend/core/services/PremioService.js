@@ -114,6 +114,71 @@ class PremioService {
       return { success: false, code: 'PROCESSAMENTO_FALHOU', message: err.message };
     }
   }
+
+  // Origem: specs/09-VITRINE-DE-PREMIOS.md (Seção 6 — GET /admin/resgates)
+  // Tarefa 11.2 — FASE 4.9
+  async listAllResgatesAdmin({ empresa_id, page = 1, limit = 10, status, corretor_id, premio_id, data_inicio, data_fim }) {
+    // Valida e sanitiza o limit — apenas 10, 50 ou 100 são permitidos
+    const limitsPermitidos = [10, 50, 100];
+    const limitSanitizado = limitsPermitidos.includes(parseInt(limit, 10)) ? parseInt(limit, 10) : 10;
+    const paginaSanitizada = Math.max(1, parseInt(page, 10) || 1);
+    const offset = (paginaSanitizada - 1) * limitSanitizado;
+
+    // Query base com joins para obter nome do corretor e título do prêmio
+    let query = db('Resgate')
+      .join('GamUsuario', 'Resgate.usuario_id', 'GamUsuario.id')
+      .join('Premio', 'Resgate.premio_id', 'Premio.id')
+      .where('GamUsuario.empresa_id', empresa_id);  // Isolamento multi-tenant obrigatório
+
+    // Filtros opcionais
+    if (status) {
+      query = query.where('Resgate.status', status);
+    }
+    if (corretor_id) {
+      query = query.where('Resgate.usuario_id', corretor_id);
+    }
+    if (premio_id) {
+      query = query.where('Resgate.premio_id', premio_id);
+    }
+    if (data_inicio) {
+      query = query.where('Resgate.created_at', '>=', `${data_inicio} 00:00:00`);
+    }
+    if (data_fim) {
+      query = query.where('Resgate.created_at', '<=', `${data_fim} 23:59:59`);
+    }
+
+    // Conta o total antes de paginar (clone da query)
+    const [{ total }] = await query.clone().count('Resgate.id as total');
+    const totalRegistros = parseInt(total, 10);
+    const totalPages = Math.ceil(totalRegistros / limitSanitizado);
+
+    // Busca os dados paginados
+    const data = await query
+      .select(
+        'Resgate.id',
+        'Resgate.usuario_id',
+        'Resgate.premio_id',
+        'Resgate.quantidade',
+        'Resgate.custo_total',
+        'Resgate.status',
+        'Resgate.created_at',
+        'GamUsuario.nome as corretor_nome',
+        'Premio.titulo as premio_titulo'
+      )
+      .orderBy('Resgate.created_at', 'desc')
+      .limit(limitSanitizado)
+      .offset(offset);
+
+    return {
+      data,
+      meta: {
+        total: totalRegistros,
+        page: paginaSanitizada,
+        totalPages,
+        limit: limitSanitizado
+      }
+    };
+  }
 }
 
 module.exports = new PremioService();
