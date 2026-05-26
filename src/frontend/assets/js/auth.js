@@ -191,6 +191,15 @@ window.addEventListener('DOMContentLoaded', async () => {
                         empresa_nome: userData.empresa_nome
                     };
                     localStorage.setItem('@VTalentos:user', JSON.stringify(updatedUser));
+
+                    // Re-renderiza o cabeçalho dinamicamente para aplicar o nome da empresa e saldo atualizados imediatamente
+                    if (window.renderHeader) {
+                        const titleEl = document.getElementById('welcomeText');
+                        const subtitleEl = document.getElementById('dashboardSub');
+                        const activeTitle = titleEl ? titleEl.innerText : '';
+                        const activeSubtitle = subtitleEl ? subtitleEl.innerText : '';
+                        window.renderHeader(activeTitle, activeSubtitle);
+                    }
                 }
 
                 if (userData.tema_preferido) {
