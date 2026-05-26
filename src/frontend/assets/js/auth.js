@@ -118,6 +118,7 @@ window.renderHeader = function(titulo, subtitulo) {
     if (!userStr) return;
 
     const user = JSON.parse(userStr);
+    console.log('[DEBUG] Objeto de usuário lido no renderHeader:', user);
     const roleLabel = (user.perfil === 'ADMIN_EMPRESA' || user.perfil === 'SUPER_ADMIN') ? 'Administrador' : 'Colaborador';
     const inicial = user.nome.charAt(0).toUpperCase();
     const saldoExibido = parseFloat(user.saldo_disponivel || 0).toFixed(2);
@@ -177,6 +178,7 @@ window.addEventListener('DOMContentLoaded', async () => {
             });
             if (response.ok) {
                 const userData = await response.json();
+                console.log('[DEBUG] Dados retornados pelo endpoint /api/auth/me:', userData);
                 
                 // Sincroniza usuário completo no localStorage para manter saldos e empresa atualizados
                 const storedUserStr = localStorage.getItem('@VTalentos:user');
