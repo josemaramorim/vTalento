@@ -96,6 +96,110 @@
             background: rgba(231, 76, 60, 0.15);
             color: var(--error);
         }
+
+        /* Admin resgates panel */
+        .admin-resgate-banner {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 20px;
+            border-radius: var(--radius-sm);
+            background: linear-gradient(135deg, rgba(231,76,60,0.08), rgba(231,76,60,0.04));
+            border: 1px solid rgba(231,76,60,0.25);
+            margin-bottom: 20px;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        .filtros-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .filtros-grid select,
+        .filtros-grid input[type="date"] {
+            width: 100%;
+            padding: 9px 12px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            font-size: 0.85rem;
+            transition: border-color 0.3s;
+        }
+
+        .filtros-grid select:focus,
+        .filtros-grid input[type="date"]:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+
+        .filtros-grid select option {
+            background: var(--bg-card);
+            color: var(--text-primary);
+        }
+
+        .paginacao-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid var(--glass-border);
+        }
+
+        .paginacao-info {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .paginacao-controles {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .paginacao-controles select {
+            padding: 6px 10px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+
+        .paginacao-controles select option {
+            background: var(--bg-card);
+        }
+
+        .btn-pag {
+            padding: 7px 16px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--glass-border);
+            background: rgba(255,255,255,0.05);
+            color: var(--text-primary);
+            cursor: pointer;
+            font-family: var(--font-main);
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .btn-pag:hover:not(:disabled) {
+            background: var(--accent-primary);
+            color: #fff;
+            border-color: var(--accent-primary);
+        }
+
+        .btn-pag:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+        }
         
         /* Modal Overlay */
         .modal-overlay {
@@ -228,8 +332,8 @@
                 </div>
             </section>
 
-            <!-- Histórico de Resgates -->
-            <section class="history-card glass" style="margin-top: 40px; padding: 25px;">
+            <!-- Corretor: Meu Histórico de Resgates (preservado 100%) -->
+            <section id="secaoHistoricoCorretor" class="history-card glass" style="margin-top: 40px; padding: 25px; display: none;">
                 <h2 style="font-size: 1.2rem; margin-bottom: 15px; color: var(--text-primary);">Meu Histórico de Resgates</h2>
                 <div class="table-responsive">
                     <table>
@@ -244,10 +348,90 @@
                         </thead>
                         <tbody id="resgatesTableBody">
                             <tr>
-                                <td colspan="5" style="text-align: center; color: var(--text-secondary);">Carregando histórico de resgates...</td>
+                                <td colspan="5" style="text-align: center; color: var(--text-secondary);">Carregando histórico...</td>
                             </tr>
                         </tbody>
                     </table>
+                </div>
+            </section>
+
+            <!-- Admin: Painel de Resgates da Equipe (Tarefa 11.7) -->
+            <section id="secaoResgatesAdmin" class="history-card glass" style="margin-top: 40px; padding: 25px; display: none;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+                    <h2 style="font-size: 1.2rem; color: var(--text-primary); margin: 0;">📋 Painel de Resgates da Equipe</h2>
+                    <span id="adminResgatesBadge" style="font-size: 0.8rem; color: var(--text-secondary); background: rgba(255,255,255,0.05); padding: 4px 12px; border-radius: 20px;">carregando...</span>
+                </div>
+
+                <!-- Filtros -->
+                <div class="filtros-grid">
+                    <div>
+                        <label style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 5px;">Status</label>
+                        <select id="filtroStatus">
+                            <option value="">Todos os Status</option>
+                            <option value="pendente">Pendente</option>
+                            <option value="confirmado">Confirmado</option>
+                            <option value="cancelado">Cancelado</option>
+                            <option value="falha">Falha</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 5px;">Corretor</label>
+                        <select id="filtroCorretor">
+                            <option value="">Todos os Corretores</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 5px;">Prêmio</label>
+                        <select id="filtroPremio">
+                            <option value="">Todos os Prêmios</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 5px;">Data Inicial</label>
+                        <input type="date" id="filtroDataInicio">
+                    </div>
+                    <div>
+                        <label style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 5px;">Data Final</label>
+                        <input type="date" id="filtroDataFim">
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                    <button class="btn btn-primary" onclick="aplicarFiltrosAdmin()" style="padding: 8px 20px; font-size: 0.85rem;">🔍 Filtrar</button>
+                    <button class="btn" onclick="limparFiltrosAdmin()" style="padding: 8px 20px; font-size: 0.85rem; background: rgba(255,255,255,0.05);">✕ Limpar Filtros</button>
+                </div>
+
+                <!-- Tabela -->
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Data/Hora</th>
+                                <th>Corretor</th>
+                                <th>Prêmio</th>
+                                <th style="text-align: center;">Qtd.</th>
+                                <th style="text-align: right;">Custo Total</th>
+                                <th style="text-align: center;">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminResgatesTableBody">
+                            <tr><td colspan="6" style="text-align: center; color: var(--text-secondary); padding: 30px 0;">Carregando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Paginação -->
+                <div class="paginacao-bar">
+                    <div class="paginacao-info" id="adminPaginacaoInfo">—</div>
+                    <div class="paginacao-controles">
+                        <label style="font-size: 0.8rem; color: var(--text-secondary);">Registros por página:</label>
+                        <select id="adminLimitSelect" onchange="onLimitChange()">
+                            <option value="10" selected>10</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                        <button class="btn-pag" id="btnPagAnterior" onclick="mudarPagina(-1)" disabled>← Anterior</button>
+                        <button class="btn-pag" id="btnPagProximo" onclick="mudarPagina(1)">Próximo →</button>
+                    </div>
                 </div>
             </section>
         </main>
@@ -299,6 +483,8 @@
 
     <script src="assets/js/auth.js"></script>
     <script>
+        // Tarefa 11.6 e 11.7 — FASE 4.9 — Renderização condicional por perfil
+        // Origem: specs/09-VITRINE-DE-PREMIOS.md (Seção 6) | specs/08-IMPLEMENTATION-TASKS.md
         const token = localStorage.getItem('@VTalentos:token');
         const userStr = localStorage.getItem('@VTalentos:user');
 
@@ -309,33 +495,27 @@
         let currentUser = JSON.parse(userStr);
         let activePremios = [];
         let selectedPremio = null;
+        const isAdmin = () => currentUser.perfil === 'ADMIN_EMPRESA' || currentUser.perfil === 'SUPER_ADMIN';
+
+        // Estado da paginação Admin
+        let adminPaginaAtual = 1;
+        let adminLimitAtual = 10;
+        let adminTotalPages = 1;
 
         // Emojis mapping for premium look
         const emojiMap = {
-            'voucher': '🎫',
-            'ifood': '🍔',
-            'netflix': '🎬',
-            'spotify': '🎵',
-            'uber': '🚗',
-            'viagem': '✈️',
-            'café': '☕',
-            'ingresso': '🎟️',
-            'fone': '🎧',
-            'gift': '🎁',
-            'relogio': '⌚'
+            'voucher': '🎫', 'ifood': '🍔', 'netflix': '🎬', 'spotify': '🎵',
+            'uber': '🚗', 'viagem': '✈️', 'café': '☕', 'ingresso': '🎟️',
+            'fone': '🎧', 'gift': '🎁', 'relogio': '⌚'
         };
 
         function getPremioEmoji(titulo) {
             const lowerTitle = titulo.toLowerCase();
             for (const key in emojiMap) {
-                if (lowerTitle.includes(key)) {
-                    return emojiMap[key];
-                }
+                if (lowerTitle.includes(key)) return emojiMap[key];
             }
             return '🎁';
         }
-
-
 
         function logout() {
             localStorage.removeItem('@VTalentos:token');
@@ -343,7 +523,6 @@
             window.location.href = 'login.html';
         }
 
-        // Render Dynamic Sidebar links matching dashboard structure
         function renderSidebar() {
             const nav = document.getElementById('navLinks');
             nav.innerHTML = `
@@ -351,25 +530,26 @@
                 <a href="dashboard.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">🏠 Dashboard</a>
                 <a href="vitrine.html" class="active" style="color: var(--accent-primary); text-decoration: none; font-weight: 600;">🎁 Vitrine de Prêmios</a>
             `;
-
-            if (currentUser.perfil === 'ADMIN_EMPRESA' || currentUser.perfil === 'SUPER_ADMIN') {
+            if (isAdmin()) {
                 nav.innerHTML += `
                     <p style="color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; margin-top: 15px; margin-bottom: 10px;">ADMINISTRAÇÃO</p>
                     <a href="admin-lancamento.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">💎 Lançamento Manual</a>
                     <a href="admin-importacao.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">📤 Importação Excel</a>
                     <a href="admin-premios.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">⚙️ Gerenciar Prêmios</a>
                 `;
-                // Show informative banner for Admin
                 document.getElementById('adminBanner').style.display = 'flex';
             }
         }
 
-        // Fetch User profile to ensure latest balance is shown
         async function updateProfile() {
             try {
                 const response = await fetch('http://localhost:3001/api/auth/me', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
+                if (response.status === 401) {
+                    logout();
+                    return;
+                }
                 if (response.ok) {
                     const latestData = await response.json();
                     currentUser.saldo_disponivel = latestData.saldo_disponivel;
@@ -377,23 +557,24 @@
                     currentUser.perfil = latestData.perfil;
                     localStorage.setItem('@VTalentos:user', JSON.stringify(currentUser));
                 }
-            } catch (err) {
-                console.error('Erro ao atualizar dados do usuário:', err);
-            }
+            } catch (err) { console.error('Erro ao atualizar perfil:', err); }
 
             document.getElementById('userName').innerText = currentUser.nome;
             document.getElementById('userInitial').innerText = currentUser.nome.charAt(0);
             document.getElementById('userSaldoHeader').innerText = `${parseFloat(currentUser.saldo_disponivel || 0).toFixed(2)} T$`;
         }
 
-        // Fetch Active Awards
+        // Tarefa 11.6 — Cards da Vitrine (condicional por perfil)
         async function fetchVitrine() {
             try {
                 const response = await fetch('http://localhost:3001/api/premios', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
+                if (response.status === 401) {
+                    logout();
+                    return;
+                }
                 const resData = await response.json();
-
                 const grid = document.getElementById('vitrineGrid');
                 grid.innerHTML = '';
 
@@ -404,17 +585,22 @@
                 }
 
                 activePremios = resData.data;
-
                 activePremios.forEach(premio => {
                     const card = document.createElement('div');
                     card.className = 'premio-card glass animate-fade';
-                    
                     const emoji = getPremioEmoji(premio.titulo);
                     const isOutOfStock = premio.quantidade_disponivel <= 0;
                     const canAfford = parseFloat(currentUser.saldo_disponivel) >= premio.custo_pontos;
-                    
+
                     let buttonHtml = '';
-                    if (isOutOfStock) {
+                    if (isAdmin()) {
+                        // Tarefa 11.6 — Admin NÃO pode resgatar
+                        buttonHtml = `
+                            <div class="admin-resgate-banner">
+                                <span>🔒</span>
+                                <span style="font-size: 0.8rem; color: var(--text-secondary);">Apenas corretores podem resgatar prêmios</span>
+                            </div>`;
+                    } else if (isOutOfStock) {
                         buttonHtml = `<button class="btn" style="width: 100%; background: rgba(255,255,255,0.05); color: var(--text-secondary); cursor: not-allowed;" disabled>ESGOTADO</button>`;
                     } else if (!canAfford) {
                         buttonHtml = `<button class="btn" style="width: 100%; background: rgba(231,76,60,0.1); color: var(--error); cursor: not-allowed;" disabled title="Saldo insuficiente">SALDO INSUFICIENTE</button>`;
@@ -444,14 +630,17 @@
             }
         }
 
-        // Fetch User Redemptions History
+        // Corretor: Histórico individual (preservado 100%)
         async function fetchHistoricoResgates() {
             try {
                 const response = await fetch(`http://localhost:3001/api/users/${currentUser.id}/resgates`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
+                if (response.status === 401) {
+                    logout();
+                    return;
+                }
                 const resData = await response.json();
-                
                 const tbody = document.getElementById('resgatesTableBody');
                 tbody.innerHTML = '';
 
@@ -462,18 +651,10 @@
 
                 resData.data.forEach(resgate => {
                     const tr = document.createElement('tr');
-                    const formattedDate = new Date(resgate.created_at).toLocaleDateString('pt-BR', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                    });
-                    
+                    const formattedDate = new Date(resgate.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
                     let badgeClass = 'badge-pendente';
                     if (resgate.status === 'confirmado') badgeClass = 'badge-confirmado';
                     if (resgate.status === 'falha' || resgate.status === 'cancelado') badgeClass = 'badge-falha';
-
                     tr.innerHTML = `
                         <td>${formattedDate}</td>
                         <td><strong>${resgate.premio_titulo || 'Prêmio #' + resgate.premio_id}</strong></td>
@@ -484,28 +665,179 @@
                     tbody.appendChild(tr);
                 });
             } catch (err) {
-                console.error('Erro ao carregar histórico de resgates:', err);
-                document.getElementById('resgatesTableBody').innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--error);">Erro ao carregar histórico de resgates.</td></tr>`;
+                console.error('Erro ao carregar histórico:', err);
+                document.getElementById('resgatesTableBody').innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--error);">Erro ao carregar histórico.</td></tr>`;
             }
         }
 
-        // Modal Controls
+        // =====================================================
+        // Tarefa 11.7 — Painel Admin de Resgates da Equipe
+        // =====================================================
+
+        async function carregarFiltrosAdmin() {
+            // Popula dropdown de corretores
+            try {
+                const res = await fetch('http://localhost:3001/api/admin/corretores', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.status === 401) {
+                    logout();
+                    return;
+                }
+                if (res.ok) {
+                    const data = await res.json();
+                    const sel = document.getElementById('filtroCorretor');
+                    (data.data || data).forEach(c => {
+                        const opt = document.createElement('option');
+                        opt.value = c.id;
+                        opt.textContent = c.nome;
+                        sel.appendChild(opt);
+                    });
+                }
+            } catch (e) { /* silencioso */ }
+
+            // Popula dropdown de prêmios
+            try {
+                const res = await fetch('http://localhost:3001/api/admin/premios', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.status === 401) {
+                    logout();
+                    return;
+                }
+                if (res.ok) {
+                    const data = await res.json();
+                    const sel = document.getElementById('filtroPremio');
+                    (data.data || []).forEach(p => {
+                        const opt = document.createElement('option');
+                        opt.value = p.id;
+                        opt.textContent = p.titulo;
+                        sel.appendChild(opt);
+                    });
+                }
+            } catch (e) { /* silencioso */ }
+        }
+
+        async function fetchResgatesAdmin(pagina = 1) {
+            adminPaginaAtual = pagina;
+            adminLimitAtual = parseInt(document.getElementById('adminLimitSelect').value, 10) || 10;
+
+            const status = document.getElementById('filtroStatus').value;
+            const corretor_id = document.getElementById('filtroCorretor').value;
+            const premio_id = document.getElementById('filtroPremio').value;
+            const data_inicio = document.getElementById('filtroDataInicio').value;
+            const data_fim = document.getElementById('filtroDataFim').value;
+
+            const params = new URLSearchParams({
+                page: adminPaginaAtual,
+                limit: adminLimitAtual,
+                ...(status && { status }),
+                ...(corretor_id && { corretor_id }),
+                ...(premio_id && { premio_id }),
+                ...(data_inicio && { data_inicio }),
+                ...(data_fim && { data_fim })
+            });
+
+            const tbody = document.getElementById('adminResgatesTableBody');
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-secondary); padding: 20px 0;">🔄 Carregando...</td></tr>`;
+
+            try {
+                const res = await fetch(`http://localhost:3001/api/admin/resgates?${params}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.status === 401) {
+                    logout();
+                    return;
+                }
+                const json = await res.json();
+
+                if (!json.success) throw new Error(json.error || 'Erro ao buscar resgates');
+
+                const { data, meta } = json;
+                adminTotalPages = meta.totalPages;
+
+                // Atualiza badge e info
+                document.getElementById('adminResgatesBadge').textContent = `${meta.total} resgate${meta.total !== 1 ? 's' : ''} no total`;
+                document.getElementById('adminPaginacaoInfo').textContent =
+                    `Página ${meta.page} de ${meta.totalPages} — ${meta.total} resgate${meta.total !== 1 ? 's' : ''}`;
+
+                // Atualiza botões de paginação
+                document.getElementById('btnPagAnterior').disabled = adminPaginaAtual <= 1;
+                document.getElementById('btnPagProximo').disabled = adminPaginaAtual >= adminTotalPages;
+
+                tbody.innerHTML = '';
+
+                if (data.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-secondary); padding: 30px 0;">Nenhum resgate encontrado com os filtros aplicados.</td></tr>`;
+                    return;
+                }
+
+                const statusLabels = { pendente: 'Pendente', confirmado: 'Confirmado', cancelado: 'Cancelado', falha: 'Falha' };
+                const statusBadges = { pendente: 'badge-pendente', confirmado: 'badge-confirmado', cancelado: 'badge-falha', falha: 'badge-falha' };
+
+                data.forEach(resgate => {
+                    const tr = document.createElement('tr');
+                    const dt = new Date(resgate.created_at).toLocaleString('pt-BR', {
+                        day: '2-digit', month: '2-digit', year: 'numeric',
+                        hour: '2-digit', minute: '2-digit'
+                    });
+                    const badgeClass = statusBadges[resgate.status] || 'badge-pendente';
+                    const statusLabel = statusLabels[resgate.status] || resgate.status;
+                    tr.innerHTML = `
+                        <td style="white-space: nowrap;">${dt}</td>
+                        <td><strong>${resgate.corretor_nome || '—'}</strong></td>
+                        <td>${resgate.premio_titulo || '—'}</td>
+                        <td style="text-align: center;">${resgate.quantidade}</td>
+                        <td style="text-align: right;"><strong style="color: var(--accent-primary);">${resgate.custo_total} T$</strong></td>
+                        <td style="text-align: center;"><span class="badge ${badgeClass}">${statusLabel}</span></td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (err) {
+                console.error('Erro ao carregar painel de resgates:', err);
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--error); padding: 20px 0;">Erro ao carregar os resgates da equipe.</td></tr>`;
+            }
+        }
+
+        function aplicarFiltrosAdmin() {
+            fetchResgatesAdmin(1);
+        }
+
+        function limparFiltrosAdmin() {
+            document.getElementById('filtroStatus').value = '';
+            document.getElementById('filtroCorretor').value = '';
+            document.getElementById('filtroPremio').value = '';
+            document.getElementById('filtroDataInicio').value = '';
+            document.getElementById('filtroDataFim').value = '';
+            fetchResgatesAdmin(1);
+        }
+
+        function mudarPagina(delta) {
+            const novaPagina = adminPaginaAtual + delta;
+            if (novaPagina >= 1 && novaPagina <= adminTotalPages) {
+                fetchResgatesAdmin(novaPagina);
+            }
+        }
+
+        function onLimitChange() {
+            adminLimitAtual = parseInt(document.getElementById('adminLimitSelect').value, 10);
+            fetchResgatesAdmin(1); // Volta para página 1 ao mudar o limite
+        }
+
+        // Modal Controls (apenas para Corretor)
         const confirmModal = document.getElementById('confirmModal');
 
         function openRedeemModal(premioId) {
             selectedPremio = activePremios.find(p => p.id === premioId);
             if (!selectedPremio) return;
-
             document.getElementById('modalPremioIcon').innerText = getPremioEmoji(selectedPremio.titulo);
             document.getElementById('modalPremioName').innerText = selectedPremio.titulo;
             document.getElementById('modalPremioDesc').innerText = selectedPremio.descricao;
             document.getElementById('modalUnitCost').innerText = `${selectedPremio.custo_pontos} T$`;
             document.getElementById('modalStockLabel').innerText = `Disponível: ${selectedPremio.quantidade_disponivel} un.`;
-            
             const resgateQtdInput = document.getElementById('resgateQtd');
             resgateQtdInput.value = 1;
             resgateQtdInput.max = selectedPremio.quantidade_disponivel;
-            
             calculateTotal();
             confirmModal.classList.add('active');
         }
@@ -517,19 +849,14 @@
 
         function calculateTotal() {
             if (!selectedPremio) return;
-            
             const qtdInput = document.getElementById('resgateQtd');
             let quantity = parseInt(qtdInput.value, 10) || 1;
-            
-            // Constrain
             if (quantity < 1) quantity = 1;
             if (quantity > selectedPremio.quantidade_disponivel) quantity = selectedPremio.quantidade_disponivel;
             qtdInput.value = quantity;
-
             const total = selectedPremio.custo_pontos * quantity;
             document.getElementById('modalQtdLabel').innerText = `${quantity}x`;
             document.getElementById('modalTotalCost').innerText = `${total} T$`;
-            
             const btnConfirm = document.getElementById('btnConfirmRedeem');
             if (total > parseFloat(currentUser.saldo_disponivel)) {
                 btnConfirm.disabled = true;
@@ -544,37 +871,23 @@
 
         async function submitResgate() {
             if (!selectedPremio) return;
-
             const quantity = parseInt(document.getElementById('resgateQtd').value, 10);
             const btnConfirm = document.getElementById('btnConfirmRedeem');
-
             try {
                 btnConfirm.disabled = true;
                 btnConfirm.innerText = 'PROCESSANDO...';
-
                 const response = await fetch(`http://localhost:3001/api/premios/${selectedPremio.id}/resgates`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                     body: JSON.stringify({ quantidade: quantity })
                 });
-
                 const data = await response.json();
-                
-                if (!response.ok || !data.success) {
-                    throw new Error(data.error || 'Falha ao solicitar resgate');
-                }
-
+                if (!response.ok || !data.success) throw new Error(data.error || 'Falha ao solicitar resgate');
                 showToast('Resgate realizado com sucesso! Recompensa confirmada.', 'success');
                 closeModal();
-                
-                // Refresh all
                 await updateProfile();
                 await fetchVitrine();
                 await fetchHistoricoResgates();
-
             } catch (err) {
                 showToast(err.message, 'error');
             } finally {
@@ -583,12 +896,24 @@
             }
         }
 
-        // Initialize Page
+        // =====================================================
+        // Inicialização — condicional por perfil
+        // =====================================================
         window.addEventListener('DOMContentLoaded', async () => {
             renderSidebar();
             await updateProfile();
             await fetchVitrine();
-            await fetchHistoricoResgates();
+
+            if (isAdmin()) {
+                // Admin: exibe painel de resgates da equipe
+                document.getElementById('secaoResgatesAdmin').style.display = 'block';
+                await carregarFiltrosAdmin();
+                await fetchResgatesAdmin(1);
+            } else {
+                // Corretor: exibe histórico individual
+                document.getElementById('secaoHistoricoCorretor').style.display = 'block';
+                await fetchHistoricoResgates();
+            }
         });
     </script>
 </body>

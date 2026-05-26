@@ -39,4 +39,7 @@ routes.post('/premios', PremioController.create);
 routes.put('/premios/:id', PremioController.update);
 routes.delete('/premios/:id', PremioController.delete);
 
+// Tarefa 11.4 — FASE 4.9 — Painel Admin de Resgates (specs/09-VITRINE-DE-PREMIOS.md Seção 6)
+routes.get('/resgates', PremioController.listAllResgatesAdmin);
+
 module.exports = routes;

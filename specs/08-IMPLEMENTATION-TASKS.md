@@ -135,4 +135,44 @@ Este documento é o guia de execução do projeto. Nenhuma tarefa deve ser inici
 
 - [x] **Tarefa 10.1:** Criar migration `20260526010000_update_transacoes_add_premio_origem.js` para adicionar `'PREMIO'` ao CHECK constraint do campo `origem` na tabela `GamTransacao` (SQLite não suporta ALTER COLUMN — tabela recriada via raw SQL).
 
+---
+
+## FASE 4.9: Painel Admin de Resgates na Vitrine de Recompensas
+
+### História 11: Visão Gerencial de Resgates para Administradores
+*Como administrador, quero visualizar na página Vitrine de Recompensas um painel completo com todos os resgates realizados pelos corretores da minha empresa, com filtros avançados (status, corretor, prêmio, data inicial, data final) e paginação, para ter total controle e visibilidade sobre as recompensas consumidas.*
+
+**Regras de Negócio:**
+- Admin **NÃO** pode resgatar prêmios — botão "RESGATAR" deve ser ocultado/desabilitado com banner informativo.
+- Admin vê resgates de **todos** os corretores da sua empresa (isolamento multi-tenant obrigatório).
+- Corretor vê apenas seu próprio histórico (comportamento atual preservado, sem nenhuma alteração).
+- Todos os dados, labels, mensagens e status devem estar em **Português**.
+
+**Filtros disponíveis (Admin):**
+- Status: Todos / Pendente / Confirmado / Cancelado / Falha
+- Corretor: Dropdown populado com os corretores ativos da empresa
+- Prêmio: Dropdown com os prêmios cadastrados da empresa
+- Data Inicial e Data Final (filtro por `Resgate.created_at`)
+
+**Paginação:** Padrão de 10 registros por página. O usuário pode selecionar entre **10, 50 ou 100** registros por página via combobox (select) — o valor padrão é sempre **10**. Controles: Anterior / Próximo + indicador "Página X de Y — Total: N registros".
+
+#### Tarefas de Backend
+
+- [x] **Tarefa 11.1:** Atualizar `specs/09-VITRINE-DE-PREMIOS.md` — Seção 6 (Endpoints) para documentar o novo endpoint `GET /api/admin/resgates` com parâmetros de query (`page`, `limit`, `status`, `corretor_id`, `premio_id`, `data_inicio`, `data_fim`). O parâmetro `limit` aceita os valores 10, 50 ou 100 (default: 10).
+- [x] **Tarefa 11.2:** Adicionar método `listAllResgatesAdmin({ empresa_id, page, limit, status, corretor_id, premio_id, data_inicio, data_fim })` no `PremioService.js` com join em `GamUsuario` (nome do corretor) e `Premio` (título), retornando `{ data, total, page, totalPages }`. O `limit` deve ser validado — valores fora de [10, 50, 100] são rejeitados com fallback para 10.
+- [x] **Tarefa 11.3:** Adicionar método `listAllResgatesAdmin` no `PremioController.js` para receber os query params e chamar o serviço, com tratamento de erros e resposta padrão `{ success: true, data, meta }`.
+- [x] **Tarefa 11.4:** Registrar a rota `GET /api/admin/resgates` no arquivo `admin.js` (protegida por `tenantMiddleware` + `adminMiddleware`, conforme governança Seção C).
+- [x] **Tarefa 11.5:** Escrever testes de integração (Supertest) para o endpoint `GET /api/admin/resgates` validando: caminho feliz com paginação, filtro por status, filtro por data, limit=50, e isolamento multi-tenant (admin de empresa A não vê resgates de empresa B).
+
+#### Tarefas de Frontend
+
+- [x] **Tarefa 11.6:** Modificar `vitrine.html` — lógica de renderização condicional por perfil:
+  - **Se Admin:** Ocultar botão "RESGATAR" nos cards de prêmios; exibir banner informativo "Apenas corretores podem resgatar prêmios".
+  - **Se Corretor:** Manter comportamento atual 100% intacto.
+- [/] **Tarefa 11.7:** Implementar no `vitrine.html` (visão Admin) o bloco "Painel de Resgates da Equipe" com:
+  - Formulário de filtros: Status (select), Corretor (select), Prêmio (select), Data Inicial (date input), Data Final (date input), Botão "Filtrar" e "Limpar Filtros".
+  - Tabela com colunas: Data/Hora, Corretor, Prêmio, Qtd., Custo Total (T$), Status (badge colorido).
+  - Controles de paginação: Combobox "Registros por página" com opções **10 / 50 / 100** (default: 10), Botões Anterior / Próximo, indicador "Página X de Y — N resgates no total". Ao alterar o combobox, a tabela recarrega automaticamente voltando para a página 1.
+  - Estado vazio: mensagem "Nenhum resgate encontrado com os filtros aplicados."
+  - Design seguindo o padrão Glassmorphism premium já estabelecido no projeto.
 

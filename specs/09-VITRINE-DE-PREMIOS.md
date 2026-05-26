@@ -68,6 +68,12 @@ Observação: nomes de tabelas e campos em Português (requisito de domínio).
   - `POST /admin/premios` — criar `Premio` atrelado ao Tenant (body: `titulo, descricao, quantidade_disponivel, custo_pontos, ativo`).
   - `PUT /admin/premios/:id` — atualizar (restrito ao Tenant).
   - `DELETE /admin/premios/:id` — remover (soft delete restrito ao Tenant).
+  - `GET /admin/resgates` — lista paginada de **todos** os resgates dos corretores da empresa, filtrada por Tenant.
+    - Query params: `page` (default: 1), `limit` (valores aceitos: 10, 50, 100 — default: 10), `status` (pendente|confirmado|cancelado|falha), `corretor_id`, `premio_id`, `data_inicio` (YYYY-MM-DD), `data_fim` (YYYY-MM-DD).
+    - Resposta: `{ success: true, data: [...], meta: { total, page, totalPages, limit } }`.
+    - Cada item inclui: `id, usuario_id, premio_id, quantidade, custo_total, status, created_at, corretor_nome, premio_titulo`.
+    - Isolamento multi-tenant obrigatório: somente resgates de usuários da mesma `empresa_id` do admin logado.
+    - Admin **não pode** criar resgates — endpoint é somente leitura.
 
 - Client / Public (com tenantMiddleware):
   - `GET /premios` — listar vitrine ativa filtrada pelo tenant logado (usa `VitrineItem` ordem se existir).
