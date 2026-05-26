@@ -90,26 +90,69 @@ function checkAuth() {
     }
 }
 
+// Persiste tema preferido na API
+async function saveThemePreference(theme) {
+    const token = localStorage.getItem('@VTalentos:token');
+    if (!token) return;
+    try {
+        await fetch('http://localhost:3001/api/auth/theme', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ tema: theme })
+        });
+    } catch (err) {
+        console.error('Falha ao persistir tema no banco:', err);
+    }
+}
+
 // Controle de Tema Unificado e Automático (Claro/Escuro)
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', async () => {
     // A tela de login é sempre forçada a manter o tema escuro premium
     if (window.location.pathname.includes('login.html') || window.location.pathname === '/' || window.location.pathname.endsWith('/')) {
         document.body.setAttribute('data-theme', 'dark');
         return;
     }
 
-    // Carrega o tema selecionado ou adota 'dark' por padrão
-    const savedTheme = localStorage.getItem('theme') || 'dark';
-    document.body.setAttribute('data-theme', savedTheme);
+    const token = localStorage.getItem('@VTalentos:token');
+    let themeToApply = localStorage.getItem('theme') || 'dark';
 
-    // Vincula o alternador de temas de forma totalmente automática se houver o botão
-    const themeToggle = document.getElementById('themeToggle');
-    if (themeToggle) {
-        themeToggle.addEventListener('click', () => {
+    // Se estiver logado, tenta sincronizar e aplicar o tema preferido do banco
+    if (token) {
+        try {
+            const response = await fetch('http://localhost:3001/api/auth/me', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (response.ok) {
+                const userData = await response.json();
+                if (userData.tema_preferido) {
+                    themeToApply = userData.tema_preferido;
+                    localStorage.setItem('theme', themeToApply);
+                }
+            }
+        } catch (err) {
+            console.error('Erro ao ler tema do banco:', err);
+        }
+    }
+
+    document.body.setAttribute('data-theme', themeToApply);
+
+    // Vincula todos os alternadores de temas (.theme-toggle ou #themeToggle) de forma totalmente automática
+    document.querySelectorAll('.theme-toggle, #themeToggle').forEach(btn => {
+        // Remove listeners duplicados clonando se necessário ou apenas tratando limpo
+        const newBtn = btn.cloneNode(true);
+        btn.parentNode.replaceChild(newBtn, btn);
+
+        newBtn.addEventListener('click', async () => {
             const currentTheme = document.body.getAttribute('data-theme');
             const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
             document.body.setAttribute('data-theme', newTheme);
             localStorage.setItem('theme', newTheme);
+            
+            await saveThemePreference(newTheme);
         });
-    }
+    });
 });

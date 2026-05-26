@@ -5,6 +5,64 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>V-TALENTOS | Dashboard</title>
     <link rel="stylesheet" href="assets/css/style.css">
+    <style>
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        .stat-card-premium {
+            padding: 25px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            animation: fadeIn 0.5s ease-out;
+        }
+        .stat-card-premium .icon-box {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+        }
+        .stat-card-premium .val {
+            font-size: 1.8rem;
+            font-weight: 700;
+            font-family: var(--font-heading);
+            color: var(--text-primary);
+        }
+        .stat-card-premium .lbl {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 35px;
+        }
+        .action-card {
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: block;
+        }
+        .action-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--accent-primary);
+            background: rgba(255, 255, 255, 0.04);
+        }
+    </style>
 </head>
 <body data-theme="dark">
     <div class="app-layout">
@@ -17,54 +75,220 @@
 
         <main class="main-content">
             <header class="header">
-                <h1 id="welcomeText">Bem-vindo!</h1>
+                <div>
+                    <h1 id="welcomeText" style="font-size: 1.8rem; margin-bottom: 5px;">Carregando...</h1>
+                    <p id="dashboardSub" style="color: var(--text-secondary); font-size: 0.9rem;">Visão geral da sua performance em vendas</p>
+                </div>
                 <div class="user-info">
-                    <span id="userName">Usuário</span>
+                    <div style="text-align: right; margin-right: 5px;">
+                        <span id="userName" style="display: block; font-weight: 600;">Usuário</span>
+                        <small id="userRoleBadge" style="color: var(--accent-primary); font-weight: 600; text-transform: uppercase; font-size: 0.75rem;">Carregando...</small>
+                    </div>
                     <div class="user-avatar" id="userInitial">U</div>
                     <button class="theme-toggle" id="themeToggle" title="Alternar Tema">🌓</button>
                     <button class="btn" onclick="logout()" style="padding: 8px 16px; font-size: 0.8rem; background: rgba(255,0,0,0.1); color: var(--error);">SAIR</button>
                 </div>
             </header>
 
-            <section class="overview">
-                <div class="glass" style="padding: 30px; border-radius: var(--radius-lg); text-align: center;">
-                    <h2 id="saldoDisponivel" style="color: var(--accent-primary); font-size: 3rem; margin-bottom: 10px;">0</h2>
-                    <p style="text-transform: uppercase; letter-spacing: 2px; font-size: 0.8rem; color: var(--text-secondary);">Talentos Disponíveis</p>
+            <!-- CONTEÚDO DINÂMICO DE ACORDO COM O PERFIL -->
+            <div id="dashboardContent">
+                <!-- Seção Colaborador -->
+                <section class="overview" id="colaboradorSection" style="display: none;">
+                    <div class="glass animate-fade" style="padding: 40px; border-radius: var(--radius-lg); text-align: center; max-width: 500px; margin: 40px auto;">
+                        <span style="font-size: 3.5rem; display: block; margin-bottom: 15px;">💎</span>
+                        <h2 id="saldoDisponivel" style="color: var(--accent-primary); font-size: 3.5rem; margin-bottom: 10px; font-family: var(--font-heading);">0.00</h2>
+                        <p style="text-transform: uppercase; letter-spacing: 2px; font-size: 0.82rem; color: var(--text-secondary); font-weight: 600;">Seus Talentos Disponíveis</p>
+                        <a href="vitrine.html" class="btn btn-primary" style="margin-top: 30px; width: 100%;">IR PARA A VITRINE DE PRÊMIOS</a>
+                    </div>
+                </section>
+
+                <!-- Seção Administrador Premium -->
+                <div id="adminSection" style="display: none; animation: fadeIn 0.4s ease;">
+                    <!-- Cards de Estatísticas -->
+                    <section class="dashboard-grid" id="statsGrid">
+                        <div class="stat-card-premium glass">
+                            <div class="icon-box">👥</div>
+                            <div>
+                                <div class="val" id="valCorretores">0</div>
+                                <div class="lbl">Corretores</div>
+                            </div>
+                        </div>
+                        <div class="stat-card-premium glass">
+                            <div class="icon-box" style="color: var(--accent-primary);">💎</div>
+                            <div>
+                                <div class="val" id="valTalentosDist">0.00</div>
+                                <div class="lbl">Talentos Distribuídos</div>
+                            </div>
+                        </div>
+                        <div class="stat-card-premium glass">
+                            <div class="icon-box" style="color: var(--warning);">🕒</div>
+                            <div>
+                                <div class="val" id="valAReceber">0.00</div>
+                                <div class="lbl">A Receber Global</div>
+                            </div>
+                        </div>
+                        <div class="stat-card-premium glass">
+                            <div class="icon-box" style="color: var(--success);">✔️</div>
+                            <div>
+                                <div class="val" id="valResgates">0</div>
+                                <div class="lbl">Resgates Efetuados</div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <h2 style="font-size: 1.2rem; margin-bottom: 15px; color: var(--text-primary);">Ações Rápidas</h2>
+                    <section class="quick-actions">
+                        <a href="admin-lancamento.html" class="action-card glass">
+                            <span style="font-size: 2rem; display: block; margin-bottom: 8px;">💎</span>
+                            <strong>Ajuste de Saldo</strong>
+                            <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 5px;">Créditos e débitos pontuais</p>
+                        </a>
+                        <a href="admin-importacao.html" class="action-card glass">
+                            <span style="font-size: 2rem; display: block; margin-bottom: 8px;">📤</span>
+                            <strong>Importar Planilha</strong>
+                            <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 5px;">Mapeamento inteligente Excel</p>
+                        </a>
+                        <a href="admin-premios.html" class="action-card glass">
+                            <span style="font-size: 2rem; display: block; margin-bottom: 8px;">⚙️</span>
+                            <strong>Gerenciar Vitrine</strong>
+                            <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 5px;">Controle total de recompensas</p>
+                        </a>
+                    </section>
+
+                    <!-- Últimas Transações Globais -->
+                    <section class="history-card glass" style="padding: 25px;">
+                        <h2 style="font-size: 1.1rem; margin-bottom: 15px; color: var(--text-primary);">Auditoria: Lançamentos Recentes no Ecossistema</h2>
+                        <div class="table-responsive">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Data</th>
+                                        <th>Corretor</th>
+                                        <th>Origem</th>
+                                        <th>Tipo</th>
+                                        <th>Valor</th>
+                                        <th>Justificativa</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="auditTableBody">
+                                    <tr>
+                                        <td colspan="6" style="text-align: center; color: var(--text-secondary);">Carregando trilha de auditoria...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
                 </div>
-            </section>
+            </div>
         </main>
     </div>
 
     <script src="assets/js/auth.js"></script>
     <script>
-        // Check Auth
         const token = localStorage.getItem('@VTalentos:token');
         const userStr = localStorage.getItem('@VTalentos:user');
 
         if (!token || !userStr) {
             window.location.href = 'login.html';
-        } else {
-            const user = JSON.parse(userStr);
-            document.getElementById('userName').innerText = user.nome;
-            document.getElementById('userInitial').innerText = user.nome.charAt(0);
-            document.getElementById('welcomeText').innerText = `Olá, ${user.nome.split(' ')[0]}!`;
-            document.getElementById('saldoDisponivel').innerText = parseFloat(user.saldo_disponivel || 0).toFixed(2);
+        }
 
-            // Render navigation links dynamically
-            const nav = document.getElementById('navLinks');
-            nav.innerHTML = `
-                <p style="color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; margin-bottom: 10px;">MENU PRINCIPAL</p>
-                <a href="dashboard.html" class="active" style="color: var(--accent-primary); text-decoration: none; font-weight: 600;">🏠 Dashboard</a>
-                <a href="vitrine.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">🎁 Vitrine de Prêmios</a>
+        const user = JSON.parse(userStr);
+
+        // Inicializa dados do header
+        document.getElementById('userName').innerText = user.nome;
+        document.getElementById('userInitial').innerText = user.nome.charAt(0);
+        document.getElementById('welcomeText').innerText = `Olá, ${user.nome.split(' ')[0]}!`;
+        document.getElementById('userRoleBadge').innerText = user.perfil === 'CORRETOR' ? 'Colaborador' : 'Administrador';
+
+        // Renderização Dinâmica de Menus Laterais (Sidebar)
+        const nav = document.getElementById('navLinks');
+        nav.innerHTML = `
+            <p style="color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; margin-bottom: 10px;">MENU PRINCIPAL</p>
+            <a href="dashboard.html" class="active" style="color: var(--accent-primary); text-decoration: none; font-weight: 600;">🏠 Dashboard</a>
+            <a href="vitrine.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">🎁 Vitrine de Prêmios</a>
+        `;
+
+        if (user.perfil === 'ADMIN_EMPRESA' || user.perfil === 'SUPER_ADMIN') {
+            nav.innerHTML += `
+                <p style="color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; margin-top: 15px; margin-bottom: 10px;">ADMINISTRAÇÃO</p>
+                <a href="admin-lancamento.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">💎 Lançamento Manual</a>
+                <a href="admin-importacao.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">📤 Importação Excel</a>
+                <a href="admin-premios.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">⚙️ Gerenciar Prêmios</a>
             `;
+        }
 
-            if (user.perfil === 'ADMIN_EMPRESA' || user.perfil === 'SUPER_ADMIN') {
-                nav.innerHTML += `
-                    <p style="color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; margin-top: 15px; margin-bottom: 10px;">ADMINISTRAÇÃO</p>
-                    <a href="admin-lancamento.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">💎 Lançamento Manual</a>
-                    <a href="admin-importacao.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">📤 Importação Excel</a>
-                    <a href="admin-premios.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">🎁 Vitrine de Prêmios</a>
-                `;
+        // Renderização e busca de dados para cada tipo de Perfil
+        async function initDashboard() {
+            if (user.perfil === 'CORRETOR') {
+                // Modo Colaborador
+                document.getElementById('dashboardSub').innerText = 'Visão geral da sua performance e saldo de talentos';
+                document.getElementById('colaboradorSection').style.display = 'block';
+                
+                // Tenta puxar perfil atualizado com saldo mais recente do backend
+                try {
+                    const response = await fetch('http://localhost:3001/api/auth/me', {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        document.getElementById('saldoDisponivel').innerText = parseFloat(data.saldo_disponivel || 0).toFixed(2);
+                    } else {
+                        document.getElementById('saldoDisponivel').innerText = parseFloat(user.saldo_disponivel || 0).toFixed(2);
+                    }
+                } catch (e) {
+                    document.getElementById('saldoDisponivel').innerText = parseFloat(user.saldo_disponivel || 0).toFixed(2);
+                }
+            } else {
+                // Modo Administrador Premium
+                document.getElementById('dashboardSub').innerText = 'Painel Consolidado de Gestão de Talentos e Auditoria';
+                document.getElementById('adminSection').style.display = 'block';
+
+                try {
+                    const response = await fetch('http://localhost:3001/api/admin/dashboard-indicadores', {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (!response.ok) throw new Error('Falha ao obter indicadores');
+                    const data = await response.json();
+
+                    // Preenche Cards de Indicadores
+                    document.getElementById('valCorretores').innerText = data.total_corretores;
+                    document.getElementById('valTalentosDist').innerText = data.talentos_distribuidos.toFixed(2);
+                    document.getElementById('valAReceber').innerText = data.talentos_a_receber.toFixed(2);
+                    document.getElementById('valResgates').innerText = data.resgates_confirmados;
+
+                    // Tabela de Auditoria Recente
+                    const auditBody = document.getElementById('auditTableBody');
+                    auditBody.innerHTML = '';
+
+                    if (data.transacoes_recentes.length === 0) {
+                        auditBody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-secondary);">Nenhum lançamento recente encontrado.</td></tr>`;
+                        return;
+                    }
+
+                    data.transacoes_recentes.forEach(item => {
+                        const tr = document.createElement('tr');
+                        const dataFormatada = new Date(item.created_at).toLocaleString('pt-BR');
+                        const sinal = item.tipo === 'CREDITO' ? '+' : '';
+                        
+                        let badgeClass = 'badge-credito';
+                        if (item.tipo === 'DEBITO') badgeClass = 'badge-debito';
+                        if (item.tipo === 'ESTORNO') badgeClass = 'badge-estorno';
+
+                        tr.innerHTML = `
+                            <td>${dataFormatada}</td>
+                            <td><strong>${item.corretor_nome}</strong></td>
+                            <td><span style="font-size:0.8rem; font-weight:600; text-transform:uppercase; color:var(--text-secondary);">${item.origem}</span></td>
+                            <td><span class="badge ${badgeClass}">${item.tipo}</span></td>
+                            <td><strong style="color:${item.tipo === 'DEBITO' ? 'var(--error)' : 'var(--success)'}">${sinal}${parseFloat(item.valor).toFixed(2)}</strong></td>
+                            <td style="color: var(--text-secondary); max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.justificativa || 'Sem justificativa'}</td>
+                        `;
+                        auditBody.appendChild(tr);
+                    });
+
+                } catch (err) {
+                    console.error(err);
+                    showToast('Erro ao carregar indicadores do Dashboard Administrativo.', 'error');
+                }
             }
         }
 
@@ -73,6 +297,10 @@
             localStorage.removeItem('@VTalentos:user');
             window.location.href = 'login.html';
         }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            initDashboard();
+        });
     </script>
 </body>
 </html>

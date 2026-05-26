@@ -109,8 +109,10 @@
         } else {
             const user = JSON.parse(userStr);
             if (user.perfil !== 'ADMIN_EMPRESA' && user.perfil !== 'SUPER_ADMIN') {
-                alert('Acesso restrito a administradores.');
-                window.location.href = 'dashboard.html';
+                showToast('Acesso restrito a administradores.', 'error');
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 2000);
             }
         }
 
@@ -120,21 +122,7 @@
             window.location.href = 'login.html';
         }
 
-        // Toggle Theme
-        const themeToggle = document.getElementById('themeToggle');
-        const body = document.body;
-
-        themeToggle.addEventListener('click', () => {
-            const currentTheme = body.getAttribute('data-theme');
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            body.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
-        });
-
-        const savedTheme = localStorage.getItem('theme');
-        if (savedTheme) {
-            body.setAttribute('data-theme', savedTheme);
-        }
+        // Toggle Theme is managed dynamically and globally by assets/js/auth.js
 
         // API Integration
         const API_BASE = 'http://localhost:3001/api/admin';
@@ -201,9 +189,15 @@
 
             const usuario_id = document.getElementById('corretorSelect').value;
             const tipo = document.getElementById('tipoSelect').value;
-            const valor = document.getElementById('valorInput').value;
+            const valorRaw = document.getElementById('valorInput').value;
+            const valor = parseFloat(valorRaw);
             const justificativa = document.getElementById('justificativaInput').value;
             const btnSubmit = document.getElementById('btnSubmit');
+
+            if (isNaN(valor) || valor <= 0) {
+                showToast('O valor do lançamento deve ser maior que zero.', 'error');
+                return;
+            }
 
             try {
                 btnSubmit.disabled = true;
@@ -224,7 +218,7 @@
                     throw new Error(data.error || 'Erro ao realizar lançamento');
                 }
 
-                alert('Lançamento efetuado com sucesso!');
+                showToast('Lançamento efetuado com sucesso!', 'success');
                 
                 // Reset form
                 document.getElementById('lancamentoForm').reset();
@@ -238,7 +232,7 @@
                 await fetchCorretores();
 
             } catch (err) {
-                alert(err.message);
+                showToast(err.message, 'error');
             } finally {
                 btnSubmit.disabled = false;
                 btnSubmit.innerText = 'EFETUAR LANÇAMENTO';

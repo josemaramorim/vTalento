@@ -34,8 +34,27 @@ class AutenticacaoController {
         email: usuario.email,
         saldo_disponivel: usuario.saldo_disponivel,
         empresa_id: usuario.empresa_id,
-        perfil: usuario.perfil
+        perfil: usuario.perfil,
+        tema_preferido: usuario.tema_preferido || 'dark'
       });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
+  async updateTheme(req, res) {
+    try {
+      const { tema } = req.body;
+      if (tema !== 'light' && tema !== 'dark') {
+        return res.status(400).json({ error: 'Tema inválido' });
+      }
+
+      const db = require('../../infra/db');
+      await db('GamUsuario')
+        .where({ id: req.usuario_id })
+        .update({ tema_preferido: tema, updated_at: db.fn.now() });
+
+      return res.json({ success: true, tema });
     } catch (err) {
       return res.status(500).json({ error: err.message });
     }
