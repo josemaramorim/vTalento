@@ -176,3 +176,29 @@ Este documento é o guia de execução do projeto. Nenhuma tarefa deve ser inici
   - Estado vazio: mensagem "Nenhum resgate encontrado com os filtros aplicados."
   - Design seguindo o padrão Glassmorphism premium já estabelecido no projeto.
 
+---
+
+### FASE 5: GESTÃO DE USUÁRIOS E PERFIL (Nome/Email/CPF/Senha/Tema)
+Esta fase implementa a capacidade dos administradores de gerenciarem os corretores do seu tenant e dos corretores gerenciarem seus próprios dados e preferências visuais de forma isolada e segura, aproveitando unicamente o modelo existente de `GamUsuario`.
+
+#### Regras de Negócio e Segurança:
+- **Tenant Isolation:** Administradores só podem listar, criar ou editar usuários que pertençam à sua própria empresa (`empresa_id` extraído do JWT).
+- **Unicidade de E-mail:** A criação ou alteração de e-mails deve garantir a unicidade no banco de dados.
+- **Segurança de Perfil:** Corretores não podem atualizar perfil (`perfil`), saldos (`saldo_disponivel`, `saldo_a_receber`) ou `empresa_id`.
+- **Alteração de Senha:** A alteração de senha própria exige a verificação prévia e correta da senha atual.
+
+#### Tarefas de Backend
+
+- [x] **Tarefa 12.1:** Implementar a rota `GET /api/admin/usuarios` (protegida por `tenantMiddleware` + `adminMiddleware`), retornando a lista de usuários do tenant de forma paginada e com filtros de busca textual (por nome, e-mail ou CPF).
+- [x] **Tarefa 12.2:** Implementar a rota `POST /api/admin/usuarios` (admin), permitindo cadastrar novos corretores no tenant, validando e-mail único globalmente.
+- [x] **Tarefa 12.3:** Implementar a rota `PUT /api/admin/usuarios/:id` (admin), permitindo editar `nome`, `email` e `cpf` de corretores do tenant, validando e-mail único.
+- [x] **Tarefa 12.4:** Implementar a rota `PUT /api/users/me` (corretor/admin próprio), permitindo editar seus próprios dados (`nome`, `email`, `cpf`). Se o campo `nova_senha` for fornecido, deve validar o campo `senha_atual` antes de atualizar o hash da senha.
+- [x] **Tarefa 12.5:** Escrever testes de integração (Supertest) validando todos os novos endpoints criados, incluindo as regras de segurança e isolamento multi-tenant.
+
+#### Tarefas de Frontend
+
+- [x] **Tarefa 12.6:** Criar a página de Gestão de Usuários do Admin (`admin-usuarios.html`), contendo listagem paginada dos corretores, barra de pesquisa, modal para adicionar corretor e modal para editar corretor.
+- [x] **Tarefa 12.7:** Criar a página de Meu Perfil para Corretores/Admin (`meu-perfil.html`), permitindo que os usuários atualizem seu Nome, E-mail, CPF, alterem sua senha de acesso e escolham o tema preferido (`light` ou `dark`).
+- [x] **Tarefa 12.8:** Atualizar o menu lateral dinâmico de navegação em todas as páginas para incluir os novos caminhos apropriados para cada perfil.
+
+

@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>V-TALENTOS | Gestão de Corretores</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <style>
+        .actions-btn {
+            display: flex;
+            gap: 10px;
+        }
+        .btn-sm {
+            padding: 4px 8px;
+            font-size: 0.75rem;
+        }
+        .filtros-barra {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+        .filtros-barra input {
+            flex: 1;
+            padding: 9px 12px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            font-size: 0.85rem;
+        }
+        .filtros-barra input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+        .paginacao-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid var(--glass-border);
+        }
+        .paginacao-info {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        .paginacao-controles {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .paginacao-controles select {
+            padding: 6px 10px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+        .paginacao-controles select option {
+            background: var(--bg-card);
+        }
+        .btn-pag {
+            padding: 7px 16px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--glass-border);
+            background: rgba(255,255,255,0.05);
+            color: var(--text-primary);
+            cursor: pointer;
+            font-family: var(--font-main);
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+        .btn-pag:hover:not(:disabled) {
+            background: var(--accent-primary);
+            color: #fff;
+            border-color: var(--accent-primary);
+        }
+        .btn-pag:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body data-theme="dark">
+    <div class="app-layout">
+        <aside class="sidebar">
+            <div class="logo" style="font-size: 1.5rem; margin-bottom: 50px;">V-<span>TALENTOS</span></div>
+            <nav id="navLinks" style="display: flex; flex-direction: column; gap: 15px;">
+                <!-- sidebar preenchido dinamicamente no script -->
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="header">
+                <div>
+                    <h1 style="font-size: 1.8rem; margin-bottom: 5px;">Gestão de Corretores</h1>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem;">Cadastre, visualize e edite os corretores vinculados à sua imobiliária</p>
+                </div>
+                <div style="display: flex; align-items: center; gap: 20px;">
+                    <button class="theme-toggle" id="themeToggle" title="Alternar Tema">🌓</button>
+                    <button class="btn" onclick="logout()" style="padding: 8px 16px; font-size: 0.8rem; background: rgba(255,0,0,0.1); color: var(--error);">SAIR</button>
+                </div>
+            </header>
+
+            <!-- Formulário de Usuário -->
+            <section class="form-card glass">
+                <h2 id="formTitle" style="font-size: 1.2rem; margin-bottom: 20px; color: var(--accent-primary);">Novo Corretor</h2>
+                <form id="usuarioForm">
+                    <input type="hidden" id="usuarioId">
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="nomeInput">Nome Completo</label>
+                            <input type="text" id="nomeInput" placeholder="Ex: João da Silva" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="emailInput">E-mail (Acesso)</label>
+                            <input type="email" id="emailInput" placeholder="Ex: joao@imobiliaria.com" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="cpfInput">CPF (Opcional)</label>
+                            <input type="text" id="cpfInput" placeholder="Ex: 000.000.000-00">
+                        </div>
+                        <div class="form-group" id="senhaGroup">
+                            <label for="senhaInput">Senha Temporária</label>
+                            <input type="password" id="senhaInput" placeholder="Mínimo 6 caracteres" required>
+                        </div>
+                    </div>
+
+                    <div style="text-align: right; display: flex; justify-content: flex-end; gap: 10px;">
+                        <button type="button" class="btn" id="btnCancelEdit" style="display: none; background: var(--bg-card); color: var(--text-primary);" onclick="resetForm()">CANCELAR</button>
+                        <button type="submit" class="btn btn-primary" id="btnSubmit">SALVAR CORRETOR</button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- Listagem de Corretores -->
+            <section class="history-card glass" style="margin-top: 30px; padding: 25px;">
+                <h2 style="font-size: 1.2rem; margin-bottom: 15px; color: var(--text-primary);">Lista de Corretores da Equipe</h2>
+                
+                <!-- Barra de Busca -->
+                <div class="filtros-barra">
+                    <input type="text" id="buscaInput" placeholder="🔍 Pesquisar por Nome, E-mail ou CPF..." oninput="onBuscaInput()">
+                    <button class="btn btn-primary" onclick="buscarUsuarios()" style="padding: 9px 20px;">Pesquisar</button>
+                </div>
+
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>E-mail</th>
+                                <th style="text-align: center;">CPF</th>
+                                <th style="text-align: right;">Saldo Disponível</th>
+                                <th style="text-align: right;">Saldo a Receber</th>
+                                <th style="text-align: center;">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usuariosTableBody">
+                            <tr>
+                                <td colspan="6" style="text-align: center; color: var(--text-secondary);">Carregando equipe...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Paginação -->
+                <div class="paginacao-bar">
+                    <div class="paginacao-info" id="paginacaoInfo">—</div>
+                    <div class="paginacao-controles">
+                        <label style="font-size: 0.8rem; color: var(--text-secondary);">Registros por página:</label>
+                        <select id="limitSelect" onchange="onLimitChange()">
+                            <option value="10" selected>10</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                        <button class="btn-pag" id="btnPagAnterior" onclick="mudarPagina(-1)" disabled>← Anterior</button>
+                        <button class="btn-pag" id="btnPagProximo" onclick="mudarPagina(1)">Próximo →</button>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="assets/js/auth.js"></script>
+    <script>
+        // Check Admin Auth
+        const token = localStorage.getItem('@VTalentos:token');
+        const userStr = localStorage.getItem('@VTalentos:user');
+
+        if (!token || !userStr) {
+            window.location.href = 'login.html';
+        }
+
+        const currentUser = JSON.parse(userStr);
+        const isAdmin = currentUser.perfil === 'ADMIN_EMPRESA' || currentUser.perfil === 'SUPER_ADMIN';
+
+        if (!isAdmin) {
+            window.location.href = 'dashboard.html';
+        }
+
+        function logout() {
+            localStorage.removeItem('@VTalentos:token');
+            localStorage.removeItem('@VTalentos:user');
+            window.location.href = 'login.html';
+        }
+
+        function renderSidebar() {
+            const nav = document.getElementById('navLinks');
+            nav.innerHTML = `
+                <p style="color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; margin-bottom: 10px;">MENU PRINCIPAL</p>
+                <a href="dashboard.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">🏠 Dashboard</a>
+                <a href="vitrine.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">🎁 Vitrine de Prêmios</a>
+                
+                <p style="color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; margin-top: 15px; margin-bottom: 10px;">ADMINISTRAÇÃO</p>
+                <a href="admin-lancamento.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">💎 Lançamento Manual</a>
+                <a href="admin-importacao.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">📤 Importação Excel</a>
+                <a href="admin-premios.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">⚙️ Gerenciar Prêmios</a>
+                <a href="admin-usuarios.html" class="active" style="color: var(--accent-primary); text-decoration: none; font-weight: 600;">👥 Gestão de Corretores</a>
+            `;
+        }
+
+        const API_BASE = 'http://localhost:3001/api/admin';
+        let stateUsuarios = [];
+        let pageAtual = 1;
+        let limitAtual = 10;
+        let totalPages = 1;
+        let buscaTimeout = null;
+
+        async function fetchUsuarios(pagina = 1) {
+            pageAtual = pagina;
+            limitAtual = parseInt(document.getElementById('limitSelect').value, 10) || 10;
+            const busca = document.getElementById('buscaInput').value;
+
+            const params = new URLSearchParams({
+                page: pageAtual,
+                limit: limitAtual,
+                ...(busca && { busca })
+            });
+
+            try {
+                const response = await fetch(`${API_BASE}/usuarios?${params}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.status === 401) {
+                    logout();
+                    return;
+                }
+
+                const resData = await response.json();
+                const tbody = document.getElementById('usuariosTableBody');
+                tbody.innerHTML = '';
+
+                if (!resData.success) {
+                    throw new Error(resData.error || 'Erro ao carregar corretores');
+                }
+
+                stateUsuarios = resData.data;
+                totalPages = resData.meta.totalPages;
+
+                document.getElementById('paginacaoInfo').textContent = 
+                    `Página ${resData.meta.page} de ${resData.meta.totalPages} — Total: ${resData.meta.total} corretor${resData.meta.total !== 1 ? 'es' : ''}`;
+
+                document.getElementById('btnPagAnterior').disabled = pageAtual <= 1;
+                document.getElementById('btnPagProximo').disabled = pageAtual >= totalPages;
+
+                if (stateUsuarios.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-secondary); padding: 30px 0;">Nenhum corretor encontrado.</td></tr>`;
+                    return;
+                }
+
+                stateUsuarios.forEach(u => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><strong>${u.nome}</strong></td>
+                        <td>${u.email}</td>
+                        <td style="text-align: center;">${u.cpf || '—'}</td>
+                        <td style="text-align: right;"><strong style="color: var(--accent-primary)">${parseFloat(u.saldo_disponivel).toFixed(2)} T$</strong></td>
+                        <td style="text-align: right; color: var(--text-secondary);">${parseFloat(u.saldo_a_receber).toFixed(2)} T$</td>
+                        <td style="text-align: center;">
+                            <div class="actions-btn" style="justify-content: center;">
+                                <button class="btn btn-sm" onclick="editUsuario('${u.id}')" style="background: rgba(255,255,255,0.1); color: var(--text-primary);">Editar</button>
+                            </div>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (err) {
+                console.error('Erro ao buscar corretores:', err);
+                showToast(err.message, 'error');
+            }
+        }
+
+        function onLimitChange() {
+            fetchUsuarios(1);
+        }
+
+        function mudarPagina(delta) {
+            const novaPagina = pageAtual + delta;
+            if (novaPagina >= 1 && novaPagina <= totalPages) {
+                fetchUsuarios(novaPagina);
+            }
+        }
+
+        function onBuscaInput() {
+            clearTimeout(buscaTimeout);
+            buscaTimeout = setTimeout(() => {
+                fetchUsuarios(1);
+            }, 300);
+        }
+
+        function buscarUsuarios() {
+            fetchUsuarios(1);
+        }
+
+        document.getElementById('usuarioForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const id = document.getElementById('usuarioId').value;
+            const nome = document.getElementById('nomeInput').value;
+            const email = document.getElementById('emailInput').value;
+            const cpf = document.getElementById('cpfInput').value;
+            const senha = document.getElementById('senhaInput').value;
+
+            const btnSubmit = document.getElementById('btnSubmit');
+
+            try {
+                btnSubmit.disabled = true;
+                btnSubmit.innerText = 'PROCESSANDO...';
+
+                const url = id ? `${API_BASE}/usuarios/${id}` : `${API_BASE}/usuarios`;
+                const method = id ? 'PUT' : 'POST';
+
+                const payload = { nome, email, cpf, ...(senha && { senha }) };
+
+                const response = await fetch(url, {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.status === 401) {
+                    logout();
+                    return;
+                }
+
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    throw new Error(data.error || 'Erro ao salvar corretor');
+                }
+
+                showToast(id ? 'Dados do corretor atualizados!' : 'Novo corretor cadastrado com sucesso!', 'success');
+                resetForm();
+                await fetchUsuarios(1);
+
+            } catch (err) {
+                showToast(err.message, 'error');
+            } finally {
+                btnSubmit.disabled = false;
+                btnSubmit.innerText = id ? 'ATUALIZAR CORRETOR' : 'SALVAR CORRETOR';
+            }
+        });
+
+        function editUsuario(id) {
+            const usuario = stateUsuarios.find(u => u.id === id);
+            if (!usuario) return;
+
+            document.getElementById('formTitle').innerText = 'Editar Corretor: ' + usuario.nome;
+            document.getElementById('usuarioId').value = usuario.id;
+            document.getElementById('nomeInput').value = usuario.nome;
+            document.getElementById('emailInput').value = usuario.email;
+            document.getElementById('cpfInput').value = usuario.cpf || '';
+            
+            // Ao editar, a senha não é obrigatória
+            const senhaInput = document.getElementById('senhaInput');
+            senhaInput.required = false;
+            document.getElementById('senhaGroup').style.display = 'none';
+
+            document.getElementById('btnSubmit').innerText = 'ATUALIZAR CORRETOR';
+            document.getElementById('btnCancelEdit').style.display = 'inline-block';
+            
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function resetForm() {
+            document.getElementById('formTitle').innerText = 'Novo Corretor';
+            document.getElementById('usuarioId').value = '';
+            document.getElementById('usuarioForm').reset();
+            
+            const senhaInput = document.getElementById('senhaInput');
+            senhaInput.required = true;
+            document.getElementById('senhaGroup').style.display = 'block';
+
+            document.getElementById('btnSubmit').innerText = 'SALVAR CORRETOR';
+            document.getElementById('btnCancelEdit').style.display = 'none';
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            renderSidebar();
+            fetchUsuarios(1);
+        });
+    </script>
+</body>
+</html>
