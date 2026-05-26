@@ -27,7 +27,8 @@ document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
 
         // Sucesso: Armazena o Token e Info do Usuário
         localStorage.setItem('@VTalentos:token', data.token);
-        localStorage.setItem('@VTalentos:user', JSON.stringify(data.usuario));
+        const userObj = { ...data.usuario, empresa_nome: data.empresa ? data.empresa.nome : '' };
+        localStorage.setItem('@VTalentos:user', JSON.stringify(userObj));
 
         // Feedback visual de sucesso
         btnSubmit.style.background = 'var(--success)';
@@ -129,8 +130,11 @@ window.renderHeader = function(titulo, subtitulo) {
         <div class="user-info">
             <div class="user-profile-clickable" onclick="window.location.href='meu-perfil.html'" style="display: flex; align-items: center; gap: 8px; cursor: pointer;" title="Visualizar Meu Perfil">
                 <div style="text-align: right; margin-right: 5px;">
-                    <span id="userName" style="display: block; font-weight: 600;">${user.nome}</span>
-                    <small id="userRoleBadge" style="color: var(--accent-primary); font-weight: 600; text-transform: uppercase; font-size: 0.75rem;">${roleLabel} | <span id="userSaldoHeader">${saldoExibido} T$</span></small>
+                    <span id="userName" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600; justify-content: flex-end; width: 100%;">
+                        ${user.nome}
+                        <span style="font-size: 0.65rem; font-weight: 500; color: var(--text-secondary); background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 12px; text-transform: uppercase; display: inline-block;">🏢 ${user.empresa_nome || 'Empresa'}</span>
+                    </span>
+                    <small id="userRoleBadge" style="color: var(--accent-primary); font-weight: 600; text-transform: uppercase; font-size: 0.75rem; display: block; margin-top: 2px;">${roleLabel} | <span id="userSaldoHeader">${saldoExibido} T$</span></small>
                 </div>
                 <div class="user-avatar" id="userInitial" style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-primary), #9b59b6); color: #fff; font-size: 1.1rem; font-weight: 600; display: flex; align-items: center; justify-content: center; border: 2px solid rgba(255,255,255,0.1);">${inicial}</div>
             </div>
@@ -173,6 +177,22 @@ window.addEventListener('DOMContentLoaded', async () => {
             });
             if (response.ok) {
                 const userData = await response.json();
+                
+                // Sincroniza usuário completo no localStorage para manter saldos e empresa atualizados
+                const storedUserStr = localStorage.getItem('@VTalentos:user');
+                if (storedUserStr) {
+                    const currentUser = JSON.parse(storedUserStr);
+                    const updatedUser = {
+                        ...currentUser,
+                        nome: userData.nome,
+                        email: userData.email,
+                        saldo_disponivel: userData.saldo_disponivel,
+                        saldo_a_receber: userData.saldo_a_receber,
+                        empresa_nome: userData.empresa_nome
+                    };
+                    localStorage.setItem('@VTalentos:user', JSON.stringify(updatedUser));
+                }
+
                 if (userData.tema_preferido) {
                     themeToApply = userData.tema_preferido;
                     localStorage.setItem('theme', themeToApply);

@@ -28,6 +28,10 @@ class AutenticacaoController {
         return res.status(404).json({ error: 'Usuário não encontrado' });
       }
 
+      const empresa = await db('GamEmpresa')
+        .where({ id: usuario.empresa_id })
+        .first();
+
       return res.json({
         usuario_id: usuario.id,
         nome: usuario.nome,
@@ -35,6 +39,7 @@ class AutenticacaoController {
         saldo_disponivel: usuario.saldo_disponivel,
         saldo_a_receber: usuario.saldo_a_receber || 0,
         empresa_id: usuario.empresa_id,
+        empresa_nome: empresa ? empresa.nome : '',
         perfil: usuario.perfil,
         tema_preferido: usuario.tema_preferido || 'dark'
       });

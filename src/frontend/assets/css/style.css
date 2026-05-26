@@ -390,3 +390,45 @@ th {
     line-height: 1.4;
 }
 
+/* --- Global Mobile Responsiveness & Grid Overflow Blindage --- */
+.main-content {
+    min-width: 0;
+    overflow-x: hidden;
+}
+
+@media (max-width: 768px) {
+    .header {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 15px;
+        padding-bottom: 15px;
+    }
+    .user-info {
+        width: 100%;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    .user-profile-clickable {
+        width: 100%;
+        justify-content: flex-start !important;
+    }
+    .user-profile-clickable div {
+        text-align: left !important;
+    }
+    #userName {
+        justify-content: flex-start !important;
+    }
+}
+
+@media (max-width: 576px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr !important;
+        gap: 15px;
+    }
+    .quick-actions {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+
