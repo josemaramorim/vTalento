@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>V-TALENTOS | Meu Perfil</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <style>
+        .perfil-container {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 30px;
+            margin-top: 30px;
+        }
+        @media (max-width: 768px) {
+            .perfil-container {
+                grid-template-columns: 1fr;
+            }
+        }
+        .avatar-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+            text-align: center;
+        }
+        .big-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-primary), #9b59b6);
+            color: #fff;
+            font-size: 3rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            border: 3px solid rgba(255,255,255,0.1);
+        }
+        .preferencia-tema {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-sm);
+            padding: 15px 20px;
+            margin-top: 20px;
+            width: 100%;
+        }
+        .tema-opcao {
+            display: flex;
+            gap: 10px;
+        }
+        .btn-tema {
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--glass-border);
+            background: rgba(255,255,255,0.05);
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-tema.active {
+            background: var(--accent-primary);
+            border-color: var(--accent-primary);
+            color: #fff;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body data-theme="dark">
+    <div class="app-layout">
+        <aside class="sidebar">
+            <div class="logo" style="font-size: 1.5rem; margin-bottom: 50px;">V-<span>TALENTOS</span></div>
+            <nav id="navLinks" style="display: flex; flex-direction: column; gap: 15px;">
+                <!-- sidebar preenchido dinamicamente no script -->
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="header">
+                <div>
+                    <h1 style="font-size: 1.8rem; margin-bottom: 5px;">Meu Perfil</h1>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem;">Gerencie suas informações cadastrais e de acesso com segurança</p>
+                </div>
+                <div style="display: flex; align-items: center; gap: 20px;">
+                    <button class="theme-toggle" id="themeToggle" title="Alternar Tema">🌓</button>
+                    <button class="btn" onclick="logout()" style="padding: 8px 16px; font-size: 0.8rem; background: rgba(255,0,0,0.1); color: var(--error);">SAIR</button>
+                </div>
+            </header>
+
+            <div class="perfil-container">
+                <!-- Cartão da Esquerda (Resumo e Tema) -->
+                <div style="display: flex; flex-direction: column; gap: 20px;">
+                    <div class="avatar-card glass">
+                        <div class="big-avatar" id="avatarLetra">C</div>
+                        <h2 id="cardNome" style="font-size: 1.3rem; margin-bottom: 5px; color: var(--text-primary);">Colaborador</h2>
+                        <span id="cardPerfil" style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; background: rgba(255,255,255,0.05); padding: 4px 12px; border-radius: 20px; margin-bottom: 25px;">Corretor</span>
+                        
+                        <div style="width: 100%; text-align: left; border-top: 1px solid var(--glass-border); padding-top: 20px;">
+                            <small style="color: var(--text-secondary); display: block; margin-bottom: 5px;">Saldo Atual</small>
+                            <strong id="cardSaldo" style="font-size: 1.6rem; color: var(--accent-primary); font-family: var(--font-heading);">0.00 T$</strong>
+                        </div>
+                    </div>
+
+                    <!-- Preferência Visual de Tema -->
+                    <div class="preferencia-tema glass">
+                        <div>
+                            <strong style="font-size: 0.9rem; display: block; color: var(--text-primary);">Tema Visual</strong>
+                            <small style="color: var(--text-secondary); font-size: 0.75rem;">Escolha seu visual</small>
+                        </div>
+                        <div class="tema-opcao">
+                            <button class="btn-tema" id="temaLightBtn" onclick="mudarTemaSistema('light')">☀ Claro</button>
+                            <button class="btn-tema" id="temaDarkBtn" onclick="mudarTemaSistema('dark')">🌙 Escuro</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Formulário da Direita (Dados e Segurança) -->
+                <div style="display: flex; flex-direction: column; gap: 20px;">
+                    <section class="form-card glass">
+                        <h2 style="font-size: 1.2rem; margin-bottom: 20px; color: var(--accent-primary);">Meus Dados</h2>
+                        
+                        <form id="perfilForm">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="nomeInput">Nome Completo</label>
+                                    <input type="text" id="nomeInput" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="emailInput">E-mail</label>
+                                    <input type="email" id="emailInput" required>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="cpfInput">CPF</label>
+                                    <input type="text" id="cpfInput" placeholder="Ex: 000.000.000-00">
+                                </div>
+                            </div>
+
+                            <h3 style="font-size: 1.05rem; color: var(--text-primary); margin-top: 30px; margin-bottom: 15px; border-top: 1px solid var(--glass-border); padding-top: 20px;">🔒 Segurança & Acesso</h3>
+                            <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 20px;">Preencha os campos abaixo apenas se desejar alterar sua senha de acesso.</p>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="senhaAtualInput">Senha Atual</label>
+                                    <input type="password" id="senhaAtualInput" placeholder="Sua senha atual">
+                                </div>
+                                <div class="form-group">
+                                    <label for="novaSenhaInput">Nova Senha</label>
+                                    <input type="password" id="novaSenhaInput" placeholder="Mínimo 6 caracteres">
+                                </div>
+                            </div>
+
+                            <div style="text-align: right; margin-top: 30px;">
+                                <button type="submit" class="btn btn-primary" id="btnSalvar">SALVAR ALTERAÇÕES</button>
+                            </div>
+                        </form>
+                    </section>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="assets/js/auth.js"></script>
+    <script>
+        // Check Auth
+        const token = localStorage.getItem('@VTalentos:token');
+        const userStr = localStorage.getItem('@VTalentos:user');
+
+        if (!token || !userStr) {
+            window.location.href = 'login.html';
+        }
+
+        let currentUser = JSON.parse(userStr);
+        const isAdmin = () => currentUser.perfil === 'ADMIN_EMPRESA' || currentUser.perfil === 'SUPER_ADMIN';
+
+        function logout() {
+            localStorage.removeItem('@VTalentos:token');
+            localStorage.removeItem('@VTalentos:user');
+            window.location.href = 'login.html';
+        }
+
+        function renderSidebar() {
+            const nav = document.getElementById('navLinks');
+            nav.innerHTML = `
+                <p style="color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; margin-bottom: 10px;">MENU PRINCIPAL</p>
+                <a href="dashboard.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">🏠 Dashboard</a>
+                <a href="vitrine.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">🎁 Vitrine de Prêmios</a>
+            `;
+
+            if (isAdmin()) {
+                nav.innerHTML += `
+                    <p style="color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; margin-top: 15px; margin-bottom: 10px;">ADMINISTRAÇÃO</p>
+                    <a href="admin-lancamento.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">💎 Lançamento Manual</a>
+                    <a href="admin-importacao.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">📤 Importação Excel</a>
+                    <a href="admin-premios.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">⚙️ Gerenciar Prêmios</a>
+                    <a href="admin-usuarios.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">👥 Gestão de Corretores</a>
+                `;
+            }
+            // Marcador visual de perfil
+            nav.innerHTML += `
+                <p style="color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; margin-top: 15px; margin-bottom: 10px;">PERFIL</p>
+                <a href="meu-perfil.html" class="active" style="color: var(--accent-primary); text-decoration: none; font-weight: 600;">👤 Meus Dados</a>
+            `;
+        }
+
+        async function syncProfileInfo() {
+            try {
+                const response = await fetch('http://localhost:3001/api/auth/me', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.status === 401) {
+                    logout();
+                    return;
+                }
+
+                if (response.ok) {
+                    const latestData = await response.json();
+                    currentUser.nome = latestData.nome;
+                    currentUser.email = latestData.email;
+                    currentUser.cpf = latestData.cpf;
+                    currentUser.saldo_disponivel = latestData.saldo_disponivel;
+                    currentUser.saldo_a_receber = latestData.saldo_a_receber;
+                    currentUser.perfil = latestData.perfil;
+                    currentUser.tema_preferido = latestData.tema_preferido || 'dark';
+                    localStorage.setItem('@VTalentos:user', JSON.stringify(currentUser));
+                }
+            } catch (err) {
+                console.error('Erro de sincronização de perfil:', err);
+            }
+
+            // Popula os elementos do cartão lateral
+            document.getElementById('avatarLetra').innerText = currentUser.nome.charAt(0).toUpperCase();
+            document.getElementById('cardNome').innerText = currentUser.nome;
+            document.getElementById('cardPerfil').innerText = isAdmin() ? 'Administrador' : 'Corretor';
+            document.getElementById('cardSaldo').innerText = `${parseFloat(currentUser.saldo_disponivel || 0).toFixed(2)} T$`;
+
+            // Popula os campos do formulário
+            document.getElementById('nomeInput').value = currentUser.nome;
+            document.getElementById('emailInput').value = currentUser.email;
+            document.getElementById('cpfInput').value = currentUser.cpf || '';
+
+            // Atualiza botões de tema na tela
+            const tema = currentUser.tema_preferido || 'dark';
+            document.getElementById('temaLightBtn').classList.toggle('active', tema === 'light');
+            document.getElementById('temaDarkBtn').classList.toggle('active', tema === 'dark');
+            document.body.setAttribute('data-theme', tema);
+        }
+
+        async function mudarTemaSistema(novoTema) {
+            try {
+                // Atualiza no banco chamando o endpoint público do auth.js
+                await saveThemePreference(novoTema);
+                currentUser.tema_preferido = novoTema;
+                localStorage.setItem('@VTalentos:user', JSON.stringify(currentUser));
+                localStorage.setItem('theme', novoTema);
+                
+                document.getElementById('temaLightBtn').classList.toggle('active', novoTema === 'light');
+                document.getElementById('temaDarkBtn').classList.toggle('active', novoTema === 'dark');
+                document.body.setAttribute('data-theme', novoTema);
+                
+                showToast('Preferência de tema atualizada!', 'success');
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        document.getElementById('perfilForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const nome = document.getElementById('nomeInput').value;
+            const email = document.getElementById('emailInput').value;
+            const cpf = document.getElementById('cpfInput').value;
+            const senha_atual = document.getElementById('senhaAtualInput').value;
+            const nova_senha = document.getElementById('novaSenhaInput').value;
+
+            if (nova_senha && !senha_atual) {
+                showToast('A senha atual é necessária para definir uma nova senha.', 'error');
+                return;
+            }
+
+            const btnSalvar = document.getElementById('btnSalvar');
+
+            try {
+                btnSalvar.disabled = true;
+                btnSalvar.innerText = 'SALVANDO...';
+
+                const response = await fetch('http://localhost:3001/api/users/me', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        nome,
+                        email,
+                        cpf,
+                        ...(nova_senha && { senha_atual, nova_senha })
+                    })
+                });
+
+                if (response.status === 401) {
+                    logout();
+                    return;
+                }
+
+                const resData = await response.json();
+
+                if (!response.ok || !resData.success) {
+                    throw new Error(resData.error || 'Erro ao atualizar dados do perfil');
+                }
+
+                showToast('Perfil atualizado com sucesso!', 'success');
+                
+                // Limpa campos de senha
+                document.getElementById('senhaAtualInput').value = '';
+                document.getElementById('novaSenhaInput').value = '';
+
+                // Sincroniza e recarrega os dados na tela
+                await syncProfileInfo();
+
+            } catch (err) {
+                showToast(err.message, 'error');
+            } finally {
+                btnSalvar.disabled = false;
+                btnSalvar.innerText = 'SALVAR ALTERAÇÕES';
+            }
+        });
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            renderSidebar();
+            await syncProfileInfo();
+        });
+    </script>
+</body>
+</html>

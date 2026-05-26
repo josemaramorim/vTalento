@@ -197,8 +197,8 @@ Esta fase implementa a capacidade dos administradores de gerenciarem os corretor
 
 #### Tarefas de Frontend
 
-- [/] **Tarefa 12.6:** Criar a página de Gestão de Usuários do Admin (`admin-usuarios.html`), contendo listagem paginada dos corretores, barra de pesquisa, modal para adicionar corretor e modal para editar corretor.
-- [ ] **Tarefa 12.7:** Criar a página de Meu Perfil para Corretores/Admin (`meu-perfil.html`), permitindo que os usuários atualizem seu Nome, E-mail, CPF, alterem sua senha de acesso e escolham o tema preferido (`light` ou `dark`).
-- [ ] **Tarefa 12.8:** Atualizar o menu lateral dinâmico de navegação em todas as páginas para incluir os novos caminhos apropriados para cada perfil.
+- [x] **Tarefa 12.6:** Criar a página de Gestão de Usuários do Admin (`admin-usuarios.html`), contendo listagem paginada dos corretores, barra de pesquisa, modal para adicionar corretor e modal para editar corretor.
+- [x] **Tarefa 12.7:** Criar a página de Meu Perfil para Corretores/Admin (`meu-perfil.html`), permitindo que os usuários atualizem seu Nome, E-mail, CPF, alterem sua senha de acesso e escolham o tema preferido (`light` ou `dark`).
+- [/] **Tarefa 12.8:** Atualizar o menu lateral dinâmico de navegação em todas as páginas para incluir os novos caminhos apropriados para cada perfil.
 
 
