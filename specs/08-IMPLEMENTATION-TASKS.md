@@ -189,15 +189,15 @@ Esta fase implementa a capacidade dos administradores de gerenciarem os corretor
 
 #### Tarefas de Backend
 
-- [/] **Tarefa 12.1:** Implementar a rota `GET /api/admin/usuarios` (protegida por `tenantMiddleware` + `adminMiddleware`), retornando a lista de usuários do tenant de forma paginada e com filtros de busca textual (por nome, e-mail ou CPF).
-- [ ] **Tarefa 12.2:** Implementar a rota `POST /api/admin/usuarios` (admin), permitindo cadastrar novos corretores no tenant, validando e-mail único globalmente.
-- [ ] **Tarefa 12.3:** Implementar a rota `PUT /api/admin/usuarios/:id` (admin), permitindo editar `nome`, `email` e `cpf` de corretores do tenant, validando e-mail único.
-- [ ] **Tarefa 12.4:** Implementar a rota `PUT /api/users/me` (corretor/admin próprio), permitindo editar seus próprios dados (`nome`, `email`, `cpf`). Se o campo `nova_senha` for fornecido, deve validar o campo `senha_atual` antes de atualizar o hash da senha.
-- [ ] **Tarefa 12.5:** Escrever testes de integração (Supertest) validando todos os novos endpoints criados, incluindo as regras de segurança e isolamento multi-tenant.
+- [x] **Tarefa 12.1:** Implementar a rota `GET /api/admin/usuarios` (protegida por `tenantMiddleware` + `adminMiddleware`), retornando a lista de usuários do tenant de forma paginada e com filtros de busca textual (por nome, e-mail ou CPF).
+- [x] **Tarefa 12.2:** Implementar a rota `POST /api/admin/usuarios` (admin), permitindo cadastrar novos corretores no tenant, validando e-mail único globalmente.
+- [x] **Tarefa 12.3:** Implementar a rota `PUT /api/admin/usuarios/:id` (admin), permitindo editar `nome`, `email` e `cpf` de corretores do tenant, validando e-mail único.
+- [x] **Tarefa 12.4:** Implementar a rota `PUT /api/users/me` (corretor/admin próprio), permitindo editar seus próprios dados (`nome`, `email`, `cpf`). Se o campo `nova_senha` for fornecido, deve validar o campo `senha_atual` antes de atualizar o hash da senha.
+- [x] **Tarefa 12.5:** Escrever testes de integração (Supertest) validando todos os novos endpoints criados, incluindo as regras de segurança e isolamento multi-tenant.
 
 #### Tarefas de Frontend
 
-- [ ] **Tarefa 12.6:** Criar a página de Gestão de Usuários do Admin (`admin-usuarios.html`), contendo listagem paginada dos corretores, barra de pesquisa, modal para adicionar corretor e modal para editar corretor.
+- [/] **Tarefa 12.6:** Criar a página de Gestão de Usuários do Admin (`admin-usuarios.html`), contendo listagem paginada dos corretores, barra de pesquisa, modal para adicionar corretor e modal para editar corretor.
 - [ ] **Tarefa 12.7:** Criar a página de Meu Perfil para Corretores/Admin (`meu-perfil.html`), permitindo que os usuários atualizem seu Nome, E-mail, CPF, alterem sua senha de acesso e escolham o tema preferido (`light` ou `dark`).
 - [ ] **Tarefa 12.8:** Atualizar o menu lateral dinâmico de navegação em todas as páginas para incluir os novos caminhos apropriados para cada perfil.
 

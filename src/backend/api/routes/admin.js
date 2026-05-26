@@ -2,6 +2,7 @@ const { Router } = require('express');
 const LancamentoController = require('../controllers/LancamentoController');
 const ImportacaoController = require('../controllers/ImportacaoController');
 const PremioController = require('../controllers/PremioController');
+const UsuarioController = require('../controllers/UsuarioController');
 const tenantMiddleware = require('../../infra/middlewares/TenantMiddleware');
 const adminMiddleware = require('../../infra/middlewares/AdminMiddleware');
 
@@ -9,6 +10,11 @@ const routes = Router();
 
 // Todas as rotas administrativas precisam de Tenant + Admin Middleware
 routes.use(tenantMiddleware, adminMiddleware);
+
+// Tarefa 12.1, 12.2, 12.3 — FASE 5 — Gestão de Usuários
+routes.get('/usuarios', UsuarioController.listAdmin);
+routes.post('/usuarios', UsuarioController.create);
+routes.put('/usuarios/:id', UsuarioController.update);
 
 // Endpoint de lançamento manual
 routes.post('/lancamento-manual', LancamentoController.realizarLancamento);
