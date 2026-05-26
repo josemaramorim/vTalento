@@ -97,11 +97,11 @@ Este documento é o guia de execução do projeto. Nenhuma tarefa deve ser inici
 ### História 7: Lapidação Premium de Notificações, Lançamentos e Integração Técnica
 *Como usuário e desenvolvedor, quero que todos os alertas da aplicação sigam a identidade premium (Toast Glassmorphism), que o lançamento manual aceite e envie valores perfeitamente sanitizados, e que haja um guia centralizado para rodar o ecossistema.*
 
-- [/] **Tarefa 7.1:** Substituir todos os `alert()` nativos nos arquivos administrativos (`admin-lancamento.html`, `admin-premios.html`, `admin-importacao.html`) pelo componente premium global `showToast()` importado via `auth.js`.
-- [/] **Tarefa 7.2:** Sanitizar os campos numéricos no formulário do frontend `admin-lancamento.html` convertendo-os explicitamente para float antes de realizar a requisição, prevenindo erros de tipagem/validação no backend.
-- [/] **Tarefa 7.3:** Criar o arquivo central de documentação e guia de execução `README.md` detalhando as instruções exatas para inicialização dos ambientes do Backend e Frontend concorrentemente (`npm run dev`) ou individualmente.
-- [/] **Tarefa 7.4:** Corrigir os botões de alternância de Tema em `admin-lancamento.html` e `admin-importacao.html` garantindo compatibilidade total com o gerenciador global de temas de `auth.js`.
-- [/] **Tarefa 7.5:** Implementar a persistência do tema preferido no banco de dados (`GamUsuario`) adicionando uma coluna `tema_preferido` ('light' ou 'dark') via migration, sincronizando o tema local da sessão com a API na autenticação.
-- [/] **Tarefa 7.6:** Reestruturar e embelezar o `dashboard.html` para Administradores, exibindo métricas de alto valor como: Total de Talentos Distribuídos, Total de Prêmios Resgatados, Gráfico de Movimentações Recentes e Rápido Atalho de Ações Administrativas.
+- [x] **Tarefa 7.1:** Substituir todos os `alert()` nativos nos arquivos administrativos (`admin-lancamento.html`, `admin-premios.html`, `admin-importacao.html`) pelo componente premium global `showToast()` importado via `auth.js`.
+- [x] **Tarefa 7.2:** Sanitizar os campos numéricos no formulário do frontend `admin-lancamento.html` convertendo-os explicitamente para float antes de realizar a requisição, prevenindo erros de tipagem/validação no backend.
+- [x] **Tarefa 7.3:** Criar o arquivo central de documentação e guia de execução `README.md` detalhando as instruções exatas para inicialização dos ambientes do Backend e Frontend concorrentemente (`npm run dev`) ou individualmente.
+- [x] **Tarefa 7.4:** Corrigir os botões de alternância de Tema em `admin-lancamento.html` e `admin-importacao.html` garantindo compatibilidade total com o gerenciador global de temas de `auth.js`.
+- [x] **Tarefa 7.5:** Implementar a persistência do tema preferido no banco de dados (`GamUsuario`) adicionando uma coluna `tema_preferido` ('light' ou 'dark') via migration, sincronizando o tema local da sessão com a API na autenticação.
+- [x] **Tarefa 7.6:** Reestruturar e embelezar o `dashboard.html` para Administradores, exibindo métricas de alto valor como: Total de Talentos Distribuídos, Total de Prêmios Resgatados, Gráfico de Movimentações Recentes e Rápido Atalho de Ações Administrativas.
 
 

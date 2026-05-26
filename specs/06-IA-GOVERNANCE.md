@@ -82,6 +82,7 @@ Para garantir a continuidade perfeita e o alinhamento do projeto, a IA deve segu
 | **DESENVOLVIMENTO** | ✅ Concluído | Fase 3: Importação & Gamificação | `develop` | Motor de processamento dinâmico Excel, balões, transações pendentes/compensadas e UI Airy Glassmorphism 100% concluído e verificado. |
 | **LIMPEZA/GOVERNANÇA** | ✅ Concluído | Remoção de arquivos legado Versatus | `develop` | Removidos da raiz: `03-REGRAS-ANTI-ALUCINACAO.md`, `04-CONTRATO-DA-IA.md`, `05-ONBOARDING-IA-PROMPT.md`, `MOD-14-GAMIFICACAO-VENDAS.md`. Spec `01-DATA-MODEL.md` sincronizada com `GamUsuario` (era `GamCorretor`). 23/23 testes passando. |
 | **DESENVOLVIMENTO** | ✅ Concluído | Fase 4: Vitrine de Prêmios | develop | Frontend do Admin (admin-premios.html) e do Colaborador (vitrine.html) 100% integrados; Toasts modernizados; 27/27 testes Jest passando. |
+| **DESENVOLVIMENTO** | ✅ Concluído | Fase 4.5: Estabilização, Toasts e Premium Admin Dashboard | `develop` | Substituição de alert() por Toasts em todas as telas de admin; correção de toggle de tema; persistência de tema preferido em GamUsuario; dashboard premium de métricas para Admin. |
 
 ---
 
