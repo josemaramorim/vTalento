@@ -123,9 +123,12 @@ window.renderHeader = function(titulo, subtitulo) {
     const saldoExibido = parseFloat(user.saldo_disponivel || 0).toFixed(2);
 
     headerEl.innerHTML = `
-        <div>
-            <h1 id="welcomeText" style="font-size: 1.8rem; margin-bottom: 5px;">${titulo || 'Olá!'}</h1>
-            <p id="dashboardSub" style="color: var(--text-secondary); font-size: 0.9rem;">${subtitulo || ''}</p>
+        <div style="display: flex; align-items: center;">
+            <button id="menuToggleBtn" style="background: none; border: none; font-size: 1.6rem; color: var(--text-primary); cursor: pointer; display: none; margin-right: 15px;" title="Abrir Menu">☰</button>
+            <div>
+                <h1 id="welcomeText" style="font-size: 1.8rem; margin-bottom: 5px;">${titulo || 'Olá!'}</h1>
+                <p id="dashboardSub" style="color: var(--text-secondary); font-size: 0.9rem;">${subtitulo || ''}</p>
+            </div>
         </div>
         <div class="user-info">
             <div class="user-profile-clickable" onclick="window.location.href='meu-perfil.html'" style="display: flex; align-items: center; gap: 8px; cursor: pointer;" title="Visualizar Meu Perfil">
@@ -142,6 +145,33 @@ window.renderHeader = function(titulo, subtitulo) {
             <button class="btn" onclick="logout()" style="padding: 8px 16px; font-size: 0.8rem; background: rgba(255,0,0,0.1); color: var(--error); margin-left: 10px;">SAIR</button>
         </div>
     `;
+
+    // Vincula a alternância do menu lateral mobile
+    const toggleBtn = headerEl.querySelector('#menuToggleBtn');
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', () => {
+            const sidebar = document.querySelector('.sidebar');
+            if (sidebar) {
+                sidebar.classList.toggle('active');
+                
+                // Cria ou remove overlay/backdrop
+                let backdrop = document.querySelector('.sidebar-backdrop');
+                if (!backdrop) {
+                    backdrop = document.createElement('div');
+                    backdrop.className = 'sidebar-backdrop';
+                    backdrop.style.cssText = 'position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); z-index: 999; transition: opacity 0.3s ease;';
+                    document.body.appendChild(backdrop);
+                    
+                    backdrop.addEventListener('click', () => {
+                        sidebar.classList.remove('active');
+                        backdrop.remove();
+                    });
+                } else {
+                    backdrop.remove();
+                }
+            }
+        });
+    }
 
     // Vincula novamente a alternância de temas do novo botão injetado
     const newBtn = headerEl.querySelector('#themeToggle');
