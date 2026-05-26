@@ -50,7 +50,7 @@ class PremioController {
   }
 
   async requestResgate(req, res) {
-    const usuario_id = req.user && req.user.id;
+    const usuario_id = req.usuario_id;
     const premio_id = parseInt(req.params.id, 10);
     const { quantidade } = req.body;
 

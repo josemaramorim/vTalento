@@ -33,6 +33,7 @@ class AutenticacaoController {
         nome: usuario.nome,
         email: usuario.email,
         saldo_disponivel: usuario.saldo_disponivel,
+        saldo_a_receber: usuario.saldo_a_receber || 0,
         empresa_id: usuario.empresa_id,
         perfil: usuario.perfil,
         tema_preferido: usuario.tema_preferido || 'dark'

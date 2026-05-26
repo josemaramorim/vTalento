@@ -93,13 +93,57 @@
             <!-- CONTEÚDO DINÂMICO DE ACORDO COM O PERFIL -->
             <div id="dashboardContent">
                 <!-- Seção Colaborador -->
-                <section class="overview" id="colaboradorSection" style="display: none;">
-                    <div class="glass animate-fade" style="padding: 40px; border-radius: var(--radius-lg); text-align: center; max-width: 500px; margin: 40px auto;">
-                        <span style="font-size: 3.5rem; display: block; margin-bottom: 15px;">💎</span>
-                        <h2 id="saldoDisponivel" style="color: var(--accent-primary); font-size: 3.5rem; margin-bottom: 10px; font-family: var(--font-heading);">0.00</h2>
-                        <p style="text-transform: uppercase; letter-spacing: 2px; font-size: 0.82rem; color: var(--text-secondary); font-weight: 600;">Seus Talentos Disponíveis</p>
-                        <a href="vitrine.html" class="btn btn-primary" style="margin-top: 30px; width: 100%;">IR PARA A VITRINE DE PRÊMIOS</a>
+                <section class="overview" id="colaboradorSection" style="display: none; animation: fadeIn 0.4s ease;">
+                    <!-- Dual Cards de Saldo -->
+                    <div class="dashboard-grid" style="margin-bottom: 30px;">
+                        <div class="stat-card-premium glass" style="border-left: 4px solid var(--accent-primary);">
+                            <div class="icon-box" style="color: var(--accent-primary);">💎</div>
+                            <div>
+                                <div class="val" id="colabSaldoDisponivel">0.00</div>
+                                <div class="lbl">Saldo Disponível</div>
+                            </div>
+                        </div>
+                        <div class="stat-card-premium glass" style="border-left: 4px solid var(--warning);">
+                            <div class="icon-box" style="color: var(--warning);">🕒</div>
+                            <div>
+                                <div class="val" id="colabSaldoAReceber">0.00</div>
+                                <div class="lbl">Saldo a Receber</div>
+                            </div>
+                        </div>
                     </div>
+
+                    <!-- Atalhos Rápidos para Corretor -->
+                    <h2 style="font-size: 1.2rem; margin-bottom: 15px; color: var(--text-primary);">Navegação Rápida</h2>
+                    <section class="quick-actions" style="margin-bottom: 35px;">
+                        <a href="vitrine.html" class="action-card glass">
+                            <span style="font-size: 2rem; display: block; margin-bottom: 8px;">🎁</span>
+                            <strong>Vitrine de Prêmios</strong>
+                            <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 5px;">Troque seus talentos agora</p>
+                        </a>
+                    </section>
+
+                    <!-- Extrato Recente do Corretor -->
+                    <section class="history-card glass" style="padding: 25px;">
+                        <h2 style="font-size: 1.1rem; margin-bottom: 15px; color: var(--text-primary);">Meu Extrato de Lançamentos Recentes</h2>
+                        <div class="table-responsive">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Data</th>
+                                        <th>Origem</th>
+                                        <th>Tipo</th>
+                                        <th>Valor</th>
+                                        <th>Justificativa / Descrição</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="colabAuditTableBody">
+                                    <tr>
+                                        <td colspan="5" style="text-align: center; color: var(--text-secondary);">Carregando seu extrato...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
                 </section>
 
                 <!-- Seção Administrador Premium -->
@@ -224,6 +268,9 @@
                 document.getElementById('dashboardSub').innerText = 'Visão geral da sua performance e saldo de talentos';
                 document.getElementById('colaboradorSection').style.display = 'block';
                 
+                let saldoDisponivel = user.saldo_disponivel || 0;
+                let saldoAReceber = user.saldo_a_receber || 0;
+
                 // Tenta puxar perfil atualizado com saldo mais recente do backend
                 try {
                     const response = await fetch('http://localhost:3001/api/auth/me', {
@@ -231,12 +278,52 @@
                     });
                     if (response.ok) {
                         const data = await response.json();
-                        document.getElementById('saldoDisponivel').innerText = parseFloat(data.saldo_disponivel || 0).toFixed(2);
-                    } else {
-                        document.getElementById('saldoDisponivel').innerText = parseFloat(user.saldo_disponivel || 0).toFixed(2);
+                        saldoDisponivel = data.saldo_disponivel;
+                        saldoAReceber = data.saldo_a_receber;
                     }
                 } catch (e) {
-                    document.getElementById('saldoDisponivel').innerText = parseFloat(user.saldo_disponivel || 0).toFixed(2);
+                    console.error('Erro ao buscar dados atualizados do corretor:', e);
+                }
+
+                document.getElementById('colabSaldoDisponivel').innerText = parseFloat(saldoDisponivel).toFixed(2);
+                document.getElementById('colabSaldoAReceber').innerText = parseFloat(saldoAReceber).toFixed(2);
+
+                // Carrega Extrato Individual do Corretor
+                try {
+                    const response = await fetch(`http://localhost:3001/api/auth/users/${user.id}/transacoes`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    const resData = await response.json();
+                    
+                    const tbody = document.getElementById('colabAuditTableBody');
+                    tbody.innerHTML = '';
+
+                    if (!resData.success || resData.data.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-secondary);">Você ainda não possui lançamentos registrados.</td></tr>`;
+                        return;
+                    }
+
+                    resData.data.forEach(item => {
+                        const tr = document.createElement('tr');
+                        const dataFormatada = new Date(item.created_at).toLocaleString('pt-BR');
+                        const sinal = item.tipo === 'CREDITO' ? '+' : '';
+                        
+                        let badgeClass = 'badge-credito';
+                        if (item.tipo === 'DEBITO') badgeClass = 'badge-debito';
+                        if (item.tipo === 'ESTORNO') badgeClass = 'badge-estorno';
+
+                        tr.innerHTML = `
+                            <td>${dataFormatada}</td>
+                            <td><span style="font-size:0.8rem; font-weight:600; text-transform:uppercase; color:var(--text-secondary);">${item.origem}</span></td>
+                            <td><span class="badge ${badgeClass}">${item.tipo}</span></td>
+                            <td><strong style="color:${item.tipo === 'DEBITO' ? 'var(--error)' : 'var(--success)'}">${sinal}${parseFloat(item.valor).toFixed(2)}</strong></td>
+                            <td style="color: var(--text-secondary); max-width: 350px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.justificativa || 'Sem justificativa'}</td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                } catch (err) {
+                    console.error('Erro ao buscar extrato do corretor:', err);
+                    document.getElementById('colabAuditTableBody').innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--error);">Erro ao carregar seu extrato de movimentações.</td></tr>`;
                 }
             } else {
                 // Modo Administrador Premium
