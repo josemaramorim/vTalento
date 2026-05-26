@@ -133,6 +133,6 @@ Este documento é o guia de execução do projeto. Nenhuma tarefa deve ser inici
 ### História 10: Correção do Constraint de Origem em GamTransacao
 *Como corretor, quero conseguir resgatar prêmios sem erros de banco de dados.*
 
-- [/] **Tarefa 10.1:** Criar migration `20260526010000_update_transacoes_add_premio_origem.js` para adicionar `'PREMIO'` ao CHECK constraint do campo `origem` na tabela `GamTransacao` (SQLite não suporta ALTER COLUMN — tabela recriada via raw SQL).
+- [x] **Tarefa 10.1:** Criar migration `20260526010000_update_transacoes_add_premio_origem.js` para adicionar `'PREMIO'` ao CHECK constraint do campo `origem` na tabela `GamTransacao` (SQLite não suporta ALTER COLUMN — tabela recriada via raw SQL).
 
 
