@@ -122,8 +122,10 @@
         } else {
             const user = JSON.parse(userStr);
             if (user.perfil !== 'ADMIN_EMPRESA' && user.perfil !== 'SUPER_ADMIN') {
-                alert('Acesso restrito a administradores.');
-                window.location.href = 'dashboard.html';
+                showToast('Acesso restrito a administradores.', 'error');
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 2000);
             }
         }
 

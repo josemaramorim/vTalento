@@ -27,6 +27,7 @@ Entidade master que isola todos os dados do sistema.
 - `perfil`: Enum (`CORRETOR`, `ADMIN_EMPRESA`, `SUPER_ADMIN`)
 - `saldo_disponivel`: Decimal (Total pronto para resgate)
 - `saldo_a_receber`: Decimal (Total de vendas não pagas)
+- `tema_preferido`: Enum (`light`, `dark`) (Default: `dark` - persistido no banco)
 - `created_at`: DateTime
 - `updated_at`: DateTime
 

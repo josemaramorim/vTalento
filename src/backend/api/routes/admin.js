@@ -19,6 +19,9 @@ routes.get('/corretores', LancamentoController.obterCorretores);
 // Endpoint de histórico recente de lançamentos
 routes.get('/historico-recente', LancamentoController.obterHistoricoRecente);
 
+// Endpoint de métricas consolidada do Dashboard Admin
+routes.get('/dashboard-indicadores', LancamentoController.obterIndicadoresAdmin);
+
 // Endpoints de perfis de importação
 routes.get('/importacao/perfis', ImportacaoController.obterPerfis);
 routes.get('/importacao/perfis/:id', ImportacaoController.obterPerfilUnico);

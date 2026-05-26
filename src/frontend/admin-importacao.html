@@ -321,8 +321,10 @@
         } else {
             const user = JSON.parse(userStr);
             if (user.perfil !== 'ADMIN_EMPRESA' && user.perfil !== 'SUPER_ADMIN') {
-                alert('Acesso restrito a administradores.');
-                window.location.href = 'dashboard.html';
+                showToast('Acesso restrito a administradores.', 'error');
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 2000);
             }
         }
 
@@ -332,21 +334,7 @@
             window.location.href = 'login.html';
         }
 
-        // Toggle Theme
-        const themeToggle = document.getElementById('themeToggle');
-        const body = document.body;
-
-        themeToggle.addEventListener('click', () => {
-            const currentTheme = body.getAttribute('data-theme');
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            body.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
-        });
-
-        const savedTheme = localStorage.getItem('theme');
-        if (savedTheme) {
-            body.setAttribute('data-theme', savedTheme);
-        }
+        // Toggle Theme is managed dynamically and globally by assets/js/auth.js
 
         // API Configuration
         const API_BASE = 'http://localhost:3001/api/admin/importacao';
@@ -459,11 +447,11 @@
                     throw new Error(errData.error || 'Falha ao excluir perfil');
                 }
 
-                alert('Perfil excluído com sucesso!');
+                showToast('Perfil excluído com sucesso!', 'success');
                 if (editPerfilId === id) resetFormState();
                 await loadPerfis();
             } catch (err) {
-                alert(err.message);
+                showToast(err.message, 'error');
             }
         });
 
@@ -512,11 +500,11 @@
                     throw new Error(errData.error || `Erro ao ${isEdit ? 'atualizar' : 'salvar'} perfil`);
                 }
 
-                alert(`Perfil ${isEdit ? 'atualizado' : 'cadastrado'} com sucesso!`);
+                showToast(`Perfil ${isEdit ? 'atualizado' : 'cadastrado'} com sucesso!`, 'success');
                 resetFormState();
                 await loadPerfis();
             } catch (err) {
-                alert(err.message);
+                showToast(err.message, 'error');
             }
         });
 
@@ -671,7 +659,7 @@
                 document.getElementById('previewSection').style.display = 'block';
 
             } catch (err) {
-                alert(err.message);
+                showToast(err.message, 'error');
             } finally {
                 btn.disabled = false;
                 btn.textContent = 'GERAR PREVIEW DA IMPORTAÇÃO';
@@ -709,7 +697,7 @@
                     throw new Error(data.error || 'Erro ao processar importação definitiva');
                 }
 
-                alert(`Importação concluída com sucesso!\n- ${data.total_vendas_processadas} Vendas Processadas\n- ${data.transacoes_criadas} Novas Transações Criadas\n- ${data.corretores_atualizados} Corretores Atualizados com seus respectivos saldos.`);
+                showToast(`Importação concluída com sucesso!\n- ${data.total_vendas_processadas} Vendas Processadas\n- ${data.transacoes_criadas} Novas Transações Criadas\n- ${data.corretores_atualizados} Corretores Atualizados com seus respectivos saldos.`, 'success');
                 
                 // Hide preview and clear file upload
                 document.getElementById('previewSection').style.display = 'none';
@@ -719,7 +707,7 @@
                 checkCanPreview();
 
             } catch (err) {
-                alert(err.message);
+                showToast(err.message, 'error');
             } finally {
                 btnConfirm.disabled = false;
                 btnConfirm.textContent = 'CONFIRMAR IMPORTAÇÃO DEFINITIVA';

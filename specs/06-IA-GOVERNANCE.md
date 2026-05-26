@@ -9,9 +9,10 @@
 ## 1. Leis Fundamentais (NÃO NEGOCIÁVEIS)
 
 ### A. Metodologia SPEC-First (Evolução Estrita)
-A IA nunca deve implementar, refatorar, adicionar sementes de dados (seeds), ou alterar qualquer linha de código sem antes ter a SPEC ou o respectivo Plano de Implementação aprovado pelo usuário.
-1. Qualquer necessidade de alteração não prevista na SPEC deve forçar uma pausa imediata, sugestão de revisão da SPEC/Plano de Implementação, e obtenção de aprovação explícita.
-2. **Nenhuma alteração é "pequena demais" para pular o fluxo:** mesmo ajustes finos, sementes de banco (seeds) ou correções pontuais exigem validação prévia na SPEC antes de mexer em código de produção.
+A IA nunca deve implementar, refatorar, adicionar sementes de dados (seeds), ou alterar qualquer linha de código sem antes ter a SPEC ou o respectivo Plano de Implementação documentado fisicamente e aprovado pelo usuário.
+1. **Inexistência de atalhos em chat:** É terminantemente PROIBIDO realizar qualquer alteração em código baseado apenas em acordos ou planos gerados textualmente no chat. Todo e qualquer plano de implementação aprovado DEVE ser registrado fisicamente na pasta `specs/` antes da execução.
+2. Qualquer necessidade de alteração não prevista na SPEC deve forçar uma pausa imediata, sugestão de revisão e atualização dos arquivos físicos de especificação (`specs/08-IMPLEMENTATION-TASKS.md` e similares), e obtenção de aprovação explícita.
+3. **Nenhuma alteração é "pequena demais" para pular o fluxo:** mesmo ajustes finos, sementes de banco (seeds) ou correções pontuais exigem validação prévia na SPEC antes de mexer em código de produção. A conformidade com a documentação física do projeto é absoluta, imutável e inegociável.
 
 ### B. Nomenclatura Híbrida
 - **Infraestrutura (Sufixos e Pastas em Inglês):** Nomes de pastas, arquivos de sistema, e design patterns (ex: `repositories/`, `controllers/`, `middlewares/`).
@@ -31,7 +32,9 @@ Antes de realizar QUALQUER chamada de ferramenta que modifique arquivos de códi
 1. **[Roadmap Check]:** Qual é o ID exato da tarefa em `specs/08-IMPLEMENTATION-TASKS.md` que esta modificação atende? (Ex: `Tarefa 4.10.5`).
 2. **[Status Check]:** Essa tarefa já foi atualizada no arquivo físico `specs/08-IMPLEMENTATION-TASKS.md` para "Em Andamento" (`[/]`) ou "Concluída" (`[x]`)? (O código NUNCA deve ser modificado se a tarefa estiver marcada como pendente `[ ]` no roadmap).
 3. **[Design Spec Check]:** As modificações estruturais (tabelas, campos, endpoints, erros ou regras de negócio) já foram integralmente descritas e detalhadas nas respectivas especificações (ex: `specs/01-DATA-MODEL.md` ou `specs/09-VITRINE-DE-PREMIOS.md`)?
-*Se a resposta para qualquer um dos 3 itens for NÃO, a IA está terminantemente bloqueada e PROIBIDA de editar qualquer arquivo de código. Ela deve parar imediatamente, atualizar/criar as SPECs necessárias no repositório, e aguardar autorização explícita do usuário.*
+4. **[Plan Integration Check] (NÃO NEGOCIÁVEL):** Todo plano de implementação gerado em chat deve ter suas tarefas e decisões detalhadamente descritas e integradas nos arquivos físicos de especificações (`specs/`) antes da execução das correções. Isso garante que qualquer IA subsequente tenha acesso total ao escopo planejado sem depender de histórico de chat volátil.
+
+*Se a resposta para qualquer um dos 4 itens for NÃO, a IA está terminantemente bloqueada e PROIBIDA de editar qualquer arquivo de código. Ela deve parar imediatamente, atualizar/criar as SPECs necessárias no repositório, e aguardar autorização explícita do usuário.*
 
 ---
 
