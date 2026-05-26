@@ -33,8 +33,9 @@ Antes de realizar QUALQUER chamada de ferramenta que modifique arquivos de códi
 2. **[Status Check]:** Essa tarefa já foi atualizada no arquivo físico `specs/08-IMPLEMENTATION-TASKS.md` para "Em Andamento" (`[/]`) ou "Concluída" (`[x]`)? (O código NUNCA deve ser modificado se a tarefa estiver marcada como pendente `[ ]` no roadmap).
 3. **[Design Spec Check]:** As modificações estruturais (tabelas, campos, endpoints, erros ou regras de negócio) já foram integralmente descritas e detalhadas nas respectivas especificações (ex: `specs/01-DATA-MODEL.md` ou `specs/09-VITRINE-DE-PREMIOS.md`)?
 4. **[Plan Integration Check] (NÃO NEGOCIÁVEL):** Todo plano de implementação gerado em chat deve ter suas tarefas e decisões detalhadamente descritas e integradas nos arquivos físicos de especificações (`specs/`) antes da execução das correções. Isso garante que qualquer IA subsequente tenha acesso total ao escopo planejado sem depender de histórico de chat volátil.
+5. **[Pre-Commit Hook Validation] (BLINDAGEM AUTOMÁTICA):** O sistema agora possui um Git Pre-Commit Hook ativo (`.git/hooks/pre-commit` acoplado ao script `src/backend/infra/scripts/preCommitValidator.js`) que impede fisicamente o commit de modificações em `src/` caso a especificação de tarefas no roadmap não possua tarefas ativas marcadas fisicamente como "Em Andamento" (`[/]`).
 
-*Se a resposta para qualquer um dos 4 itens for NÃO, a IA está terminantemente bloqueada e PROIBIDA de editar qualquer arquivo de código. Ela deve parar imediatamente, atualizar/criar as SPECs necessárias no repositório, e aguardar autorização explícita do usuário.*
+*Se a resposta para qualquer um dos 5 itens for NÃO, a IA está terminantemente bloqueada e PROIBIDA de editar qualquer arquivo de código. Ela deve parar imediatamente, atualizar/criar as SPECs necessárias no repositório, e aguardar autorização explícita do usuário.*
 
 ---
 

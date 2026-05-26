@@ -104,4 +104,16 @@ Este documento é o guia de execução do projeto. Nenhuma tarefa deve ser inici
 - [x] **Tarefa 7.5:** Implementar a persistência do tema preferido no banco de dados (`GamUsuario`) adicionando uma coluna `tema_preferido` ('light' ou 'dark') via migration, sincronizando o tema local da sessão com a API na autenticação.
 - [x] **Tarefa 7.6:** Reestruturar e embelezar o `dashboard.html` para Administradores, exibindo métricas de alto valor como: Total de Talentos Distribuídos, Total de Prêmios Resgatados, Gráfico de Movimentações Recentes e Rápido Atalho de Ações Administrativas.
 
+---
+
+## FASE 4.6: Blindagem Sistêmica da Governança (Pre-Commit Guard)
+
+### História 8: Proteção Automatizada contra Edições sem Específicas no Roadmap
+*Como administrador e responsável pelo código, quero um mecanismo automatizado (Git Hook Pre-Commit) que impeça IAs ou desenvolvedores de commitar qualquer código modificado se as tarefas correspondentes no arquivo físico specs/08-IMPLEMENTATION-TASKS.md não estiverem explicitamente como "Em Andamento" ou "Concluídas".*
+
+- [/] **Tarefa 8.1:** Criar um script de auditoria e validação física em node (`src/backend/infra/scripts/preCommitValidator.js`) que varra as modificações pendentes no git e certifique que a especificação specs/08-IMPLEMENTATION-TASKS.md tenha tarefas sinalizadas para o escopo.
+- [/] **Tarefa 8.2:** Configurar um pre-commit hook nativo na pasta `.git/hooks/pre-commit` para executar este validador e abortar a operação de commit caso o checklist físico não esteja alinhado.
+- [/] **Tarefa 8.3:** Documentar este validador na especificação de governança (specs/06-IA-GOVERNANCE.md) para blindar a integridade técnica.
+
+
 
