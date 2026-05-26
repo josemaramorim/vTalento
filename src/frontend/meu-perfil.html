@@ -82,16 +82,7 @@
         </aside>
 
         <main class="main-content">
-            <header class="header">
-                <div>
-                    <h1 style="font-size: 1.8rem; margin-bottom: 5px;">Meu Perfil</h1>
-                    <p style="color: var(--text-secondary); font-size: 0.9rem;">Gerencie suas informações cadastrais e de acesso com segurança</p>
-                </div>
-                <div style="display: flex; align-items: center; gap: 20px;">
-                    <button class="theme-toggle" id="themeToggle" title="Alternar Tema">🌓</button>
-                    <button class="btn" onclick="logout()" style="padding: 8px 16px; font-size: 0.8rem; background: rgba(255,0,0,0.1); color: var(--error);">SAIR</button>
-                </div>
-            </header>
+            <header class="header" id="appHeader"></header>
 
             <div class="perfil-container">
                 <!-- Cartão da Esquerda (Resumo e Tema) -->
@@ -253,6 +244,9 @@
             document.getElementById('temaLightBtn').classList.toggle('active', tema === 'light');
             document.getElementById('temaDarkBtn').classList.toggle('active', tema === 'dark');
             document.body.setAttribute('data-theme', tema);
+
+            // Desenha cabeçalho dinâmico premium
+            renderHeader("Meu Perfil", "Gerencie suas informações cadastrais e de acesso com segurança");
         }
 
         async function mudarTemaSistema(novoTema) {
@@ -267,6 +261,9 @@
                 document.getElementById('temaDarkBtn').classList.toggle('active', novoTema === 'dark');
                 document.body.setAttribute('data-theme', novoTema);
                 
+                // Redesenha o cabeçalho dinâmico para sincronizar os botões e estados do toggle
+                renderHeader("Meu Perfil", "Gerencie suas informações cadastrais e de acesso com segurança");
+
                 showToast('Preferência de tema atualizada!', 'success');
             } catch (e) {
                 console.error(e);

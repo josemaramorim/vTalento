@@ -74,21 +74,7 @@
         </aside>
 
         <main class="main-content">
-            <header class="header">
-                <div>
-                    <h1 id="welcomeText" style="font-size: 1.8rem; margin-bottom: 5px;">Carregando...</h1>
-                    <p id="dashboardSub" style="color: var(--text-secondary); font-size: 0.9rem;">Visão geral da sua performance em vendas</p>
-                </div>
-                <div class="user-info">
-                    <div style="text-align: right; margin-right: 5px;">
-                        <span id="userName" style="display: block; font-weight: 600;">Usuário</span>
-                        <small id="userRoleBadge" style="color: var(--accent-primary); font-weight: 600; text-transform: uppercase; font-size: 0.75rem;">Carregando...</small>
-                    </div>
-                    <div class="user-avatar" id="userInitial">U</div>
-                    <button class="theme-toggle" id="themeToggle" title="Alternar Tema">🌓</button>
-                    <button class="btn" onclick="logout()" style="padding: 8px 16px; font-size: 0.8rem; background: rgba(255,0,0,0.1); color: var(--error);">SAIR</button>
-                </div>
-            </header>
+            <header class="header" id="appHeader"></header>
 
             <!-- CONTEÚDO DINÂMICO DE ACORDO COM O PERFIL -->
             <div id="dashboardContent">
@@ -238,11 +224,8 @@
 
         const user = JSON.parse(userStr);
 
-        // Inicializa dados do header
-        document.getElementById('userName').innerText = user.nome;
-        document.getElementById('userInitial').innerText = user.nome.charAt(0);
-        document.getElementById('welcomeText').innerText = `Olá, ${user.nome.split(' ')[0]}!`;
-        document.getElementById('userRoleBadge').innerText = user.perfil === 'CORRETOR' ? 'Colaborador' : 'Administrador';
+        // Inicializa dados do header dinâmico unificado
+        renderHeader(`Olá, ${user.nome.split(' ')[0]}!`, 'Visão geral da sua performance em vendas');
 
         // Renderização Dinâmica de Menus Laterais (Sidebar)
         const nav = document.getElementById('navLinks');

@@ -98,16 +98,7 @@
         </aside>
 
         <main class="main-content">
-            <header class="header">
-                <div>
-                    <h1 style="font-size: 1.8rem; margin-bottom: 5px;">Gestão de Corretores</h1>
-                    <p style="color: var(--text-secondary); font-size: 0.9rem;">Cadastre, visualize e edite os corretores vinculados à sua imobiliária</p>
-                </div>
-                <div style="display: flex; align-items: center; gap: 20px;">
-                    <button class="theme-toggle" id="themeToggle" title="Alternar Tema">🌓</button>
-                    <button class="btn" onclick="logout()" style="padding: 8px 16px; font-size: 0.8rem; background: rgba(255,0,0,0.1); color: var(--error);">SAIR</button>
-                </div>
-            </header>
+            <header class="header" id="appHeader"></header>
 
             <!-- Formulário de Usuário -->
             <section class="form-card glass">
@@ -412,6 +403,7 @@
 
         window.addEventListener('DOMContentLoaded', () => {
             renderSidebar();
+            renderHeader("Gestão de Corretores", "Cadastre, visualize e edite os corretores vinculados à sua imobiliária");
             fetchUsuarios(1);
         });
     </script>

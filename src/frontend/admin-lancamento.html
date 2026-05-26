@@ -27,16 +27,7 @@
         </aside>
 
         <main class="main-content">
-            <header class="header">
-                <div>
-                    <h1 style="font-size: 1.8rem; margin-bottom: 5px;">Ajustes de Saldo</h1>
-                    <p style="color: var(--text-secondary); font-size: 0.9rem;">Lançamentos manuais com auditoria total</p>
-                </div>
-                <div style="display: flex; align-items: center; gap: 20px;">
-                    <button class="theme-toggle" id="themeToggle" title="Alternar Tema">🌓</button>
-                    <button class="btn" onclick="logout()" style="padding: 8px 16px; font-size: 0.8rem; background: rgba(255,0,0,0.1); color: var(--error);">SAIR</button>
-                </div>
-            </header>
+            <header class="header" id="appHeader"></header>
 
             <!-- Formulário de lançamento -->
             <section class="form-card glass">
@@ -245,6 +236,7 @@
 
         // Init
         window.addEventListener('DOMContentLoaded', () => {
+            renderHeader("Ajustes de Saldo", "Lançamentos manuais com auditoria total");
             fetchCorretores();
             fetchHistorico();
         });

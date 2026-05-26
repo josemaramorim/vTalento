@@ -296,21 +296,7 @@
         </aside>
 
         <main class="main-content">
-            <header class="header">
-                <div>
-                    <h1 style="font-size: 1.8rem; margin-bottom: 5px;">Vitrine de Recompensas</h1>
-                    <p style="color: var(--text-secondary); font-size: 0.9rem;">Troque seus Talentos por prêmios e experiências incríveis</p>
-                </div>
-                <div class="user-info">
-                    <div style="text-align: right; margin-right: 5px;">
-                        <span id="userName" style="display: block; font-weight: 600;">Colaborador</span>
-                        <small id="userSaldoHeader" style="color: var(--accent-primary); font-weight: 700; font-family: var(--font-heading);">Carregando saldo...</small>
-                    </div>
-                    <div class="user-avatar" id="userInitial">C</div>
-                    <button class="theme-toggle" id="themeToggle" title="Alternar Tema">🌓</button>
-                    <button class="btn" onclick="logout()" style="padding: 8px 16px; font-size: 0.8rem; background: rgba(255,0,0,0.1); color: var(--error);">SAIR</button>
-                </div>
-            </header>
+            <header class="header" id="appHeader"></header>
 
             <!-- Banner informativo para administradores -->
             <div id="adminBanner" class="glass" style="display: none; padding: 15px 25px; margin-bottom: 25px; border-left: 4px solid var(--accent-primary); align-items: center; justify-content: space-between; gap: 20px; animation: fadeIn 0.4s ease-out;">
@@ -564,9 +550,7 @@
                 }
             } catch (err) { console.error('Erro ao atualizar perfil:', err); }
 
-            document.getElementById('userName').innerText = currentUser.nome;
-            document.getElementById('userInitial').innerText = currentUser.nome.charAt(0);
-            document.getElementById('userSaldoHeader').innerText = `${parseFloat(currentUser.saldo_disponivel || 0).toFixed(2)} T$`;
+            renderHeader("Vitrine de Recompensas", "Troque seus Talentos por prêmios e experiências incríveis");
         }
 
         // Tarefa 11.6 — Cards da Vitrine (condicional por perfil)

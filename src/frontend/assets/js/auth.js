@@ -108,6 +108,52 @@ async function saveThemePreference(theme) {
     }
 }
 
+// Função global para renderizar o cabeçalho dinâmico premium unificado (Tarefa 13.1)
+window.renderHeader = function(titulo, subtitulo) {
+    const headerEl = document.getElementById('appHeader') || document.querySelector('header.header');
+    if (!headerEl) return;
+
+    const userStr = localStorage.getItem('@VTalentos:user');
+    if (!userStr) return;
+
+    const user = JSON.parse(userStr);
+    const roleLabel = (user.perfil === 'ADMIN_EMPRESA' || user.perfil === 'SUPER_ADMIN') ? 'Administrador' : 'Colaborador';
+    const inicial = user.nome.charAt(0).toUpperCase();
+    const saldoExibido = parseFloat(user.saldo_disponivel || 0).toFixed(2);
+
+    headerEl.innerHTML = `
+        <div>
+            <h1 id="welcomeText" style="font-size: 1.8rem; margin-bottom: 5px;">${titulo || 'Olá!'}</h1>
+            <p id="dashboardSub" style="color: var(--text-secondary); font-size: 0.9rem;">${subtitulo || ''}</p>
+        </div>
+        <div class="user-info">
+            <div class="user-profile-clickable" onclick="window.location.href='meu-perfil.html'" style="display: flex; align-items: center; gap: 8px; cursor: pointer;" title="Visualizar Meu Perfil">
+                <div style="text-align: right; margin-right: 5px;">
+                    <span id="userName" style="display: block; font-weight: 600;">${user.nome}</span>
+                    <small id="userRoleBadge" style="color: var(--accent-primary); font-weight: 600; text-transform: uppercase; font-size: 0.75rem;">${roleLabel} | <span id="userSaldoHeader">${saldoExibido} T$</span></small>
+                </div>
+                <div class="user-avatar" id="userInitial" style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-primary), #9b59b6); color: #fff; font-size: 1.1rem; font-weight: 600; display: flex; align-items: center; justify-content: center; border: 2px solid rgba(255,255,255,0.1);">${inicial}</div>
+            </div>
+            <button class="theme-toggle" id="themeToggle" title="Alternar Tema" style="margin-left: 10px;">🌓</button>
+            <button class="btn" onclick="logout()" style="padding: 8px 16px; font-size: 0.8rem; background: rgba(255,0,0,0.1); color: var(--error); margin-left: 10px;">SAIR</button>
+        </div>
+    `;
+
+    // Vincula novamente a alternância de temas do novo botão injetado
+    const newBtn = headerEl.querySelector('#themeToggle');
+    if (newBtn) {
+        newBtn.addEventListener('click', async () => {
+            const currentTheme = document.body.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            document.body.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            
+            await saveThemePreference(newTheme);
+        });
+    }
+};
+
 // Controle de Tema Unificado e Automático (Claro/Escuro)
 window.addEventListener('DOMContentLoaded', async () => {
     // A tela de login é sempre forçada a manter o tema escuro premium
