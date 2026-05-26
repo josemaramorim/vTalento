@@ -40,6 +40,10 @@ class AutenticacaoController {
         saldo_a_receber: usuario.saldo_a_receber || 0,
         empresa_id: usuario.empresa_id,
         empresa_nome: empresa ? empresa.nome : '',
+        empresa_status: empresa ? empresa.status : 'ATIVO',
+        data_expiracao: empresa ? empresa.data_expiracao : null,
+        liberacao_emergencia: empresa ? !!empresa.liberacao_emergencia : false,
+        emergencia_expiracao: empresa ? empresa.emergencia_expiracao : null,
         perfil: usuario.perfil,
         tema_preferido: usuario.tema_preferido || 'dark'
       });

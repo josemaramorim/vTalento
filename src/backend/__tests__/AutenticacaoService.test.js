@@ -88,9 +88,9 @@ describe('AutenticacaoService', () => {
             .toThrow('Credenciais inválidas');
     });
 
-    it('deve lançar erro se a empresa não for ATIVO', async () => {
+    it('deve lançar erro se a empresa for CANCELADA', async () => {
         const mockUser = { empresa_id: '456', senha_hash: 'hash' };
-        const mockEmpresa = { status: 'SUSPENSO' };
+        const mockEmpresa = { status: 'CANCELADO' };
 
         db.mockImplementation((table) => {
             if (table === 'GamUsuario') {
@@ -109,6 +109,6 @@ describe('AutenticacaoService', () => {
 
         await expect(AutenticacaoService.login('test@test.com', '123456'))
             .rejects
-            .toThrow('Empresa suspensa ou inativa');
+            .toThrow('Empresa cancelada. Contate o administrador.');
     });
 });

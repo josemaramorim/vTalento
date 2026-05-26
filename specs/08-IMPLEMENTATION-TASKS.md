@@ -238,5 +238,26 @@ Esta fase implementa a exibição elegante da empresa logada no cabeçalho dinâ
 - [x] **Tarefa 14.3:** Adicionar as regras globais de responsividade mobile e blindagem contra overflow no `style.css`.
 
 
+---
 
+## FASE 8: Painel SaaS, Faturamento Autogovernado e Cortesia Parametrizada
 
+Esta fase introduz o papel de `SUPER_ADMIN` no ecossistema V-Talentos, incorporando controle de faturamento, liberação de emergência parametrizada (concessão de cortesia com manipulação de dias), histórico de faturamento (`GamFatura`) e gestão lógica isolada de usuários.
+
+### Regras de Negócio e UX:
+- **Acesso de Emergência Flexível:** O Super-Admin pode conceder acesso temporário para inquilinos suspensos. O tempo padrão de cortesia (padrão: 7 dias) é obtido de uma configuração global (`GamSaaSConfig`) e pode ser modificado ou manipulado sob demanda para cada empresa no modal de concessão.
+- **Lockout e Redirecionamento:** Se uma empresa for marcada como suspensa e o período de emergência expirar ou não estiver ativo, os usuários `ADMIN_EMPRESA` serão redirecionados na API e no frontend para a tela `fatura-vencida.html` para visualizar e pagar a fatura em aberto. Usuários `CORRETOR` receberão uma mensagem amigável de suspensão temporária.
+- **Saúde Financeira:** O Super-Admin possui um painel financeiro detalhado com indicadores rápidos (total pago, total em aberto) e a possibilidade de dar "Baixa Manual" em faturas da empresa.
+- **Isolamento de Usuários:** O gerenciador de usuários do Super-Admin é estritamente isolado pelo dropdown de inquilinos.
+
+### Tarefas de Desenvolvimento
+
+- [x] **Tarefa 15.1 (Infra / Banco):** Criar as migrações do banco de dados para a tabela `GamSaaSConfig` (chave-valor para configurações da plataforma), tabela `GamFatura` (invoices do SaaS) e adicionar colunas de faturamento e cortesia (`data_expiracao`, `liberacao_emergencia`, `emergencia_expiracao`, `provedor_pagamento`, `config_pagamento_json`) na tabela `GamEmpresa`.
+- [x] **Tarefa 15.2 (Backend):** Atualizar o fluxo de login em `AutenticacaoService.js` para permitir a autenticação de empresas suspensas (para fins de pagamento) e refatorar `TenantMiddleware.js` para interceptar acessos suspensos/expirados (retornando HTTP 402) com bypass ativo de cortesia se `liberacao_emergencia === true` dentro do prazo.
+- [x] **Tarefa 15.3 (Backend):** Implementar rotas e serviços exclusivos do Super-Admin (`SuperAdminController` / `SuperAdminService`), englobando CRUD de empresas, concessão de acesso de emergência parametrizado, alteração de configurações globais (incluindo `dias_padrao_cortesia`), visualização de faturas e quitação com baixa manual.
+- [x] **Tarefa 15.4 (Backend):** Implementar gerenciamento lógico de usuários isolado por inquilino em rotas exclusivas do Super-Admin.
+- [/] **Tarefa 15.5 (Frontend):** Desenvolver a tela `super-dashboard.html` com gráficos translúcidos de faturamento acumulado, lista de empresas ativas/inadimplentes e aba de configurações de gateways e dias padrão de cortesia.
+- [ ] **Tarefa 15.6 (Frontend):** Desenvolver a tela `super-empresas.html` com listagem de inquilinos, modal de Acesso de Emergência dinâmico (com manipulação de dias) e aba de Saúde Financeira com quitação manual.
+- [ ] **Tarefa 15.7 (Frontend):** Desenvolver a tela `super-usuarios.html` para controle de usuários filtrado e isolado por dropdown de empresa.
+- [ ] **Tarefa 15.8 (Frontend):** Desenvolver as telas de faturamento do inquilino `admin-faturamento.html` e a tela de bloqueio `fatura-vencida.html` (com checkout simulado/gateways) e integrar interceptores reativos no `auth.js` com banner dinâmico de cortesia ativa.
+- [x] **Tarefa 15.9 (Testes):** Desenvolver suíte de testes de integração Jest/Supertest validando o bloqueio de tenant expirado, bypass de cortesia parametrizada e endpoints de faturamento e quitação do Super-Admin.
