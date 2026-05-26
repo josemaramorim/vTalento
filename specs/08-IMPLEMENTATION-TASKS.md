@@ -126,6 +126,13 @@ Este documento é o guia de execução do projeto. Nenhuma tarefa deve ser inici
 - [x] **Tarefa 9.2:** Melhorar o `dashboard.html` para corretores, exibindo em destaque tanto o "Saldo Disponível" quanto o "Saldo a Receber" daquele corretor de forma visualmente estimulante (premium).
 - [x] **Tarefa 9.3:** Integrar uma tabela de extrato com histórico recente das transações individuais de ganho/resgate do corretor diretamente no `dashboard.html` para total clareza.
 
+---
 
+## FASE 4.8: Correção de Bug Crítico — Resgate de Prêmios (400 Bad Request)
+
+### História 10: Correção do Constraint de Origem em GamTransacao
+*Como corretor, quero conseguir resgatar prêmios sem erros de banco de dados.*
+
+- [x] **Tarefa 10.1:** Criar migration `20260526010000_update_transacoes_add_premio_origem.js` para adicionar `'PREMIO'` ao CHECK constraint do campo `origem` na tabela `GamTransacao` (SQLite não suporta ALTER COLUMN — tabela recriada via raw SQL).
 
 
