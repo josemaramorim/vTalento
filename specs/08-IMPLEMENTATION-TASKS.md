@@ -201,4 +201,26 @@ Esta fase implementa a capacidade dos administradores de gerenciarem os corretor
 - [x] **Tarefa 12.7:** Criar a página de Meu Perfil para Corretores/Admin (`meu-perfil.html`), permitindo que os usuários atualizem seu Nome, E-mail, CPF, alterem sua senha de acesso e escolham o tema preferido (`light` ou `dark`).
 - [x] **Tarefa 12.8:** Atualizar o menu lateral dinâmico de navegação em todas as páginas para incluir os novos caminhos apropriados para cada perfil.
 
+---
+
+### FASE 6: UNIFICAÇÃO DE CABEÇALHO (DRY FRONTEND) E AJUSTES DE NAVEGAÇÃO
+Esta fase visa eliminar a repetição de código no frontend unificando os cabeçalhos das páginas e adicionando o redirecionamento para o perfil ao clicar no bloco de informações do usuário.
+
+#### Regras de Negócio e UX:
+- **DRY Header:** O cabeçalho deve ser gerado de forma totalmente dinâmica por uma função global em `auth.js` (`renderHeader(titulo, subtitulo)`). As páginas HTML devem conter apenas o container `<header class="header" id="appHeader"></header>`.
+- **Redirecionamento ao Perfil:** Clicar no bloco do usuário (nome, perfil ou avatar) no cabeçalho deve redirecionar para `meu-perfil.html`.
+- **Compatibilidade de Temas:** O botão de alternar tema em todos os cabeçalhos dinâmicos deve continuar funcionando 100%.
+
+#### Tarefas de Frontend
+
+- [x] **Tarefa 13.1:** Implementar a função global `renderHeader(titulo, subtitulo)` no `auth.js` para renderizar o cabeçalho dinamicamente com suporte a tema, avatar com inicial, perfil em português, e redirecionamento de clique para `meu-perfil.html` no bloco do usuário.
+- [x] **Tarefa 13.2:** Atualizar `dashboard.html` para utilizar o cabeçalho unificado dinâmico.
+- [x] **Tarefa 13.3:** Atualizar `vitrine.html` para utilizar o cabeçalho unificado dinâmico.
+- [x] **Tarefa 13.4:** Atualizar `admin-lancamento.html` para utilizar o cabeçalho unificado dinâmico.
+- [x] **Tarefa 13.5:** Atualizar `admin-importacao.html` para utilizar o cabeçalho unificado dinâmico.
+- [x] **Tarefa 13.6:** Atualizar `admin-premios.html` para utilizar o cabeçalho unificado dinâmico.
+- [x] **Tarefa 13.7:** Atualizar `admin-usuarios.html` para utilizar o cabeçalho unificado dinâmico.
+- [x] **Tarefa 13.8:** Atualizar `meu-perfil.html` para utilizar o cabeçalho unificado dinâmico.
+
+
 
