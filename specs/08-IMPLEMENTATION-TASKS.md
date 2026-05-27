@@ -292,12 +292,12 @@ Esta fase permite que o administrador da empresa (`ADMIN_EMPRESA`) gerencie a id
 #### Tarefas de Backend
 - [x] **Tarefa 17.1 (Infra / Banco):** Criar migration `20260527000100_add_ativo_to_usuarios.js` para adicionar a coluna `ativo` (boolean, default: true) à tabela `GamUsuario`.
 - [x] **Tarefa 17.2 (Backend):** Atualizar `AutenticacaoService.js` no login para rejeitar usuários inativos (`ativo === false`).
-- [x] **Tarefa 17.3 (Backend):** Atualizar `UsuarioService.js` e `UsuarioController.js` para permitir inativar/ativar e excluir (delete) corretores, garantindo isolamento multi-tenant (admin não pode excluir/inativar usuários de outras empresas).
+- [/] **Tarefa 17.3 (Backend):** Atualizar `UsuarioService.js` e `UsuarioController.js` para permitir inativar/ativar e excluir (delete) corretores, garantindo isolamento multi-tenant (admin não pode excluir/inativar usuários de outras empresas).
 - [x] **Tarefa 17.4 (Backend):** Criar endpoint `GET /api/admin/movimentacoes` no backend (protegido por `tenantMiddleware` + `adminMiddleware`), retornando o histórico filtrado e paginado de todas as transações dos corretores da empresa, com resumos consolidados de saldo disponível total, saldo a receber total, total de créditos e total de débitos.
 - [x] **Tarefa 17.5 (Testes):** Escrever testes unitários e de integração validando login com usuário inativo, exclusão de usuários, isolamento e filtragem de movimentações da equipe.
 
 #### Tarefas de Frontend
-- [x] **Tarefa 17.6 (Frontend):** Atualizar a tela `admin-usuarios.html` para incluir:
+- [/] **Tarefa 17.6 (Frontend):** Atualizar a tela `admin-usuarios.html` para incluir:
   - Uma coluna de "Status" (Ativo / Inativo) e botão de alternar status (Inativar / Ativar).
   - Um botão de "Excluir" que exibe um Modal de Confirmação Premium (Glassmorphism) com alerta explícito e elegante destacando que todos os dados e histórico de transações associados serão apagados definitivamente.
   - Atualização dos modais de criação/edição se necessário.

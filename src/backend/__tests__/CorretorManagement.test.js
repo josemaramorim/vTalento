@@ -87,6 +87,68 @@ describe('Corretor Management & Team Movements (FASE 10 Integration Tests)', () 
     });
   });
 
+  describe('PUT /api/admin/usuarios/:id - Alterar Status (Ativar/Inativar)', () => {
+    it('Permite que ADMIN_EMPRESA altere o status (ativo = false) de um corretor da mesma empresa', async () => {
+      const mockCorretor = { id: 'c1', empresa_id: 'empresa-a', nome: 'Corretor Teste', email: 'c1@teste.com', ativo: true };
+      
+      const mockChainUsuario = createChainMock();
+      mockChainUsuario.first = jest.fn()
+        .mockResolvedValueOnce(mockCorretor) // Primeira chamada (busca existente no service)
+        .mockResolvedValueOnce({ ...mockCorretor, ativo: false }); // Segunda chamada (re-busca atualizado no service)
+
+      const mockChainEmpresa = createChainMock({
+        first: { id: 'empresa-a', status: 'ATIVO' }
+      });
+
+      db.mockImplementation((table) => {
+        if (table === 'GamUsuario') {
+          return mockChainUsuario;
+        }
+        if (table === 'GamEmpresa') {
+          return mockChainEmpresa;
+        }
+        return createChainMock();
+      });
+
+      const response = await request(app)
+        .put('/api/admin/usuarios/c1')
+        .set('Authorization', `Bearer ${getAdminToken()}`)
+        .send({ ativo: false });
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.ativo).toBe(false);
+    });
+
+    it('Recusa alteração de status se corretor for de outra empresa (multi-tenant)', async () => {
+      const mockChainUsuario = createChainMock({
+        first: null
+      });
+      const mockChainEmpresa = createChainMock({
+        first: { id: 'empresa-b', status: 'ATIVO' }
+      });
+
+      db.mockImplementation((table) => {
+        if (table === 'GamUsuario') {
+          return mockChainUsuario;
+        }
+        if (table === 'GamEmpresa') {
+          return mockChainEmpresa;
+        }
+        return createChainMock();
+      });
+
+      const response = await request(app)
+        .put('/api/admin/usuarios/c1')
+        .set('Authorization', `Bearer ${getAdminToken('empresa-b')}`)
+        .send({ ativo: false });
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toContain('não encontrado');
+    });
+  });
+
   describe('GET /api/admin/movimentacoes - Extrato de Movimentações da Equipe', () => {
     it('Retorna histórico de transações da equipe com paginação, filtros e consolidações', async () => {
       const mockTransacoes = [
