@@ -309,7 +309,26 @@ Esta fase permite que o administrador da empresa (`ADMIN_EMPRESA`) gerencie a id
 - [x] **Tarefa 17.8 (Frontend):** Registrar no menu lateral dinâmico de `auth.js` o novo link "📈 Movimentações" para administradores.
 - [x] **Tarefa 17.9 (UX / Refatoração):** Substituir o modal de extrato simplificado na tela de usuários por um redirecionamento direto para a tela de movimentações filtrada por corretor, eliminando código redundante e permitindo filtros avançados.
 - [x] **Tarefa 17.10 (UX / Integração):** Sincronizar o link do Meu Extrato na barra de navegação dinâmica do dashboard para garantir acesso uniforme a todos os usuários.
-- [/] **Tarefa 17.11 (Handoff / Alinhamento):** Preparação do log de progresso e ritual de encerramento da sessão atual no repositório.
+- [x] **Tarefa 17.11 (Handoff / Alinhamento):** Preparação do log de progresso e ritual de encerramento da sessão atual no repositório.
+
+---
+
+## FASE 11: Gestão Dedicada de Provedores e Padrão Strategy/Adapter de Pagamentos (SaaS)
+
+### Regras de Negócio e UX:
+- **Modularidade de Pagamentos:** A lógica de comunicação com os gateways (Stripe, Asaas) é isolada por meio do padrão Strategy/Adapter.
+- **Gestão Dedicada para Super-Admin:** Provedores de pagamento agora possuem uma tela exclusiva com visualização premium em cards nobre (`super-provedores.html`).
+- **Universalidade de Configuração:** O Super-Admin pode registrar chaves/parâmetros arbitrários em um formulário dinâmico chave-valor, permitindo suporte a qualquer provedor do mundo.
+
+### Tarefas de Desenvolvimento
+
+- [x] **Tarefa 18.1 (Backend):** Implementar a classe base e os adapters `BasePaymentAdapter.js`, `StripeAdapter.js` e `AsaasAdapter.js` na nova pasta `src/backend/core/services/payment/`.
+- [x] **Tarefa 18.2 (Backend):** Implementar a fábrica de carregamento dinâmico de adapters `PaymentFactory.js`.
+- [x] **Tarefa 18.3 (Backend):** Refatorar `BillingController.js` para consumir a fábrica de adapters e delegar a geração de cobranças.
+- [x] **Tarefa 18.4 (Frontend):** Criar a nova página `super-provedores.html` com layout de cards, exclusão física e cadastro dinâmico chave-valor.
+- [x] **Tarefa 18.5 (Frontend):** Atualizar sidebar de todas as páginas do Super-Admin (`super-dashboard.html`, `super-empresas.html`, `super-usuarios.html`, `meu-perfil.html`) e limpar o dashboard.
+- [/] **Tarefa 18.6 (Testes):** Criar testes integrados em Jest para os adapters de pagamentos e fábrica.
+
 
 
 

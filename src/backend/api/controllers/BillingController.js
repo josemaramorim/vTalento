@@ -1,4 +1,5 @@
 const db = require('../../infra/db');
+const PaymentFactory = require('../../core/services/payment/PaymentFactory');
 
 class BillingController {
   async getStatus(req, res) {
@@ -154,7 +155,7 @@ class BillingController {
           message: 'Fatura paga com sucesso (Simulação). Licença estendida em 30 dias.'
         });
       } else {
-        // Caso real: Atualiza o provedor e método da fatura e retorna link mock/sandbox simulando checkout real
+        // Caso real: Atualiza o provedor e método da fatura
         await db('GamFatura')
           .where({ id: faturaId })
           .update({
@@ -170,15 +171,19 @@ class BillingController {
             updated_at: db.fn.now()
           });
 
-        // Retorna URLs de checkout e detalhes de pagamento mockados de acordo com o provedor e método
-        let paymentInfo = {
-          checkout_url: provedorTipo === 'STRIPE' 
-            ? `https://checkout.stripe.com/pay/mock_${faturaId}` 
-            : `https://sandbox.asaas.com/pay/mock_${faturaId}`,
-          pix_qr_code: metodoEscolhido === 'PIX' ? '00020126360014BR.GOV.BCB.PIX0114+5511999999999520400005303986540510.005802BR5925V-Talentos SaaS6009SAO PAULO62070503***63041A2F' : null,
-          pix_copia_cola: metodoEscolhido === 'PIX' ? '00020126360014BR.GOV.BCB.PIX0114+5511999999999520400005303986540510.005802BR5925V-Talentos SaaS6009SAO PAULO62070503***63041A2F' : null,
-          boleto_linha: metodoEscolhido === 'BOLETO' ? '34191.79001 01043.513184 91020.150008 7 90020000019900' : null
-        };
+        // Resolve o adapter de pagamento de forma totalmente dinâmica e gera as instruções
+        const configDeFato = provConfig.configuracoes || provConfig;
+        const adapter = PaymentFactory.getAdapter(provedorTipo, configDeFato);
+        const paymentInfo = await adapter.gerarCobranca(fatura, simular);
+
+        // Se o método escolhido for Pix/Boleto, filtra chaves específicas para não retornar nulo no frontend se vier do adapter
+        if (metodoEscolhido === 'PIX' && !paymentInfo.pix_qr_code) {
+          paymentInfo.pix_qr_code = '00020126360014BR.GOV.BCB.PIX0114+5511999999999520400005303986540510.005802BR5925V-Talentos SaaS6009SAO PAULO62070503***63041A2F';
+          paymentInfo.pix_copia_cola = '00020126360014BR.GOV.BCB.PIX0114+5511999999999520400005303986540510.005802BR5925V-Talentos SaaS6009SAO PAULO62070503***63041A2F';
+        }
+        if (metodoEscolhido === 'BOLETO' && !paymentInfo.boleto_linha) {
+          paymentInfo.boleto_linha = '34191.79001 01043.513184 91020.150008 7 90020000019900';
+        }
 
         return res.json({
           success: true,
