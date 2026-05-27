@@ -133,3 +133,53 @@ Uma vez que o backend e frontend públicos estejam rodando seguros sob HTTPS:
    * **Stripe:** `https://api.seudominio.com/api/webhooks/stripe`
    * **Asaas:** `https://api.seudominio.com/api/webhooks/asaas`
 3. **Webhook Secrets:** Atualize os respectivos segredos de assinatura (`webhook_secret`) de produção no painel do Super Admin para validar a integridade dos callbacks em produção.
+
+---
+
+## 🚀 7. Implantação Ultra-Rápida em Plataformas PaaS (Railway / Render)
+Se você deseja implantar a aplicação na nuvem em poucos minutos sem a necessidade de configurar servidores VPS Linux do zero (Nginx, PM2, Certbot), o uso de plataformas modernizadas de PaaS como **Railway** ou **Render** é altamente recomendado.
+
+Ambas suportam nativamente o gerenciamento integrado de bancos PostgreSQL e microsserviços Node.js.
+
+### A. Implantação no Railway (Recomendado)
+A plataforma **[Railway.app](https://railway.app)** é extremamente rápida e automatizada:
+
+1. **Provisionamento do Banco:**
+   * Crie uma conta no Railway.
+   * Clique em **"New Project"** -> **"Provision PostgreSQL"**. A plataforma gerará um banco PostgreSQL gerenciado instantaneamente.
+2. **Deploy do Código-Fonte:**
+   * Clique em **"New"** -> **"GitHub Repo"** e selecione o repositório do projeto V-Talentos.
+   * O Railway detectará o `package.json` e configurará o contêiner de execução automaticamente.
+3. **Variáveis de Ambiente:**
+   * No painel do seu serviço Node.js no Railway, vá na aba **Variables**.
+   * Adicione as variáveis do seu arquivo `.env` (como `JWT_SECRET`, `NODE_ENV=production`, etc.).
+   * Para conectar ao banco, adicione as chaves herdadas do PostgreSQL provisionado (clique em **"Reference Variable"** e selecione `DATABASE_URL` ou configure as chaves de conexão referencing `DATABASE_URL`).
+4. **Comando de Start Personalizado:**
+   * Vá em **Settings** -> **Deploy** -> **Start Command** do serviço do backend.
+   * Configure o comando para rodar as migrações, criar o super admin padrão e iniciar a API:
+     ```bash
+     npx knex migrate:latest && npm run db:init-admin && npm run backend:dev
+     ```
+
+---
+
+### B. Implantação no Render.com
+A plataforma **[Render.com](https://render.com)** oferece infraestrutura robusta:
+
+1. **Provisionamento do Banco:**
+   * No painel do Render, clique em **"New +"** -> **"PostgreSQL"**.
+   * Dê um nome ao banco e clique em **"Create Database"**. Guarde a URL de conexão interna.
+2. **Deploy do Backend (Web Service):**
+   * Clique em **"New +"** -> **"Web Service"**.
+   * Conecte sua conta do GitHub e selecione o repositório do V-Talentos.
+   * Dê um nome ao serviço (ex: `vtalentos-api`) e escolha o ambiente **Node**.
+3. **Configuração de Execução:**
+   * No campo **Build Command**, defina `npm install`.
+   * No campo **Start Command**, defina o comando para rodar migrações, inicializar o administrador e iniciar o servidor:
+     ```bash
+     npx knex migrate:latest && npm run db:init-admin && node src/backend/app.js
+     ```
+4. **Variáveis de Ambiente:**
+   * Vá na aba **Environment** do Web Service e clique em **Add Environment Variable**.
+   * Adicione todas as variáveis de ambiente necessárias (`JWT_SECRET`, `NODE_ENV=production`).
+   * Adicione as chaves de conexão PostgreSQL individuais obtidas no banco gerado (ou configure `DATABASE_URL` apontando para a string de conexão do PostgreSQL).
