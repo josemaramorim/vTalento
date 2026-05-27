@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Histórico Financeiro SaaS - V-Talentos</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <style>
+        /* Estilos e Grid Layout */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card-premium {
+            padding: 25px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        .stat-card-premium::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -30%;
+            width: 150px;
+            height: 150px;
+            background: radial-gradient(circle, rgba(212, 175, 55, 0.08) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+        .stat-card-premium .icon-box {
+            width: 55px;
+            height: 55px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        .stat-card-premium .val {
+            font-size: 1.8rem;
+            font-weight: 700;
+            font-family: var(--font-heading);
+            margin-bottom: 4px;
+        }
+        .stat-card-premium .lbl {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .selector-box {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            padding: 15px 25px;
+            border-radius: var(--radius-md);
+            margin-bottom: 30px;
+            box-shadow: var(--shadow-sm);
+        }
+        .selector-box select {
+            min-width: 200px;
+            padding: 10px 15px;
+            border-radius: var(--radius-sm);
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            font-size: 0.95rem;
+            cursor: pointer;
+        }
+        .selector-box select:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+        .table-responsive {
+            overflow-x: auto;
+            width: 100%;
+            border-radius: var(--radius-md);
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--shadow-md);
+        }
+        .premium-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+        .premium-table th {
+            padding: 18px 24px;
+            background: rgba(255, 255, 255, 0.02);
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+        .premium-table td {
+            padding: 18px 24px;
+            border-bottom: 1px solid var(--glass-border);
+            font-size: 0.9rem;
+            color: var(--text-primary);
+        }
+        .premium-table tr:last-child td {
+            border-bottom: none;
+        }
+        .premium-table tr:hover {
+            background: rgba(255, 255, 255, 0.01);
+        }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .badge-success { background: rgba(46, 204, 113, 0.1); color: #2ecc71; border: 1px solid rgba(46, 204, 113, 0.2); }
+        .badge-warning { background: rgba(241, 196, 15, 0.1); color: #f1c40f; border: 1px solid rgba(241, 196, 15, 0.2); }
+        .badge-essencial { background: rgba(52, 152, 219, 0.1); color: #3498db; border: 1px solid rgba(52, 152, 219, 0.2); }
+        .badge-profissional { background: rgba(155, 89, 182, 0.1); color: #9b59b6; border: 1px solid rgba(155, 89, 182, 0.2); }
+        .badge-enterprise { background: rgba(231, 76, 60, 0.1); color: #e74c3c; border: 1px solid rgba(231, 76, 60, 0.2); }
+        
+        .pagination-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+        }
+        .pagination-btn {
+            padding: 8px 16px;
+            border-radius: var(--radius-sm);
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        .pagination-btn:hover:not(:disabled) {
+            border-color: var(--accent-primary);
+            background: rgba(255,255,255,0.08);
+        }
+        .pagination-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body data-theme="dark">
+    <div class="app-layout">
+        <aside class="sidebar">
+            <div class="logo">V-<span>TALENTOS</span></div>
+            <nav id="navLinks">
+                <!-- Injetado dinamicamente via JS -->
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="header" id="appHeader"></header>
+
+            <div class="page-header-actions animate-fade" style="margin-bottom: 25px;">
+                <h1 style="font-size: 1.6rem; font-weight: 600;">💰 Histórico Financeiro & Saúde SaaS</h1>
+            </div>
+
+            <!-- KPIs de Faturamento -->
+            <div class="dashboard-grid animate-fade" style="animation-delay: 0.05s;">
+                <div class="stat-card-premium glass">
+                    <div class="icon-box">🟢</div>
+                    <div>
+                        <div class="val" id="kpiTotalPago">R$ 0,00</div>
+                        <div class="lbl">Total Recebido</div>
+                    </div>
+                </div>
+                <div class="stat-card-premium glass">
+                    <div class="icon-box" style="color: var(--accent-primary);">⏳</div>
+                    <div>
+                        <div class="val" id="kpiTotalPendente" style="color: var(--accent-primary);">R$ 0,00</div>
+                        <div class="lbl">Total em Aberto</div>
+                    </div>
+                </div>
+                <div class="stat-card-premium glass">
+                    <div class="icon-box" style="color: #00f0ff;">📊</div>
+                    <div>
+                        <div class="val" id="kpiTotalGeral" style="color: #00f0ff;">R$ 0,00</div>
+                        <div class="lbl">Volume Faturado</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Painel de Filtros -->
+            <div class="selector-box animate-fade" style="animation-delay: 0.1s;">
+                <div style="display: flex; gap: 20px; width: 100%; flex-wrap: wrap; align-items: center;">
+                    <div style="display: flex; flex-direction: column; gap: 6px;">
+                        <label for="tenantSelect" style="font-weight: 600; font-size: 0.85rem; color: var(--text-secondary);">Filtrar por Inquilino (Empresa):</label>
+                        <select id="tenantSelect" onchange="handleFilterChange()">
+                            <option value="">Todos os inquilinos (Sem filtro)...</option>
+                        </select>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 6px;">
+                        <label for="statusSelect" style="font-weight: 600; font-size: 0.85rem; color: var(--text-secondary);">Status da Fatura:</label>
+                        <select id="statusSelect" onchange="handleFilterChange()">
+                            <option value="">Todos os status...</option>
+                            <option value="PENDENTE">PENDENTE</option>
+                            <option value="PAGA">PAGA</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-secondary" onclick="limparFiltros()" style="margin-top: auto; padding: 10px 20px; font-weight: 600; background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: var(--text-primary); cursor: pointer; border-radius: var(--radius-sm); transition: all 0.3s;">🧹 LIMPAR</button>
+                </div>
+            </div>
+
+            <!-- Tabela de Faturas -->
+            <div class="table-responsive animate-fade" style="animation-delay: 0.15s;">
+                <table class="premium-table">
+                    <thead>
+                        <tr>
+                            <th>Fatura ID</th>
+                            <th>Inquilino (Empresa)</th>
+                            <th>Plano</th>
+                            <th>Valor</th>
+                            <th>Status</th>
+                            <th>Vencimento</th>
+                            <th>Pagamento</th>
+                            <th style="text-align: right;">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="faturasTableBody">
+                        <tr>
+                            <td colspan="8" style="text-align: center; color: var(--text-secondary); padding: 30px;">Carregando histórico...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Paginação -->
+            <div class="pagination-container animate-fade" style="animation-delay: 0.2s;">
+                <span id="pageInfo" style="font-size: 0.85rem; color: var(--text-secondary);">Página 1 de 1</span>
+                <div style="display: flex; gap: 10px;">
+                    <button class="pagination-btn" id="prevPageBtn" onclick="changePage(-1)" disabled>Anterior</button>
+                    <button class="pagination-btn" id="nextPageBtn" onclick="changePage(1)" disabled>Próxima</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="assets/js/auth.js"></script>
+    <script>
+        const token = localStorage.getItem('@VTalentos:token');
+        const userStr = localStorage.getItem('@VTalentos:user');
+
+        if (!token || !userStr) {
+            window.location.href = 'login.html';
+        }
+
+        const user = JSON.parse(userStr);
+        if (user.perfil !== 'SUPER_ADMIN') {
+            window.location.href = 'dashboard.html';
+        }
+
+        // Renderiza o cabeçalho dinâmico do Super-Admin
+        renderHeader('Histórico Financeiro SaaS', 'Métricas, faturamento acumulado, quitações manuais e controle de faturas multi-tenant');
+
+        // Renderiza Sidebar
+        const nav = document.getElementById('navLinks');
+        nav.innerHTML = `
+            <p style="color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; margin-bottom: 10px;">SAAS PLATAFORMA</p>
+            <a href="super-dashboard.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">📊 Plataforma Dashboard</a>
+            <a href="super-empresas.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">🏢 Inquilinos (Empresas)</a>
+            <a href="super-usuarios.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">👥 Usuários Isolados</a>
+            <a href="super-faturamento.html" class="active" style="color: var(--accent-primary); text-decoration: none; font-weight: 600;">💰 Faturamento SaaS</a>
+            <a href="super-provedores.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">💳 Provedores de Pgto.</a>
+            <p style="color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; margin-top: 20px; margin-bottom: 10px;">PERFIL</p>
+            <a href="meu-perfil.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">👤 Meus Dados</a>
+        `;
+
+        let currentPage = 1;
+        const limitPerPage = 10;
+
+        // Captura o empresa_id da URL (se existir) para pré-filtrar
+        const urlParams = new URLSearchParams(window.location.search);
+        let selectedEmpresaId = urlParams.get('empresa_id') || '';
+
+        // Carregar a lista de inquilinos para o dropdown de filtros
+        async function carregarInquilinosDropdown() {
+            try {
+                const res = await fetch('http://localhost:3001/api/super/empresas?limit=100', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (!data.success) throw new Error(data.error);
+
+                const select = document.getElementById('tenantSelect');
+                select.innerHTML = '<option value="">Todos os inquilinos (Sem filtro)...</option>';
+                
+                data.data.forEach(emp => {
+                    const option = document.createElement('option');
+                    option.value = emp.id;
+                    option.textContent = emp.nome;
+                    if (emp.id === selectedEmpresaId) {
+                        option.selected = true;
+                    }
+                    select.appendChild(option);
+                });
+            } catch (err) {
+                console.error(err);
+                showToast('Erro ao carregar lista de inquilinos.', 'error');
+            }
+        }
+
+        // Buscar Faturas com os filtros aplicados
+        async function carregarFaturas() {
+            const statusSelect = document.getElementById('statusSelect').value;
+            const empresaSelect = document.getElementById('tenantSelect').value;
+
+            try {
+                let url = `http://localhost:3001/api/super/faturas?page=${currentPage}&limit=${limitPerPage}`;
+                if (empresaSelect) url += `&empresaId=${empresaSelect}`;
+                if (statusSelect) url += `&status=${statusSelect}`;
+
+                const res = await fetch(url, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (!data.success) throw new Error(data.error);
+
+                // Renderiza KPIs
+                document.getElementById('kpiTotalPago').textContent = data.stats.total_pago.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                document.getElementById('kpiTotalPendente').textContent = data.stats.total_pendente.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                document.getElementById('kpiTotalGeral').textContent = data.stats.total_geral.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+                // Renderiza Tabela
+                renderTable(data.data);
+
+                // Paginação
+                document.getElementById('pageInfo').textContent = `Página ${data.meta.page} de ${data.meta.totalPages || 1}`;
+                document.getElementById('prevPageBtn').disabled = data.meta.page <= 1;
+                document.getElementById('nextPageBtn').disabled = data.meta.page >= data.meta.totalPages;
+            } catch (err) {
+                console.error(err);
+                showToast(err.message || 'Erro ao carregar faturas.', 'error');
+            }
+        }
+
+        function renderTable(faturas) {
+            const tbody = document.getElementById('faturasTableBody');
+            if (faturas.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-secondary); padding: 30px;">Nenhuma fatura encontrada com os filtros selecionados.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = '';
+            faturas.forEach(f => {
+                const tr = document.createElement('tr');
+                const badgeClass = f.status === 'PAGA' ? 'badge-success' : 'badge-warning';
+                const formattedValue = parseFloat(f.valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                const vencimento = new Date(f.data_vencimento).toLocaleDateString('pt-BR');
+                const pagamento = f.data_pagamento ? new Date(f.data_pagamento).toLocaleDateString('pt-BR') : '-';
+
+                // Botão de ação condicional
+                let actionBtn = '';
+                if (f.status !== 'PAGA') {
+                    actionBtn = `<button class="btn btn-secondary btn-sm" onclick="baixarFatura('${f.id}')" style="padding: 5px 10px; font-size: 0.8rem; font-weight: 600; background: rgba(46, 204, 113, 0.1); color: #2ecc71; border: 1px solid rgba(46, 204, 113, 0.25); cursor: pointer; border-radius: 4px; transition: all 0.3s;">✔️ QUITAR</button>`;
+                } else {
+                    actionBtn = `<span style="color: var(--text-secondary); font-size: 0.85rem; font-style: italic;">Quitado</span>`;
+                }
+
+                tr.innerHTML = `
+                    <td style="font-family: monospace; font-size: 0.85rem; color: var(--text-secondary);">${f.id.slice(0, 8)}...</td>
+                    <td style="font-weight: 600;">${f.empresa_nome}</td>
+                    <td><span class="badge ${f.empresa_plano === 'ESSENCIAL' ? 'badge-essencial' : (f.empresa_plano === 'PROFISSIONAL' ? 'badge-profissional' : 'badge-enterprise')}">${f.empresa_plano}</span></td>
+                    <td style="font-weight: 600; color: ${f.status === 'PAGA' ? '#2ecc71' : 'var(--accent-primary)'}">${formattedValue}</td>
+                    <td><span class="badge ${badgeClass}">${f.status}</span></td>
+                    <td>${vencimento}</td>
+                    <td>${pagamento}</td>
+                    <td style="text-align: right;">${actionBtn}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function baixarFatura(faturaId) {
+            if (!confirm('Deseja realmente dar baixa manual nesta fatura? Esta ação é irreversível e estenderá o licenciamento da empresa por mais 30 dias.')) {
+                return;
+            }
+
+            try {
+                const res = await fetch(`http://localhost:3001/api/super/faturas/${faturaId}/baixa`, {
+                    method: 'POST',
+                    headers: { 
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const data = await res.json();
+                if (!data.success) throw new Error(data.error);
+
+                showToast('Fatura quitada e licença da empresa prorrogada com sucesso!', 'success');
+                carregarFaturas();
+            } catch (err) {
+                console.error(err);
+                showToast(err.message, 'error');
+            }
+        }
+
+        function handleFilterChange() {
+            currentPage = 1;
+            carregarFaturas();
+        }
+
+        function limparFiltros() {
+            document.getElementById('tenantSelect').value = '';
+            document.getElementById('statusSelect').value = '';
+            selectedEmpresaId = '';
+            currentPage = 1;
+            window.history.pushState({}, document.title, window.location.pathname);
+            carregarFaturas();
+        }
+
+        function changePage(direction) {
+            currentPage += direction;
+            carregarFaturas();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        async function init() {
+            await carregarInquilinosDropdown();
+            await carregarFaturas();
+        }
+
+        init();
+    </script>
+</body>
+</html>

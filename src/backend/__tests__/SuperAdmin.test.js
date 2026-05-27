@@ -49,7 +49,10 @@ describe('SuperAdmin Module & Tenant Licensing Integration Tests', () => {
     chain.count = jest.fn().mockResolvedValue(stubs.count || [{ total: 0 }]);
     chain.insert = jest.fn().mockResolvedValue(stubs.insert || [1]);
     chain.update = jest.fn().mockResolvedValue(stubs.update || 1);
-    chain.del = jest.fn().mockResolvedValue(1);
+    chain.del = jest.fn().mockResolvedValue(stubs.del || 1);
+    chain.join = jest.fn().mockReturnThis();
+    chain.whereIn = jest.fn().mockReturnThis();
+    chain.sum = jest.fn().mockImplementation(() => Promise.resolve(stubs.sum || [{ total: 0 }]));
     chain.clone = jest.fn().mockReturnValue(chain);
 
     // Torna a cadeia de chamadas "thenable" (compatível com await)
@@ -201,6 +204,30 @@ describe('SuperAdmin Module & Tenant Licensing Integration Tests', () => {
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
       expect(response.body.message).toBe('Fatura baixada com sucesso');
+    });
+
+    it('Deve listar todas as faturas com filtros e KPIs para o Super Admin', async () => {
+      const mockFaturas = [
+        { id: 'f1', valor: 399.00, status: 'PENDENTE', empresa_nome: 'Empresa 1', empresa_plano: 'PROFISSIONAL' }
+      ];
+
+      db.mockImplementation(() => {
+        return createChainMock({
+          count: [{ total: 1 }],
+          offset: mockFaturas,
+          sum: [{ total: 399.00 }]
+        });
+      });
+
+      const response = await request(app)
+        .get('/api/super/faturas?page=1&limit=10&status=PENDENTE')
+        .set('Authorization', `Bearer ${getSuperAdminToken()}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data).toHaveLength(1);
+      expect(response.body.data[0].id).toBe('f1');
+      expect(response.body.stats.total_pendente).toBe(399.00);
     });
   });
 

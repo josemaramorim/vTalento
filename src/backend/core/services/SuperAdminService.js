@@ -277,6 +277,76 @@ class SuperAdminService {
 
   // --- FATURAS / INVOICES (GamFatura) ---
 
+  async listFaturas(page = 1, limit = 10, empresaId = '', status = '') {
+    const limitSanitizado = [10, 50, 100].includes(parseInt(limit, 10)) ? parseInt(limit, 10) : 10;
+    const paginaSanitizada = Math.max(1, parseInt(page, 10) || 1);
+    const offset = (paginaSanitizada - 1) * limitSanitizado;
+
+    let query = db('GamFatura')
+      .join('GamEmpresa', 'GamFatura.empresa_id', '=', 'GamEmpresa.id')
+      .select(
+        'GamFatura.id',
+        'GamFatura.empresa_id',
+        'GamFatura.valor',
+        'GamFatura.status',
+        'GamFatura.data_vencimento',
+        'GamFatura.data_pagamento',
+        'GamFatura.created_at',
+        'GamEmpresa.nome as empresa_nome',
+        'GamEmpresa.plano as empresa_plano'
+      );
+
+    let countQuery = db('GamFatura');
+
+    if (empresaId) {
+      query = query.where('GamFatura.empresa_id', empresaId);
+      countQuery = countQuery.where('empresa_id', empresaId);
+    }
+
+    if (status) {
+      query = query.where('GamFatura.status', status);
+      countQuery = countQuery.where('status', status);
+    }
+
+    const [{ total }] = await countQuery.count('id as total');
+    const totalRegistros = parseInt(total, 10);
+
+    const faturas = await query
+      .orderBy('GamFatura.created_at', 'desc')
+      .limit(limitSanitizado)
+      .offset(offset);
+
+    // Métricas
+    let totalPagoQuery = db('GamFatura').where({ status: 'PAGA' });
+    let totalPendenteQuery = db('GamFatura').whereIn('status', ['PENDENTE', 'VENCIDA']);
+
+    if (empresaId) {
+      totalPagoQuery = totalPagoQuery.where({ empresa_id: empresaId });
+      totalPendenteQuery = totalPendenteQuery.where({ empresa_id: empresaId });
+    }
+
+    const totalPagoResult = await totalPagoQuery.sum('valor as total');
+    const totalPendenteResult = await totalPendenteQuery.sum('valor as total');
+
+    const totalPago = parseFloat(totalPagoResult[0].total) || 0;
+    const totalPendente = parseFloat(totalPendenteResult[0].total) || 0;
+
+    return {
+      data: faturas,
+      stats: {
+        total_pago: totalPago,
+        total_pendente: totalPendente,
+        total_geral: totalPago + totalPendente
+      },
+      meta: {
+        total: totalRegistros,
+        page: paginaSanitizada,
+        limit: limitSanitizado,
+        totalPages: Math.ceil(totalRegistros / limitSanitizado)
+      }
+    };
+  }
+
   async baixarFaturaManual(faturaId) {
     const fatura = await db('GamFatura').where({ id: faturaId }).first();
     if (!fatura) {
@@ -386,8 +456,9 @@ class SuperAdminService {
     const salt = await bcrypt.genSalt(10);
     const senha_hash = await bcrypt.hash(senha, salt);
 
+    const userId = require('crypto').randomUUID();
     const novoUsuario = {
-      id: require('crypto').randomUUID(),
+      id: userId,
       empresa_id: empresaId,
       nome,
       email,
@@ -403,8 +474,13 @@ class SuperAdminService {
 
     await db('GamUsuario').insert(novoUsuario);
 
-    const { senha_hash: _, ...retorno } = novoUsuario;
-    return retorno;
+    // Busca o usuário do banco para evitar retornar os helpers do Knex (db.fn.now) que possuem estrutura circular
+    const usuarioCriado = await db('GamUsuario')
+      .where({ id: userId })
+      .select('id', 'nome', 'email', 'cpf', 'perfil', 'saldo_disponivel', 'saldo_a_receber', 'tema_preferido', 'created_at', 'updated_at')
+      .first();
+
+    return usuarioCriado;
   }
 
   async updateUsuarioForEmpresa(empresaId, usuarioId, dados) {
@@ -436,8 +512,13 @@ class SuperAdminService {
 
     await db('GamUsuario').where({ id: usuarioId, empresa_id: empresaId }).update(updates);
 
-    const { senha_hash: _, ...retorno } = { ...usuario, ...updates };
-    return retorno;
+    // Busca o usuário atualizado do banco para evitar problemas com serialização circular de db.fn.now()
+    const usuarioAtualizado = await db('GamUsuario')
+      .where({ id: usuarioId, empresa_id: empresaId })
+      .select('id', 'nome', 'email', 'cpf', 'perfil', 'saldo_disponivel', 'saldo_a_receber', 'tema_preferido', 'created_at', 'updated_at')
+      .first();
+
+    return usuarioAtualizado;
   }
 
   async deleteUsuarioForEmpresa(empresaId, usuarioId) {

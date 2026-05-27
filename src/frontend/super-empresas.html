@@ -460,49 +460,6 @@
         </div>
     </div>
 
-    <!-- 4. MODAL: SAÚDE FINANCEIRA & FATURAS -->
-    <div class="modal-overlay" id="financeiroModal">
-        <div class="modal-card glass" style="max-width: 750px;">
-            <div class="modal-header">
-                <h2 style="font-size: 1.2rem; font-weight: 600;">📊 Histórico Financeiro & Saúde do Tenant</h2>
-                <button class="modal-close-btn" onclick="closeModal('financeiroModal')">✕</button>
-            </div>
-            
-            <div class="health-grid">
-                <div class="health-card">
-                    <div class="val" id="finTotalPago" style="color: var(--success);">R$ 0,00</div>
-                    <div class="lbl">Total Recebido</div>
-                </div>
-                <div class="health-card">
-                    <div class="val" id="finTotalAberto" style="color: var(--error);">R$ 0,00</div>
-                    <div class="lbl">Total em Aberto</div>
-                </div>
-                <div class="health-card">
-                    <div class="val" id="finProximaCobranca" style="color: var(--accent-primary);">--/--/----</div>
-                    <div class="lbl">Próximo Vencimento</div>
-                </div>
-            </div>
-
-            <h3 style="font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; color: var(--accent-primary);">Trilha de Faturas Geradas</h3>
-            <div class="table-responsive" style="max-height: 250px; overflow-y: auto;">
-                <table class="premium-table" style="font-size: 0.8rem;">
-                    <thead>
-                        <tr>
-                            <th>Data Vencimento</th>
-                            <th>Valor Cobrado</th>
-                            <th>Provedor</th>
-                            <th>Status Fatura</th>
-                            <th style="text-align: right;">Ação</th>
-                        </tr>
-                    </thead>
-                    <tbody id="faturasTableBody">
-                        <!-- Injetado dinamicamente -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
     <script src="assets/js/auth.js"></script>
     <script>
         const token = localStorage.getItem('@VTalentos:token');
@@ -527,6 +484,7 @@
             <a href="super-dashboard.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">📊 Plataforma Dashboard</a>
             <a href="super-empresas.html" class="active" style="color: var(--accent-primary); text-decoration: none; font-weight: 600;">🏢 Inquilinos (Empresas)</a>
             <a href="super-usuarios.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">👥 Usuários Isolados</a>
+            <a href="super-faturamento.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">💰 Faturamento SaaS</a>
             <a href="super-provedores.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">💳 Provedores de Pgto.</a>
             <p style="color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; margin-top: 20px; margin-bottom: 10px;">PERFIL</p>
             <a href="meu-perfil.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">👤 Meus Dados</a>
@@ -632,7 +590,7 @@
                     <td>${faturamentoText}</td>
                     <td style="text-align: right;">
                         ${emergenciaBtn}
-                        <button class="btn btn-primary" onclick="openFinanceiroModal('${emp.id}')" style="padding: 6px 12px; font-size: 0.75rem; font-weight:600; border-radius:4px; margin-right:5px; box-shadow:none;">📊 SAÚDE</button>
+                        <button class="btn btn-primary" onclick="window.location.href='super-faturamento.html?empresa_id=${emp.id}'" style="padding: 6px 12px; font-size: 0.75rem; font-weight:600; border-radius:4px; margin-right:5px; box-shadow:none;">📊 SAÚDE</button>
                         <button class="btn" onclick="openEditEmpresaModal('${emp.id}')" style="padding: 6px 12px; font-size: 0.75rem; font-weight:600; background:rgba(255,255,255,0.05); color:var(--text-primary); border-radius:4px; margin-right:5px;">✏️ EDITAR</button>
                         <button class="btn" onclick="deletarEmpresa('${emp.id}', '${emp.nome}')" style="padding: 6px 12px; font-size: 0.75rem; font-weight:600; background:rgba(255,0,0,0.1); color:var(--error); border-radius:4px;">❌ EXCLUIR</button>
                     </td>
@@ -813,79 +771,7 @@
             }
         });
 
-        // SAÚDE FINANCEIRA & QUITAÇÃO MANUAL
-        async function openFinanceiroModal(empresaId) {
-            try {
-                const res = await fetch(`http://localhost:3001/api/super/empresas/${empresaId}/financeiro`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const data = await res.json();
-                
-                if (data.success) {
-                    const saude = data.data;
-                    document.getElementById('finTotalPago').innerText = formatReal(saude.total_pago);
-                    document.getElementById('finTotalAberto').innerText = formatReal(saude.total_pendente);
-                    document.getElementById('finProximaCobranca').innerText = formatData(saude.data_proxima_cobranca);
 
-                    // Renderiza Tabela de Faturas
-                    const tbody = document.getElementById('faturasTableBody');
-                    tbody.innerHTML = '';
-
-                    if (saude.faturas.length === 0) {
-                        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-secondary);">Nenhuma fatura encontrada.</td></tr>`;
-                    } else {
-                        saude.faturas.forEach(fat => {
-                            const tr = document.createElement('tr');
-                            const statusClass = fat.status === 'PAGA' ? 'badge-ativo' : 'badge-suspenso';
-                            
-                            let actionBtn = '';
-                            if (fat.status !== 'PAGA') {
-                                actionBtn = `<button class="btn btn-primary" onclick="baixarFatura('${fat.id}', '${empresaId}')" style="padding: 4px 8px; font-size: 0.7rem; border-radius: 4px; box-shadow:none; font-weight:600;">DAR BAIXA</button>`;
-                            } else {
-                                actionBtn = `<span style="color:var(--text-secondary); font-size:0.75rem;">Quitada</span>`;
-                            }
-
-                            tr.innerHTML = `
-                                <td>${formatData(fat.data_vencimento)}</td>
-                                <td><strong>${formatReal(fat.valor)}</strong></td>
-                                <td><span style="font-size:0.7rem; font-weight:600; text-transform:uppercase; color:var(--text-secondary);">${fat.provedor || 'PLATAFORMA'}</span></td>
-                                <td><span class="badge ${statusClass}">${fat.status}</span></td>
-                                <td style="text-align: right;">${actionBtn}</td>
-                            `;
-                            tbody.appendChild(tr);
-                        });
-                    }
-
-                    openModal('financeiroModal');
-                } else {
-                    throw new Error(data.error);
-                }
-            } catch (err) {
-                showToast(err.message, 'error');
-            }
-        }
-
-        async function baixarFatura(faturaId, empresaId) {
-            if (!confirm('Deseja realmente dar baixa manual nesta fatura? Esta ação reativará e estenderá a licença da empresa por 30 dias.')) return;
-
-            try {
-                const res = await fetch(`http://localhost:3001/api/super/faturas/${faturaId}/baixa`, {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const data = await res.json();
-                if (data.success) {
-                    showToast('Fatura quitada e licença estendida por 30 dias!', 'success');
-                    // Recarrega modal financeiro e tabela
-                    openFinanceiroModal(empresaId);
-                    fetchEmpresas(currentPage);
-                } else {
-                    throw new Error(data.error);
-                }
-            } catch (err) {
-                showToast(err.message, 'error');
-            }
-        }
 
         async function deletarEmpresa(id, nome) {
             if (!confirm(`ATENÇÃO CRÍTICA!\n\nDeseja realmente excluir permanentemente o inquilino "${nome}"?\n\nEsta ação excluirá TODOS os usuários, faturas, prêmios, resgates e transações vinculadas a esta empresa na nuvem. Esta operação é irreversível e afetará todos os corretores associados.`)) return;

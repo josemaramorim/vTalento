@@ -87,6 +87,19 @@ class SuperAdminController {
   }
 
   // Faturas
+  async listFaturas(req, res) {
+    try {
+      const page = parseInt(req.query.page, 10) || 1;
+      const limit = parseInt(req.query.limit, 10) || 10;
+      const empresaId = req.query.empresaId || '';
+      const status = req.query.status || '';
+      const result = await SuperAdminService.listFaturas(page, limit, empresaId, status);
+      return res.json({ success: true, ...result });
+    } catch (err) {
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  }
+
   async baixarFaturaManual(req, res) {
     try {
       const { id } = req.params;

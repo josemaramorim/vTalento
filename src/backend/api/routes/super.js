@@ -21,6 +21,7 @@ router.get('/empresas/:id/financeiro', SuperAdminController.getEmpresaSaudeFinan
 router.post('/empresas/:id/emergencia', SuperAdminController.liberarAcessoEmergencia);
 
 // --- FATURAS ---
+router.get('/faturas', SuperAdminController.listFaturas);
 router.post('/faturas/:id/baixa', SuperAdminController.baixarFaturaManual);
 
 // --- USUÁRIOS ISOLADOS POR TENANT ---

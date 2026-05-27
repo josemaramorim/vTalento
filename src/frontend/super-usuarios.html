@@ -202,7 +202,7 @@
 
             <div class="page-header-actions animate-fade">
                 <h1 style="font-size: 1.6rem; font-weight: 600;">👥 Gestão Lógica Isolada de Usuários</h1>
-                <button class="btn btn-primary" id="btnNovoUsuario" onclick="openNewUsuarioModal()" style="font-weight: 600;" disabled>➕ ADICIONAR NOVO USUÁRIO</button>
+                <button class="btn btn-primary" id="btnNovoUsuario" onclick="openNewUsuarioModal()" style="font-weight: 600;">➕ ADICIONAR NOVO USUÁRIO</button>
             </div>
 
             <!-- Seletor de Tenant -->
@@ -351,6 +351,7 @@
             <a href="super-dashboard.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">📊 Plataforma Dashboard</a>
             <a href="super-empresas.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">🏢 Inquilinos (Empresas)</a>
             <a href="super-usuarios.html" class="active" style="color: var(--accent-primary); text-decoration: none; font-weight: 600;">👥 Usuários Isolados</a>
+            <a href="super-faturamento.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">💰 Faturamento SaaS</a>
             <a href="super-provedores.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">💳 Provedores de Pgto.</a>
             <p style="color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; margin-top: 20px; margin-bottom: 10px;">PERFIL</p>
             <a href="meu-perfil.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">👤 Meus Dados</a>
@@ -394,15 +395,12 @@
             const select = document.getElementById('tenantSelect');
             selectedTenantId = select.value;
             
-            const btn = document.getElementById('btnNovoUsuario');
             const busca = document.getElementById('buscaInput');
 
             if (selectedTenantId) {
-                btn.disabled = false;
                 busca.disabled = false;
                 fetchUsuarios(1);
             } else {
-                btn.disabled = true;
                 busca.disabled = true;
                 document.getElementById('usuariosTableBody').innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-secondary);">Selecione uma empresa acima para isolar e carregar os usuários.</td></tr>`;
                 updatePagination({ page: 1, totalPages: 1 });
@@ -500,6 +498,11 @@
 
         // NOVO USUÁRIO
         function openNewUsuarioModal() {
+            if (!selectedTenantId) {
+                showToast('Selecione uma empresa (inquilino) no seletor acima antes de adicionar um usuário.', 'error');
+                return;
+            }
+
             document.getElementById('newUsuarioForm').reset();
             
             // Busca o nome da empresa selecionada no combo box principal
