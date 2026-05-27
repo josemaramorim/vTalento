@@ -154,6 +154,38 @@
                             </div>
                         </form>
                     </section>
+
+                    <!-- Configurações da Empresa (Apenas para ADMIN_EMPRESA) -->
+                    <section class="form-card glass" id="empresaConfigSection" style="display: none;">
+                        <h2 style="font-size: 1.2rem; margin-bottom: 20px; color: var(--accent-primary);">🏢 Configurações da Empresa</h2>
+                        
+                        <form id="empresaForm">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="empresaNomeInput">Nome da Empresa</label>
+                                    <input type="text" id="empresaNomeInput" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="empresaLogoInput">URL da Logomarca (Logo)</label>
+                                    <input type="url" id="empresaLogoInput" placeholder="Ex: https://dominio.com/logo.png">
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="empresaCorInput">Cor Primária do Tema</label>
+                                    <div style="display: flex; gap: 10px; align-items: center;">
+                                        <input type="color" id="empresaCorInput" value="#D4AF37" style="width: 60px; height: 42px !important; padding: 4px 6px !important; border: 1px solid var(--glass-border); border-radius: var(--radius-sm); background: none; cursor: pointer;">
+                                        <input type="text" id="empresaCorHexInput" placeholder="#D4AF37" pattern="^#([A-Fa-f0-9]{6})$" style="flex: 1;" title="Formato hexadecimal válido, ex: #D4AF37">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div style="text-align: right; margin-top: 30px;">
+                                <button type="submit" class="btn btn-primary" id="btnSalvarEmpresa">SALVAR CONFIGURAÇÕES DA EMPRESA</button>
+                            </div>
+                        </form>
+                    </section>
                 </div>
             </div>
         </main>
@@ -180,10 +212,24 @@
 
         function renderSidebar() {
             const nav = document.getElementById('navLinks');
+
+            if (currentUser.perfil === 'SUPER_ADMIN') {
+                nav.innerHTML = `
+                    <p style="color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; margin-bottom: 10px;">SAAS PLATAFORMA</p>
+                    <a href="super-dashboard.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">📊 Plataforma Dashboard</a>
+                    <a href="super-empresas.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">🏢 Inquilinos (Empresas)</a>
+                    <a href="super-usuarios.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">👥 Usuários Isolados</a>
+                    <p style="color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; margin-top: 20px; margin-bottom: 10px;">PERFIL</p>
+                    <a href="meu-perfil.html" class="active" style="color: var(--accent-primary); text-decoration: none; font-weight: 600;">👤 Meus Dados</a>
+                `;
+                return;
+            }
+
             nav.innerHTML = `
                 <p style="color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; margin-bottom: 10px;">MENU PRINCIPAL</p>
                 <a href="dashboard.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">🏠 Dashboard</a>
                 <a href="vitrine.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">🎁 Vitrine de Prêmios</a>
+                <a href="meu-extrato.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">📊 Meu Extrato</a>
             `;
 
             if (isAdmin()) {
@@ -193,6 +239,7 @@
                     <a href="admin-importacao.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">📤 Importação Excel</a>
                     <a href="admin-premios.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">⚙️ Gerenciar Prêmios</a>
                     <a href="admin-usuarios.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">👥 Gestão de Corretores</a>
+                    <a href="admin-faturamento.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">💳 Faturamento SaaS</a>
                 `;
             }
             // Marcador visual de perfil
@@ -223,6 +270,9 @@
                     currentUser.perfil = latestData.perfil;
                     currentUser.tema_preferido = latestData.tema_preferido || 'dark';
                     localStorage.setItem('@VTalentos:user', JSON.stringify(currentUser));
+                    
+                    // Garante que o menu lateral sincroniza com o perfil mais atualizado do banco
+                    renderSidebar();
                 }
             } catch (err) {
                 console.error('Erro de sincronização de perfil:', err);
@@ -231,7 +281,14 @@
             // Popula os elementos do cartão lateral
             document.getElementById('avatarLetra').innerText = currentUser.nome.charAt(0).toUpperCase();
             document.getElementById('cardNome').innerText = currentUser.nome;
-            document.getElementById('cardPerfil').innerText = isAdmin() ? 'Administrador' : 'Corretor';
+            
+            let perfilExibido = 'Corretor';
+            if (currentUser.perfil === 'SUPER_ADMIN') {
+                perfilExibido = 'Super Admin';
+            } else if (currentUser.perfil === 'ADMIN_EMPRESA') {
+                perfilExibido = 'Administrador';
+            }
+            document.getElementById('cardPerfil').innerText = perfilExibido;
             document.getElementById('cardSaldo').innerText = `${parseFloat(currentUser.saldo_disponivel || 0).toFixed(2)} T$`;
 
             // Popula os campos do formulário
@@ -244,6 +301,19 @@
             document.getElementById('temaLightBtn').classList.toggle('active', tema === 'light');
             document.getElementById('temaDarkBtn').classList.toggle('active', tema === 'dark');
             document.body.setAttribute('data-theme', tema);
+
+            // Sincroniza e exibe configurações da empresa
+            if (currentUser.perfil === 'ADMIN_EMPRESA') {
+                document.getElementById('empresaConfigSection').style.display = 'block';
+                document.getElementById('empresaNomeInput').value = currentUser.empresa_nome || '';
+                document.getElementById('empresaLogoInput').value = currentUser.empresa_logo_url || '';
+                
+                const activeColor = currentUser.empresa_cor_primaria || '#D4AF37';
+                document.getElementById('empresaCorInput').value = activeColor;
+                document.getElementById('empresaCorHexInput').value = activeColor.toUpperCase();
+            } else {
+                document.getElementById('empresaConfigSection').style.display = 'none';
+            }
 
             // Desenha cabeçalho dinâmico premium
             renderHeader("Meu Perfil", "Gerencie suas informações cadastrais e de acesso com segurança");
@@ -329,6 +399,75 @@
             } finally {
                 btnSalvar.disabled = false;
                 btnSalvar.innerText = 'SALVAR ALTERAÇÕES';
+            }
+        });
+
+        // Sincronização entre Color Picker e Campo Hex
+        const colorPicker = document.getElementById('empresaCorInput');
+        const colorHex = document.getElementById('empresaCorHexInput');
+
+        if (colorPicker && colorHex) {
+            colorPicker.addEventListener('input', (e) => {
+                colorHex.value = e.target.value.toUpperCase();
+            });
+
+            colorHex.addEventListener('input', (e) => {
+                const val = e.target.value;
+                if (/^#[0-9A-F]{6}$/i.test(val)) {
+                    colorPicker.value = val;
+                }
+            });
+        }
+
+        // Envio do formulário de empresa
+        document.getElementById('empresaForm')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const nome = document.getElementById('empresaNomeInput').value;
+            const logo_url = document.getElementById('empresaLogoInput').value;
+            const cor_primaria = document.getElementById('empresaCorHexInput').value || colorPicker.value;
+
+            const btnSalvarEmpresa = document.getElementById('btnSalvarEmpresa');
+
+            try {
+                btnSalvarEmpresa.disabled = true;
+                btnSalvarEmpresa.innerText = 'SALVANDO...';
+
+                const response = await fetch('http://localhost:3001/api/admin/empresa', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ nome, logo_url, cor_primaria })
+                });
+
+                if (response.status === 401) {
+                    logout();
+                    return;
+                }
+
+                const resData = await response.json();
+
+                if (!response.ok || !resData.success) {
+                    throw new Error(resData.error || 'Erro ao atualizar dados da empresa');
+                }
+
+                showToast('Configurações da empresa atualizadas com sucesso!', 'success');
+                
+                // Sincroniza e recarrega os dados na tela
+                await syncProfileInfo();
+
+                // Aplica visualmente na hora
+                if (window.applyTenantBranding) {
+                    window.applyTenantBranding(currentUser);
+                }
+
+            } catch (err) {
+                showToast(err.message, 'error');
+            } finally {
+                btnSalvarEmpresa.disabled = false;
+                btnSalvarEmpresa.innerText = 'SALVAR CONFIGURAÇÕES DA EMPRESA';
             }
         });
 

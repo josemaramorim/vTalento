@@ -91,7 +91,7 @@ class UsuarioService {
   }
 
   // Tarefa 12.3 — FASE 5 — Editar dados de um usuário pelo Admin
-  async updateUsuarioAdmin({ empresa_id, id, nome, email, cpf }) {
+  async updateUsuarioAdmin({ empresa_id, id, nome, email, cpf, senha }) {
     const usuario = await db('GamUsuario').where({ id, empresa_id }).first();
     if (!usuario) {
       throw new Error('Usuário não encontrado.');
@@ -112,9 +112,21 @@ class UsuarioService {
       updated_at: db.fn.now()
     };
 
+    // Se uma nova senha foi fornecida, hash e inclui no update
+    if (senha && senha.length >= 6) {
+      const salt = await bcrypt.genSalt(10);
+      updates.senha_hash = await bcrypt.hash(senha, salt);
+    }
+
     await db('GamUsuario').where({ id, empresa_id }).update(updates);
 
-    return { id, ...usuario, ...updates };
+    // Re-fetch to avoid returning raw db.fn.now() Timeout objects that break JSON serialization
+    const atualizado = await db('GamUsuario')
+      .where({ id, empresa_id })
+      .select('id', 'nome', 'email', 'cpf', 'perfil', 'saldo_disponivel', 'saldo_a_receber', 'created_at', 'updated_at')
+      .first();
+
+    return atualizado;
   }
 
   // Tarefa 12.4 — FASE 5 — Atualizar dados próprios (Corretor ou Admin)

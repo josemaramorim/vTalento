@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acesso Suspenso - V-Talentos SaaS</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: var(--bg-primary);
+            font-family: var(--font-main);
+            padding: 20px;
+        }
+        .lockout-card {
+            width: 100%;
+            max-width: 550px;
+            padding: 40px;
+            border-radius: var(--radius-md);
+            text-align: center;
+            box-shadow: var(--shadow-md);
+            animation: fadeIn 0.6s ease;
+        }
+        .lock-icon {
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+            display: inline-block;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+            100% { transform: scale(1); }
+        }
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            background: rgba(231, 76, 60, 0.1);
+            color: var(--error);
+            border: 1px solid rgba(231, 76, 60, 0.2);
+            margin-bottom: 25px;
+        }
+        .payment-methods-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin: 25px 0;
+        }
+        .method-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-sm);
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        .method-card:hover, .method-card.active {
+            border-color: var(--accent-primary);
+            background: rgba(255, 255, 255, 0.06);
+            transform: translateY(-2px);
+        }
+        .method-card .icon {
+            font-size: 1.8rem;
+            margin-bottom: 8px;
+            display: block;
+        }
+        .method-card span {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+        .method-card.active span {
+            color: var(--accent-primary);
+        }
+        .invoice-box {
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-sm);
+            padding: 20px;
+            margin-bottom: 25px;
+            text-align: left;
+        }
+        .invoice-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+        }
+        .invoice-row:last-child {
+            margin-bottom: 0;
+            border-top: 1px dashed var(--glass-border);
+            padding-top: 10px;
+            margin-top: 10px;
+            font-weight: 700;
+        }
+        .action-button {
+            width: 100%;
+            font-size: 1rem;
+            font-weight: 700;
+            padding: 14px 28px;
+            border-radius: var(--radius-sm);
+            margin-top: 10px;
+        }
+        /* Detalhes de pagamento mockados */
+        .payment-info-box {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-sm);
+            padding: 20px;
+            margin-top: 20px;
+            text-align: center;
+            animation: fadeIn 0.4s ease;
+        }
+        .qr-code-placeholder {
+            background: white;
+            padding: 10px;
+            display: inline-block;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        .copia-cola-input {
+            width: 100%;
+            background: rgba(0,0,0,0.2);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-family: monospace;
+            text-align: center;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body data-theme="dark">
+    <div class="lockout-card glass">
+        <span class="lock-icon">🔒</span>
+        <div id="statusBadgeContainer">
+            <span class="status-badge">Acesso Bloqueado</span>
+        </div>
+
+        <h1 id="lockoutTitle" style="font-size: 1.8rem; font-weight: 600; margin-bottom: 15px;">Assinatura Suspensa</h1>
+        <p id="lockoutMessage" style="color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 25px; line-height: 1.6;">
+            Verificamos que as mensalidades da plataforma para a sua empresa estão pendentes.
+        </p>
+
+        <!-- Seção ADMIN_EMPRESA -->
+        <div id="adminSection" style="display: none;">
+            <div class="invoice-box" id="invoiceDetailsBox">
+                <div class="invoice-row">
+                    <span>Inquilino:</span>
+                    <span id="tenantName">Empresa Teste</span>
+                </div>
+                <div class="invoice-row">
+                    <span>Fatura Referência:</span>
+                    <span id="invoiceRef">Mensalidade SaaS</span>
+                </div>
+                <div class="invoice-row">
+                    <span>Vencimento Original:</span>
+                    <span id="invoiceDueDate">--/--/----</span>
+                </div>
+                <div class="invoice-row">
+                    <span>Valor Total em Aberto:</span>
+                    <strong id="invoiceValue" style="color: var(--error);">0,00 R$</strong>
+                </div>
+            </div>
+
+            <h3 style="font-size: 1rem; font-weight: 600; text-align: left; margin-bottom: 10px;">Selecione o Método de Pagamento:</h3>
+            <div class="payment-methods-grid">
+                <div class="method-card active" id="methodCard" onclick="selectMethod('CARTAO')">
+                    <span class="icon">💳</span>
+                    <span>Cartão</span>
+                </div>
+                <div class="method-card" id="methodPix" onclick="selectMethod('PIX')">
+                    <span class="icon">⚡</span>
+                    <span>Pix</span>
+                </div>
+                <div class="method-card" id="methodBoleto" onclick="selectMethod('BOLETO')">
+                    <span class="icon">📄</span>
+                    <span>Boleto</span>
+                </div>
+            </div>
+
+            <button class="btn btn-primary action-button" id="payButton" onclick="processPayment()">PAGAR E LIBERAR ACESSO</button>
+            
+            <div id="paymentInfoBox" class="payment-info-box" style="display: none;">
+                <!-- Preenchido via JS -->
+            </div>
+        </div>
+
+        <!-- Seção CORRETOR -->
+        <div id="corretorSection" style="display: none;">
+            <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--glass-border); padding: 25px; border-radius: var(--radius-sm); margin-bottom: 25px;">
+                <p style="font-size: 0.95rem; line-height: 1.7; color: var(--text-secondary);">
+                    Por favor, entre em contato com o <strong>administrador</strong> do seu portal V-Talentos para regularizar as mensalidades em aberto.
+                </p>
+                <p style="font-size: 0.85rem; color: var(--accent-primary); margin-top: 15px; font-weight: 600;">
+                    Assim que o pagamento for confirmado, seu acesso será reestabelecido automaticamente.
+                </p>
+            </div>
+        </div>
+
+        <button class="btn" onclick="logout()" style="margin-top: 20px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--glass-border); color: var(--text-secondary); width: 100%; font-weight: 600;">SAIR DA CONTA</button>
+    </div>
+
+    <script src="assets/js/auth.js"></script>
+    <script>
+        const token = localStorage.getItem('@VTalentos:token');
+        const userStr = localStorage.getItem('@VTalentos:user');
+
+        if (!token || !userStr) {
+            window.location.href = 'login.html';
+        }
+
+        const user = JSON.parse(userStr);
+        let selectedMethod = 'CARTAO';
+        let currentFatura = null;
+        let isSandbox = true;
+        let preferredProviderId = 'stripe_default';
+
+        async function initLockoutPage() {
+            if (user.perfil === 'SUPER_ADMIN') {
+                window.location.href = 'super-dashboard.html';
+                return;
+            }
+
+            if (user.perfil === 'CORRETOR') {
+                document.getElementById('corretorSection').style.display = 'block';
+                return;
+            }
+
+            // Exibir seção do Admin Empresa
+            document.getElementById('adminSection').style.display = 'block';
+            
+            try {
+                // Obter status de faturamento
+                const resStatus = await fetch('http://localhost:3001/api/admin/billing/status', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const dataStatus = await resStatus.json();
+
+                if (dataStatus.success) {
+                    isSandbox = dataStatus.simular_pagamentos;
+                    document.getElementById('tenantName').innerText = dataStatus.empresa.nome;
+                    preferredProviderId = dataStatus.empresa.provedor_pagamento || 'stripe_default';
+                    
+                    if (isSandbox) {
+                        document.getElementById('payButton').innerText = 'PAGAR FATURA (SIMULAÇÃO SANDBOX)';
+                    }
+                }
+
+                // Obter faturas pendentes/vencidas
+                const resFaturas = await fetch('http://localhost:3001/api/admin/billing/faturas', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const dataFaturas = await resFaturas.json();
+
+                if (dataFaturas.success && dataFaturas.data.length > 0) {
+                    // Pega a fatura mais antiga pendente ou vencida
+                    const faturasAberto = dataFaturas.data.filter(f => f.status === 'PENDENTE' || f.status === 'VENCIDA');
+                    if (faturasAberto.length > 0) {
+                        currentFatura = faturasAberto[faturasAberto.length - 1]; // pega a mais antiga primeiro
+                        document.getElementById('invoiceDueDate').innerText = new Date(currentFatura.data_vencimento).toLocaleDateString('pt-BR');
+                        document.getElementById('invoiceValue').innerText = parseFloat(currentFatura.valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                    } else {
+                        // Sem faturas em aberto, redireciona ao dashboard
+                        window.location.href = 'dashboard.html';
+                    }
+                } else {
+                    window.location.href = 'dashboard.html';
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('Falha ao carregar informações de faturamento.', 'error');
+            }
+        }
+
+        function selectMethod(method) {
+            selectedMethod = method;
+            document.querySelectorAll('.method-card').forEach(card => card.classList.remove('active'));
+            
+            if (method === 'CARTAO') document.getElementById('methodCard').classList.add('active');
+            if (method === 'PIX') document.getElementById('methodPix').classList.add('active');
+            if (method === 'BOLETO') document.getElementById('methodBoleto').classList.add('active');
+
+            // Limpar bloco de pagamento anterior
+            document.getElementById('paymentInfoBox').style.display = 'none';
+        }
+
+        async function processPayment() {
+            if (!currentFatura) {
+                showToast('Nenhuma fatura localizada para quitação.', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('payButton');
+            btn.disabled = true;
+            btn.innerText = 'PROCESSANDO...';
+
+            try {
+                const res = await fetch('http://localhost:3001/api/admin/billing/pagar', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        faturaId: currentFatura.id,
+                        metodo_pagamento: selectedMethod,
+                        provedor: preferredProviderId
+                    })
+                });
+
+                const data = await res.json();
+                if (data.success) {
+                    if (data.simulado) {
+                        showToast('Pagamento simulado com sucesso! Liberando acesso...', 'success');
+                        setTimeout(() => {
+                            window.location.href = 'dashboard.html';
+                        }, 2000);
+                    } else {
+                        // Modo real/informações de checkout
+                        showToast('Checkout gerado com sucesso!', 'success');
+                        const infoBox = document.getElementById('paymentInfoBox');
+                        infoBox.style.display = 'block';
+
+                        if (selectedMethod === 'CARTAO') {
+                            infoBox.innerHTML = `
+                                <p style="font-size:0.9rem; margin-bottom:15px; color:var(--text-primary);">A fatura foi enviada para o gateway. Clique abaixo para realizar o pagamento com cartão de crédito:</p>
+                                <a href="${data.paymentInfo.checkout_url}" target="_blank" class="btn btn-primary" style="width:100%; font-weight:700;">IR PARA CHECKOUT STRIPE</a>
+                                <p style="font-size:0.75rem; color:var(--text-secondary); margin-top:15px;">⚠️ O acesso será liberado assim que o gateway confirmar a transação.</p>
+                            `;
+                        } else if (selectedMethod === 'PIX') {
+                            infoBox.innerHTML = `
+                                <p style="font-size:0.9rem; margin-bottom:15px; color:var(--text-primary);">Escaneie o QR Code abaixo com o aplicativo do seu banco:</p>
+                                <div class="qr-code-placeholder">
+                                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(data.paymentInfo.pix_copia_cola)}" alt="QR Code Pix" style="display:block;">
+                                </div>
+                                <p style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:10px;">Ou utilize a chave Copia e Cola:</p>
+                                <input type="text" class="copia-cola-input" value="${data.paymentInfo.pix_copia_cola}" readonly onclick="copyPix(this)">
+                                <small style="display:block; color:var(--success); margin-top:10px;">💡 Toque no campo acima para copiar!</small>
+                            `;
+                        } else if (selectedMethod === 'BOLETO') {
+                            infoBox.innerHTML = `
+                                <p style="font-size:0.9rem; margin-bottom:15px; color:var(--text-primary);">Seu boleto bancário foi gerado com sucesso!</p>
+                                <p style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:10px;">Código de Barras:</p>
+                                <input type="text" class="copia-cola-input" value="${data.paymentInfo.boleto_linha}" readonly onclick="copyPix(this)">
+                                <a href="${data.paymentInfo.checkout_url}" target="_blank" class="btn" style="width:100%; font-weight:700; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:var(--text-primary); margin-top:15px;">VISUALIZAR BOLETO PDF</a>
+                                <p style="font-size:0.75rem; color:var(--text-secondary); margin-top:15px;">⚠️ Boletos podem demorar até 48 horas úteis para compensação.</p>
+                            `;
+                        }
+                    }
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (err) {
+                showToast(err.message || 'Falha ao processar pagamento.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerText = isSandbox ? 'PAGAR FATURA (SIMULAÇÃO SANDBOX)' : 'PAGAR E LIBERAR ACESSO';
+            }
+        }
+
+        function copyPix(input) {
+            input.select();
+            document.execCommand('copy');
+            showToast('Chave de pagamento copiada para a área de transferência!', 'success');
+        }
+
+        function logout() {
+            localStorage.removeItem('@VTalentos:token');
+            localStorage.removeItem('@VTalentos:user');
+            window.location.href = 'login.html';
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            initLockoutPage();
+        });
+    </script>
+</body>
+</html>

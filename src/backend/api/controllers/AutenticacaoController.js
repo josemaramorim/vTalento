@@ -41,6 +41,8 @@ class AutenticacaoController {
         empresa_id: usuario.empresa_id,
         empresa_nome: empresa ? empresa.nome : '',
         empresa_status: empresa ? empresa.status : 'ATIVO',
+        empresa_logo_url: empresa ? empresa.logo_url : '',
+        empresa_cor_primaria: empresa ? empresa.cor_primaria : '',
         data_expiracao: empresa ? empresa.data_expiracao : null,
         liberacao_emergencia: empresa ? !!empresa.liberacao_emergencia : false,
         emergencia_expiracao: empresa ? empresa.emergencia_expiracao : null,

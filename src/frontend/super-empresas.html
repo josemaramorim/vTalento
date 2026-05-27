@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciamento de Inquilinos - V-Talentos SaaS</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <style>
+        /* Estilos Premium para Modais e Tabelas */
+        .page-header-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+        .table-responsive {
+            overflow-x: auto;
+            width: 100%;
+            border-radius: var(--radius-md);
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--shadow-md);
+        }
+        .premium-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+        .premium-table th {
+            padding: 18px 24px;
+            background: rgba(255, 255, 255, 0.02);
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+        .premium-table td {
+            padding: 18px 24px;
+            border-bottom: 1px solid var(--glass-border);
+            font-size: 0.9rem;
+            color: var(--text-primary);
+        }
+        .premium-table tr:last-child td {
+            border-bottom: none;
+        }
+        .premium-table tr:hover {
+            background: rgba(255, 255, 255, 0.01);
+        }
+        /* Badges de Status */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .badge-ativo { background: rgba(46, 204, 113, 0.1); color: var(--success); border: 1px solid rgba(46, 204, 113, 0.2); }
+        .badge-suspenso { background: rgba(231, 76, 60, 0.1); color: var(--error); border: 1px solid rgba(231, 76, 60, 0.2); }
+        .badge-cancelado { background: rgba(108, 117, 125, 0.1); color: var(--text-secondary); border: 1px solid rgba(108, 117, 125, 0.2); }
+
+        .badge-plano {
+            background: rgba(212, 175, 55, 0.08);
+            color: var(--accent-primary);
+            border: 1px solid rgba(212, 175, 55, 0.15);
+        }
+
+        /* Modal Overlay Premium */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.55);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .modal-card {
+            width: 90%;
+            max-width: 600px;
+            padding: 35px;
+            border-radius: var(--radius-md);
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal-overlay.active .modal-card {
+            transform: scale(1);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            border-bottom: 1px solid var(--glass-border);
+            padding-bottom: 15px;
+        }
+        .modal-close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+        .modal-close-btn:hover {
+            color: var(--error);
+        }
+
+        /* Form Layouts */
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        .form-group {
+            margin-bottom: 18px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+        .form-control {
+            width: 100%;
+            padding: 10px 14px;
+            border-radius: var(--radius-sm);
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            font-size: 0.9rem;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+        input[type="color"].form-control {
+            padding: 4px 6px !important;
+            height: 42px !important;
+            cursor: pointer;
+        }
+
+        /* Saúde Financeira Layout */
+        .health-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        .health-card {
+            padding: 15px;
+            border-radius: var(--radius-sm);
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--glass-border);
+            text-align: center;
+        }
+        .health-card .val {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        .health-card .lbl {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        /* Paginação */
+        .pagination-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+        }
+        .pagination-btn {
+            padding: 8px 16px;
+            border-radius: var(--radius-sm);
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        .pagination-btn:hover:not(:disabled) {
+            border-color: var(--accent-primary);
+            background: rgba(255,255,255,0.08);
+        }
+        .pagination-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        /* Selector box and filter styles */
+        .selector-box {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            padding: 15px 25px;
+            border-radius: var(--radius-md);
+            margin-bottom: 30px;
+            box-shadow: var(--shadow-sm);
+            flex-wrap: wrap;
+        }
+        .selector-box .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .selector-box .filter-group label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .selector-box select, .selector-box input {
+            min-width: 150px;
+            padding: 8px 12px;
+            border-radius: var(--radius-sm);
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .selector-box select:focus, .selector-box input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            background: rgba(255,255,255,0.06);
+        }
+    </style>
+</head>
+<body data-theme="dark">
+    <div class="app-layout">
+        <aside class="sidebar">
+            <div class="logo">V-<span>TALENTOS</span></div>
+            <nav id="navLinks">
+                <!-- Injetado dinamicamente -->
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="header" id="appHeader"></header>
+
+            <div class="page-header-actions animate-fade">
+                <h1 style="font-size: 1.6rem; font-weight: 600;">🏢 Inquilinos SaaS Cadastrados</h1>
+                <button class="btn btn-primary" onclick="openNewEmpresaModal()" style="font-weight: 600;">➕ CADASTRAR NOVO CLIENTE</button>
+            </div>
+
+            <!-- Seção de Filtros Diversos de Inquilinos -->
+            <div class="selector-box animate-fade" style="animation-delay: 0.05s;">
+                <div class="filter-group">
+                    <label for="filtroBusca">Buscar:</label>
+                    <input type="text" id="filtroBusca" placeholder="Nome ou slug..." style="width: 200px;" oninput="handleFilterChange()">
+                </div>
+                <div class="filter-group">
+                    <label for="filtroPlano">Plano:</label>
+                    <select id="filtroPlano" onchange="handleFilterChange()">
+                        <option value="">Todos os Planos</option>
+                        <option value="ESSENCIAL">ESSENCIAL</option>
+                        <option value="PROFISSIONAL">PROFISSIONAL</option>
+                        <option value="ENTERPRISE">ENTERPRISE</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="filtroStatus">Status:</label>
+                    <select id="filtroStatus" onchange="handleFilterChange()">
+                        <option value="">Todos os Status</option>
+                        <option value="ATIVO">ATIVO</option>
+                        <option value="SUSPENSO">SUSPENSO</option>
+                        <option value="CANCELADO">CANCELADO</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="filtroSaude">Saúde da Licença:</label>
+                    <select id="filtroSaude" onchange="handleFilterChange()">
+                        <option value="">Todas as Situações</option>
+                        <option value="ATIVA">Ativa (Em Dia)</option>
+                        <option value="EXPIRADA">Expirada / Vencida</option>
+                        <option value="CORTESIA">bypass Cortesia Ativo</option>
+                    </select>
+                </div>
+                <button class="btn" onclick="limparFiltros()" style="margin-left: auto; padding: 8px 16px; font-size: 0.8rem; font-weight: 600; background: rgba(255,255,255,0.05); color: var(--text-primary); border-radius: var(--radius-sm);">🧹 Limpar</button>
+            </div>
+
+            <!-- Tabela de Empresas -->
+            <div class="table-responsive animate-fade" style="animation-delay: 0.1s;">
+                <table class="premium-table">
+                    <thead>
+                        <tr>
+                            <th>Nome / Slug</th>
+                            <th>Plano Contratado</th>
+                            <th>Status Conta</th>
+                            <th>Expiração Licença</th>
+                            <th>Finanças (Pago / Aberto)</th>
+                            <th style="text-align: right;">Ações de Operação</th>
+                        </tr>
+                    </thead>
+                    <tbody id="empresasTableBody">
+                        <tr>
+                            <td colspan="6" style="text-align: center; color: var(--text-secondary);">Buscando inquilinos na nuvem...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Paginação -->
+            <div class="pagination-container animate-fade" style="animation-delay: 0.15s;">
+                <span id="pageInfo" style="font-size: 0.85rem; color: var(--text-secondary);">Página 1 de 1</span>
+                <div style="display: flex; gap: 10px;">
+                    <button class="pagination-btn" id="prevPageBtn" disabled>Anterior</button>
+                    <button class="pagination-btn" id="nextPageBtn" disabled>Próxima</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 1. MODAL: NOVA EMPRESA -->
+    <div class="modal-overlay" id="newEmpresaModal">
+        <div class="modal-card glass">
+            <div class="modal-header">
+                <h2 style="font-size: 1.2rem; font-weight: 600;">🏢 Cadastrar Novo Cliente (Tenant)</h2>
+                <button class="modal-close-btn" onclick="closeModal('newEmpresaModal')">✕</button>
+            </div>
+            <form id="newEmpresaForm">
+                <div class="form-group">
+                    <label for="newNome">Nome da Empresa</label>
+                    <input type="text" id="newNome" class="form-control" placeholder="Ex: Construtora Haja Ltda" required>
+                </div>
+                <div class="form-group">
+                    <label for="newSlug">Slug Único da URL</label>
+                    <input type="text" id="newSlug" class="form-control" placeholder="Ex: haja" required>
+                    <small style="color: var(--text-secondary); font-size: 0.75rem; display: block; margin-top: 4px;">Utilizado para caminhos e redirecionamento de login.</small>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="newPlano">Plano Inicial</label>
+                        <select id="newPlano" class="form-control">
+                            <option value="ESSENCIAL">ESSENCIAL (R$ 199/mês)</option>
+                            <option value="PROFISSIONAL" selected>PROFISSIONAL (R$ 399/mês)</option>
+                            <option value="ENTERPRISE">ENTERPRISE (R$ 899/mês)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="newLimite">Limite Máximo Corretores</label>
+                        <input type="number" id="newLimite" class="form-control" placeholder="Deixe em branco para o padrão">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="newLogo">Logo URL (Opcional)</label>
+                        <input type="text" id="newLogo" class="form-control" placeholder="https://...">
+                    </div>
+                    <div class="form-group">
+                        <label for="newCor">Cor Primária Tema (Hex)</label>
+                        <input type="color" id="newCor" class="form-control" value="#D4AF37">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; font-weight: 600; margin-top: 15px;">CADASTRAR EMPRESA & GERAR FATURA</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 2. MODAL: EDITAR EMPRESA -->
+    <div class="modal-overlay" id="editEmpresaModal">
+        <div class="modal-card glass">
+            <div class="modal-header">
+                <h2 style="font-size: 1.2rem; font-weight: 600;">⚙️ Configurar Licenciamento & Plano</h2>
+                <button class="modal-close-btn" onclick="closeModal('editEmpresaModal')">✕</button>
+            </div>
+            <form id="editEmpresaForm">
+                <input type="hidden" id="editId">
+                <div class="form-group">
+                    <label for="editNome">Nome da Empresa</label>
+                    <input type="text" id="editNome" class="form-control" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editPlano">Plano</label>
+                        <select id="editPlano" class="form-control">
+                            <option value="ESSENCIAL">ESSENCIAL</option>
+                            <option value="PROFISSIONAL">PROFISSIONAL</option>
+                            <option value="ENTERPRISE">ENTERPRISE</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="editLimite">Limite Corretores</label>
+                        <input type="number" id="editLimite" class="form-control" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editStatus">Status da Conta</label>
+                        <select id="editStatus" class="form-control">
+                            <option value="ATIVO">ATIVO</option>
+                            <option value="SUSPENSO">SUSPENSO</option>
+                            <option value="CANCELADO">CANCELADO</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="editExpiracao">Data de Expiração</label>
+                        <input type="datetime-local" id="editExpiracao" class="form-control" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editLogo">Logo URL (Opcional)</label>
+                        <input type="text" id="editLogo" class="form-control" placeholder="https://...">
+                    </div>
+                    <div class="form-group">
+                        <label for="editCor">Cor Primária Tema (Hex)</label>
+                        <input type="color" id="editCor" class="form-control" value="#D4AF37">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; font-weight: 600; margin-top: 15px;">SALVAR PARÂMETROS DA LICENÇA</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 3. MODAL: ACESSO DE EMERGÊNCIA (CORTESIA) -->
+    <div class="modal-overlay" id="emergenciaModal">
+        <div class="modal-card glass" style="max-width: 480px;">
+            <div class="modal-header">
+                <h2 style="font-size: 1.2rem; font-weight: 600;">⚡ Conceder Acesso de Emergência</h2>
+                <button class="modal-close-btn" onclick="closeModal('emergenciaModal')">✕</button>
+            </div>
+            <form id="emergenciaForm">
+                <input type="hidden" id="emergenciaId">
+                <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 20px; line-height: 1.5;">O acesso de emergência (liberação por cortesia) reativa imediatamente os acessos à plataforma do inquilino suspenso, sem necessitar de pagamento imediato. <strong>O default é carregado das configurações globais</strong>, mas você pode manipular este número de dias para este cliente específico.</p>
+                
+                <div class="form-group">
+                    <label for="emergenciaDias">Prazo Concedido (N dias)</label>
+                    <input type="number" id="emergenciaDias" class="form-control" min="1" max="60" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%; font-weight: 600; background: linear-gradient(135deg, var(--warning), var(--accent-secondary)); box-shadow: 0 4px 15px rgba(230, 126, 34, 0.3);">LIBERAR ACESSO IMEDIATO</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 4. MODAL: SAÚDE FINANCEIRA & FATURAS -->
+    <div class="modal-overlay" id="financeiroModal">
+        <div class="modal-card glass" style="max-width: 750px;">
+            <div class="modal-header">
+                <h2 style="font-size: 1.2rem; font-weight: 600;">📊 Histórico Financeiro & Saúde do Tenant</h2>
+                <button class="modal-close-btn" onclick="closeModal('financeiroModal')">✕</button>
+            </div>
+            
+            <div class="health-grid">
+                <div class="health-card">
+                    <div class="val" id="finTotalPago" style="color: var(--success);">R$ 0,00</div>
+                    <div class="lbl">Total Recebido</div>
+                </div>
+                <div class="health-card">
+                    <div class="val" id="finTotalAberto" style="color: var(--error);">R$ 0,00</div>
+                    <div class="lbl">Total em Aberto</div>
+                </div>
+                <div class="health-card">
+                    <div class="val" id="finProximaCobranca" style="color: var(--accent-primary);">--/--/----</div>
+                    <div class="lbl">Próximo Vencimento</div>
+                </div>
+            </div>
+
+            <h3 style="font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; color: var(--accent-primary);">Trilha de Faturas Geradas</h3>
+            <div class="table-responsive" style="max-height: 250px; overflow-y: auto;">
+                <table class="premium-table" style="font-size: 0.8rem;">
+                    <thead>
+                        <tr>
+                            <th>Data Vencimento</th>
+                            <th>Valor Cobrado</th>
+                            <th>Provedor</th>
+                            <th>Status Fatura</th>
+                            <th style="text-align: right;">Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody id="faturasTableBody">
+                        <!-- Injetado dinamicamente -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/auth.js"></script>
+    <script>
+        const token = localStorage.getItem('@VTalentos:token');
+        const userStr = localStorage.getItem('@VTalentos:user');
+
+        if (!token || !userStr) {
+            window.location.href = 'login.html';
+        }
+
+        const user = JSON.parse(userStr);
+        if (user.perfil !== 'SUPER_ADMIN') {
+            window.location.href = 'dashboard.html';
+        }
+
+        // Renderiza o cabeçalho dinâmico do Super-Admin
+        renderHeader('Inquilinos SaaS', 'Visualize a integridade de faturamento, controle cortesia e configure contas');
+
+        // Renderiza Sidebar
+        const nav = document.getElementById('navLinks');
+        nav.innerHTML = `
+            <p style="color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; margin-bottom: 10px;">SAAS PLATAFORMA</p>
+            <a href="super-dashboard.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">📊 Plataforma Dashboard</a>
+            <a href="super-empresas.html" class="active" style="color: var(--accent-primary); text-decoration: none; font-weight: 600;">🏢 Inquilinos (Empresas)</a>
+            <a href="super-usuarios.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">👥 Usuários Isolados</a>
+            <p style="color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; margin-top: 20px; margin-bottom: 10px;">PERFIL</p>
+            <a href="meu-perfil.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">👤 Meus Dados</a>
+        `;
+
+        let currentPage = 1;
+        const limitPerPage = 10;
+        let loadedEmpresas = [];
+
+        // Formatação Helpers
+        function formatReal(val) {
+            return parseFloat(val).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+
+        function formatData(dateStr) {
+            if (!dateStr) return 'Sem expiração';
+            return new Date(dateStr).toLocaleDateString('pt-BR');
+        }
+
+        let filterTimeout = null;
+
+        function handleFilterChange() {
+            clearTimeout(filterTimeout);
+            filterTimeout = setTimeout(() => {
+                fetchEmpresas(1);
+            }, 300);
+        }
+
+        function limparFiltros() {
+            document.getElementById('filtroBusca').value = '';
+            document.getElementById('filtroPlano').value = '';
+            document.getElementById('filtroStatus').value = '';
+            document.getElementById('filtroSaude').value = '';
+            fetchEmpresas(1);
+        }
+
+        // Buscar Inquilinos
+        async function fetchEmpresas(page = 1) {
+            try {
+                const busca = document.getElementById('filtroBusca').value;
+                const plano = document.getElementById('filtroPlano').value;
+                const status = document.getElementById('filtroStatus').value;
+                const saude = document.getElementById('filtroSaude').value;
+
+                let url = `http://localhost:3001/api/super/empresas?page=${page}&limit=${limitPerPage}`;
+                if (busca) url += `&busca=${encodeURIComponent(busca)}`;
+                if (plano) url += `&plano=${encodeURIComponent(plano)}`;
+                if (status) url += `&status=${encodeURIComponent(status)}`;
+                if (saude) url += `&saude=${encodeURIComponent(saude)}`;
+
+                const res = await fetch(url, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    currentPage = page;
+                    loadedEmpresas = data.data; // Armazena em memória as empresas carregadas
+                    renderTable(data.data);
+                    updatePagination(data.meta);
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (err) {
+                showToast(err.message || 'Erro ao carregar lista de empresas.', 'error');
+            }
+        }
+
+        function renderTable(empresas) {
+            const tbody = document.getElementById('empresasTableBody');
+            tbody.innerHTML = '';
+
+            if (empresas.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-secondary);">Nenhum inquilino cadastrado na nuvem.</td></tr>`;
+                return;
+            }
+
+            empresas.forEach(emp => {
+                const tr = document.createElement('tr');
+                
+                const statusBadge = emp.status === 'ATIVO' ? 'badge-ativo' : emp.status === 'SUSPENSO' ? 'badge-suspenso' : 'badge-cancelado';
+                const faturamentoText = `<strong>${formatReal(emp.total_pago)}</strong> <span style="color:var(--text-secondary); font-size:0.75rem;">pago</span> / <span style="color:var(--error); font-size:0.75rem;">${formatReal(emp.total_pendente)} aberto</span>`;
+                
+                let emergenciaBtn = '';
+                if (emp.status === 'SUSPENSO' || new Date(emp.data_expiracao) < new Date()) {
+                    emergenciaBtn = `<button class="btn" onclick="openEmergenciaModal('${emp.id}')" style="padding: 6px 12px; font-size: 0.75rem; background: rgba(230, 126, 34, 0.15); color: var(--warning); font-weight:600; border-radius:4px; margin-right:5px;">⚡ CORTESIA</button>`;
+                }
+
+                tr.innerHTML = `
+                    <td>
+                        <div style="font-weight:600;">${emp.nome}</div>
+                        <div style="font-size:0.75rem; color:var(--text-secondary); font-family:monospace;">/${emp.slug}</div>
+                    </td>
+                    <td>
+                        <span class="badge badge-plano">${emp.plano}</span>
+                        <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;">Limite: ${emp.corretores_ativos}/${emp.limite_corretores} corretores</div>
+                    </td>
+                    <td><span class="badge ${statusBadge}">${emp.status}</span></td>
+                    <td>
+                        <div>${formatData(emp.data_expiracao)}</div>
+                        ${emp.liberacao_emergencia ? `<span style="font-size:0.7rem; color:var(--warning); font-weight:600; background:rgba(230,126,34,0.08); padding:1px 5px; border-radius:4px;">Bypass até ${formatData(emp.emergencia_expiracao)}</span>` : ''}
+                    </td>
+                    <td>${faturamentoText}</td>
+                    <td style="text-align: right;">
+                        ${emergenciaBtn}
+                        <button class="btn btn-primary" onclick="openFinanceiroModal('${emp.id}')" style="padding: 6px 12px; font-size: 0.75rem; font-weight:600; border-radius:4px; margin-right:5px; box-shadow:none;">📊 SAÚDE</button>
+                        <button class="btn" onclick="openEditEmpresaModal('${emp.id}')" style="padding: 6px 12px; font-size: 0.75rem; font-weight:600; background:rgba(255,255,255,0.05); color:var(--text-primary); border-radius:4px; margin-right:5px;">✏️ EDITAR</button>
+                        <button class="btn" onclick="deletarEmpresa('${emp.id}', '${emp.nome}')" style="padding: 6px 12px; font-size: 0.75rem; font-weight:600; background:rgba(255,0,0,0.1); color:var(--error); border-radius:4px;">❌ EXCLUIR</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function updatePagination(meta) {
+            document.getElementById('pageInfo').innerText = `Página ${meta.page} de ${meta.totalPages || 1}`;
+            
+            const prev = document.getElementById('prevPageBtn');
+            const next = document.getElementById('nextPageBtn');
+
+            prev.disabled = meta.page <= 1;
+            next.disabled = meta.page >= meta.totalPages;
+
+            // Remove antigos event listeners clonando os botões
+            const newPrev = prev.cloneNode(true);
+            prev.parentNode.replaceChild(newPrev, prev);
+            newPrev.addEventListener('click', () => fetchEmpresas(meta.page - 1));
+
+            const newNext = next.cloneNode(true);
+            next.parentNode.replaceChild(newNext, next);
+            newNext.addEventListener('click', () => fetchEmpresas(meta.page + 1));
+        }
+
+        // Modais Controle
+        function openModal(id) {
+            document.getElementById(id).classList.add('active');
+        }
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        // NOVA EMPRESA FORM
+        function openNewEmpresaModal() {
+            document.getElementById('newEmpresaForm').reset();
+            openModal('newEmpresaModal');
+        }
+        document.getElementById('newEmpresaForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const payload = {
+                nome: document.getElementById('newNome').value,
+                slug: document.getElementById('newSlug').value,
+                plano: document.getElementById('newPlano').value,
+                limite_corretores: document.getElementById('newLimite').value ? parseInt(document.getElementById('newLimite').value) : null,
+                logo_url: document.getElementById('newLogo').value,
+                cor_primaria: document.getElementById('newCor').value
+            };
+
+            try {
+                const res = await fetch('http://localhost:3001/api/super/empresas', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast('Inquilino criado e primeira fatura faturada!', 'success');
+                    closeModal('newEmpresaModal');
+                    fetchEmpresas(currentPage);
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        });
+
+        // EDITAR EMPRESA FORM
+        function openEditEmpresaModal(id) {
+            const emp = loadedEmpresas.find(e => e.id === id);
+            if (!emp) return;
+
+            document.getElementById('editId').value = emp.id;
+            document.getElementById('editNome').value = emp.nome;
+            document.getElementById('editPlano').value = emp.plano;
+            document.getElementById('editLimite').value = emp.limite_corretores;
+            document.getElementById('editStatus').value = emp.status;
+            document.getElementById('editLogo').value = emp.logo_url || '';
+            document.getElementById('editCor').value = emp.cor_primaria || '#D4AF37';
+            
+            // Format to datetime-local inputs
+            if (emp.data_expiracao && emp.data_expiracao !== 'null') {
+                const date = new Date(emp.data_expiracao);
+                // Converte timezone local para string YYYY-MM-DDThh:mm
+                const tzOffset = date.getTimezoneOffset() * 60000;
+                const localISOTime = (new Date(date.getTime() - tzOffset)).toISOString().slice(0, 16);
+                document.getElementById('editExpiracao').value = localISOTime;
+            } else {
+                document.getElementById('editExpiracao').value = '';
+            }
+
+            openModal('editEmpresaModal');
+        }
+        document.getElementById('editEmpresaForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('editId').value;
+            const payload = {
+                nome: document.getElementById('editNome').value,
+                plano: document.getElementById('editPlano').value,
+                limite_corretores: parseInt(document.getElementById('editLimite').value),
+                status: document.getElementById('editStatus').value,
+                logo_url: document.getElementById('editLogo').value,
+                cor_primaria: document.getElementById('editCor').value,
+                data_expiracao: document.getElementById('editExpiracao').value ? new Date(document.getElementById('editExpiracao').value).toISOString() : null
+            };
+
+            try {
+                const res = await fetch(`http://localhost:3001/api/super/empresas/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast('Parâmetros da licença salvos com sucesso!', 'success');
+                    closeModal('editEmpresaModal');
+                    fetchEmpresas(currentPage);
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        });
+
+        // EMERGÊNCIA MODAL (ACESSO CORTESIA)
+        async function openEmergenciaModal(id) {
+            document.getElementById('emergenciaId').value = id;
+            
+            // Carrega dias padrão da config global
+            try {
+                const configRes = await fetch('http://localhost:3001/api/super/configs', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const configData = await configRes.json();
+                if (configData.success) {
+                    document.getElementById('emergenciaDias').value = configData.configs.dias_padrao_cortesia || 7;
+                }
+            } catch (e) {
+                document.getElementById('emergenciaDias').value = 7;
+            }
+
+            openModal('emergenciaModal');
+        }
+        document.getElementById('emergenciaForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('emergenciaId').value;
+            const dias = parseInt(document.getElementById('emergenciaDias').value);
+
+            try {
+                const res = await fetch(`http://localhost:3001/api/super/empresas/${id}/emergencia`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ dias })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast(`Bypass concedido por ${dias} dias com sucesso!`, 'success');
+                    closeModal('emergenciaModal');
+                    fetchEmpresas(currentPage);
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        });
+
+        // SAÚDE FINANCEIRA & QUITAÇÃO MANUAL
+        async function openFinanceiroModal(empresaId) {
+            try {
+                const res = await fetch(`http://localhost:3001/api/super/empresas/${empresaId}/financeiro`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    const saude = data.data;
+                    document.getElementById('finTotalPago').innerText = formatReal(saude.total_pago);
+                    document.getElementById('finTotalAberto').innerText = formatReal(saude.total_pendente);
+                    document.getElementById('finProximaCobranca').innerText = formatData(saude.data_proxima_cobranca);
+
+                    // Renderiza Tabela de Faturas
+                    const tbody = document.getElementById('faturasTableBody');
+                    tbody.innerHTML = '';
+
+                    if (saude.faturas.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-secondary);">Nenhuma fatura encontrada.</td></tr>`;
+                    } else {
+                        saude.faturas.forEach(fat => {
+                            const tr = document.createElement('tr');
+                            const statusClass = fat.status === 'PAGA' ? 'badge-ativo' : 'badge-suspenso';
+                            
+                            let actionBtn = '';
+                            if (fat.status !== 'PAGA') {
+                                actionBtn = `<button class="btn btn-primary" onclick="baixarFatura('${fat.id}', '${empresaId}')" style="padding: 4px 8px; font-size: 0.7rem; border-radius: 4px; box-shadow:none; font-weight:600;">DAR BAIXA</button>`;
+                            } else {
+                                actionBtn = `<span style="color:var(--text-secondary); font-size:0.75rem;">Quitada</span>`;
+                            }
+
+                            tr.innerHTML = `
+                                <td>${formatData(fat.data_vencimento)}</td>
+                                <td><strong>${formatReal(fat.valor)}</strong></td>
+                                <td><span style="font-size:0.7rem; font-weight:600; text-transform:uppercase; color:var(--text-secondary);">${fat.provedor || 'PLATAFORMA'}</span></td>
+                                <td><span class="badge ${statusClass}">${fat.status}</span></td>
+                                <td style="text-align: right;">${actionBtn}</td>
+                            `;
+                            tbody.appendChild(tr);
+                        });
+                    }
+
+                    openModal('financeiroModal');
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        async function baixarFatura(faturaId, empresaId) {
+            if (!confirm('Deseja realmente dar baixa manual nesta fatura? Esta ação reativará e estenderá a licença da empresa por 30 dias.')) return;
+
+            try {
+                const res = await fetch(`http://localhost:3001/api/super/faturas/${faturaId}/baixa`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast('Fatura quitada e licença estendida por 30 dias!', 'success');
+                    // Recarrega modal financeiro e tabela
+                    openFinanceiroModal(empresaId);
+                    fetchEmpresas(currentPage);
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        async function deletarEmpresa(id, nome) {
+            if (!confirm(`ATENÇÃO CRÍTICA!\n\nDeseja realmente excluir permanentemente o inquilino "${nome}"?\n\nEsta ação excluirá TODOS os usuários, faturas, prêmios, resgates e transações vinculadas a esta empresa na nuvem. Esta operação é irreversível e afetará todos os corretores associados.`)) return;
+
+            try {
+                const res = await fetch(`http://localhost:3001/api/super/empresas/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast('Inquilino e todos os seus dados vinculados foram excluídos com sucesso!', 'success');
+                    fetchEmpresas(currentPage);
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (err) {
+                showToast(err.message || 'Erro ao excluir inquilino.', 'error');
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            fetchEmpresas(currentPage);
+        });
+    </script>
+</body>
+</html>

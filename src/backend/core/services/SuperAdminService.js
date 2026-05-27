@@ -44,13 +44,50 @@ class SuperAdminService {
 
   // --- EMPRESAS / TENANTS (GamEmpresa) ---
 
-  async listEmpresas(page = 1, limit = 10) {
+  async listEmpresas(page = 1, limit = 10, busca = '', status = '', plano = '', saude = '') {
     const offset = (page - 1) * limit;
 
-    const countResult = await db('GamEmpresa').count({ total: '*' });
+    let query = db('GamEmpresa');
+    let countQuery = db('GamEmpresa');
+
+    if (busca) {
+      const b = `%${busca}%`;
+      query = query.where(function() {
+        this.where('nome', 'like', b).orWhere('slug', 'like', b);
+      });
+      countQuery = countQuery.where(function() {
+        this.where('nome', 'like', b).orWhere('slug', 'like', b);
+      });
+    }
+
+    if (status) {
+      query = query.where({ status });
+      countQuery = countQuery.where({ status });
+    }
+
+    if (plano) {
+      query = query.where({ plano });
+      countQuery = countQuery.where({ plano });
+    }
+
+    if (saude) {
+      const agora = new Date().toISOString();
+      if (saude === 'ATIVA') {
+        query = query.where('status', 'ATIVO').andWhere('data_expiracao', '>', agora);
+        countQuery = countQuery.where('status', 'ATIVO').andWhere('data_expiracao', '>', agora);
+      } else if (saude === 'EXPIRADA') {
+        query = query.where('data_expiracao', '<=', agora);
+        countQuery = countQuery.where('data_expiracao', '<=', agora);
+      } else if (saude === 'CORTESIA') {
+        query = query.where({ liberacao_emergencia: true }).andWhere('emergencia_expiracao', '>', agora);
+        countQuery = countQuery.where({ liberacao_emergencia: true }).andWhere('emergencia_expiracao', '>', agora);
+      }
+    }
+
+    const countResult = await countQuery.count({ total: '*' });
     const total = countResult[0].total;
 
-    const empresas = await db('GamEmpresa')
+    const empresas = await query
       .select('*')
       .orderBy('created_at', 'desc')
       .limit(limit)
@@ -410,6 +447,16 @@ class SuperAdminService {
     }
 
     await db('GamUsuario').where({ id: usuarioId, empresa_id: empresaId }).del();
+    return { success: true };
+  }
+
+  async deleteEmpresa(id) {
+    const empresa = await db('GamEmpresa').where({ id }).first();
+    if (!empresa) {
+      throw new Error('Inquilino não encontrado.');
+    }
+    // Deleta a empresa, cascateando automaticamente para todas as tabelas vinculadas
+    await db('GamEmpresa').where({ id }).del();
     return { success: true };
   }
 }

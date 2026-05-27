@@ -74,6 +74,7 @@ exports.seed = async function(knex) {
   await knex('Resgate').del();
   await knex('VitrineItem').del();
   await knex('Premio').del();
+  await knex('GamTransacao').del();
 
   // Insere Prêmios de Exemplo atrelados a Construtora Haja
   await knex('Premio').insert([
@@ -108,4 +109,21 @@ exports.seed = async function(knex) {
       updated_at: knex.fn.now()
     }
   ]);
+
+  // Insere transação de crédito inicial para o Corretor Haja (origem dos 1500 T$ no saldo)
+  await knex('GamTransacao').insert({
+    id: uuidv4(),
+    empresa_id: empresaId,
+    usuario_id: 'c2c2c2c2-c2c2-c2c2-c2c2-c2c2c2c2c2c2',
+    admin_id: 'a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1',
+    valor: 1500.00,
+    tipo: 'CREDITO',
+    origem: 'MANUAL',
+    status: 'COMPENSADO',
+    justificativa: 'Crédito inicial de demonstração — Venda Exemplo Empreendimento Alpha',
+    empreendimento: 'Empreendimento Alpha',
+    unidade: 'Apto 101',
+    data_compensacao: knex.fn.now(),
+    created_at: knex.fn.now()
+  });
 };

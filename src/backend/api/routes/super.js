@@ -16,6 +16,7 @@ router.post('/configs', SuperAdminController.updateConfigs);
 router.get('/empresas', SuperAdminController.listEmpresas);
 router.post('/empresas', SuperAdminController.createEmpresa);
 router.put('/empresas/:id', SuperAdminController.updateEmpresa);
+router.delete('/empresas/:id', SuperAdminController.deleteEmpresa);
 router.get('/empresas/:id/financeiro', SuperAdminController.getEmpresaSaudeFinanceira);
 router.post('/empresas/:id/emergencia', SuperAdminController.liberarAcessoEmergencia);
 

@@ -25,7 +25,11 @@ class SuperAdminController {
     try {
       const page = parseInt(req.query.page, 10) || 1;
       const limit = parseInt(req.query.limit, 10) || 10;
-      const result = await SuperAdminService.listEmpresas(page, limit);
+      const busca = req.query.busca || '';
+      const status = req.query.status || '';
+      const plano = req.query.plano || '';
+      const saude = req.query.saude || '';
+      const result = await SuperAdminService.listEmpresas(page, limit, busca, status, plano, saude);
       return res.json({ success: true, ...result });
     } catch (err) {
       return res.status(500).json({ success: false, error: err.message });
@@ -46,6 +50,16 @@ class SuperAdminController {
       const { id } = req.params;
       const empresa = await SuperAdminService.updateEmpresa(id, req.body);
       return res.json({ success: true, data: empresa });
+    } catch (err) {
+      return res.status(400).json({ success: false, error: err.message });
+    }
+  }
+
+  async deleteEmpresa(req, res) {
+    try {
+      const { id } = req.params;
+      await SuperAdminService.deleteEmpresa(id);
+      return res.json({ success: true, message: 'Inquilino e todos os seus dados vinculados foram excluídos com sucesso.' });
     } catch (err) {
       return res.status(400).json({ success: false, error: err.message });
     }

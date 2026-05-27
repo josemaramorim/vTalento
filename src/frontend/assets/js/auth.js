@@ -1,5 +1,28 @@
 const API_URL = 'http://localhost:3001/api';
 
+// Interceptor Global Fetch para Bloqueio de Mensalidades do SaaS (HTTP 402)
+const originalFetch = window.fetch;
+window.fetch = async function(...args) {
+    const response = await originalFetch(...args);
+    if (response.status === 402) {
+        const data = await response.clone().json().catch(() => ({}));
+        if (data.error === 'SUBSCRIPTION_EXPIRED') {
+            const userStr = localStorage.getItem('@VTalentos:user');
+            if (userStr) {
+                const user = JSON.parse(userStr);
+                // O Super-Admin está imune a bloqueios de tenants
+                if (user.perfil !== 'SUPER_ADMIN') {
+                    if (!window.location.pathname.includes('fatura-vencida.html')) {
+                        window.location.href = 'fatura-vencida.html';
+                    }
+                }
+            }
+        }
+    }
+    return response;
+};
+
+
 document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
 
@@ -27,16 +50,25 @@ document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
 
         // Sucesso: Armazena o Token e Info do Usuário
         localStorage.setItem('@VTalentos:token', data.token);
-        const userObj = { ...data.usuario, empresa_nome: data.empresa ? data.empresa.nome : '' };
+        const userObj = { 
+            ...data.usuario, 
+            empresa_nome: data.empresa ? data.empresa.nome : '',
+            empresa_logo_url: data.empresa ? data.empresa.logo_url : '',
+            empresa_cor_primaria: data.empresa ? data.empresa.cor_primaria : ''
+        };
         localStorage.setItem('@VTalentos:user', JSON.stringify(userObj));
 
         // Feedback visual de sucesso
         btnSubmit.style.background = 'var(--success)';
         btnSubmit.innerText = 'ACESSO PERMITIDO!';
 
-        // Redireciona após um breve delay
+        // Redireciona após um breve delay com base no perfil
         setTimeout(() => {
-            window.location.href = 'dashboard.html';
+            if (data.usuario.perfil === 'SUPER_ADMIN') {
+                window.location.href = 'super-dashboard.html';
+            } else {
+                window.location.href = 'dashboard.html';
+            }
         }, 1000);
 
     } catch (err) {
@@ -118,9 +150,17 @@ window.renderHeader = function(titulo, subtitulo) {
     if (!userStr) return;
 
     const user = JSON.parse(userStr);
-    const roleLabel = (user.perfil === 'ADMIN_EMPRESA' || user.perfil === 'SUPER_ADMIN') ? 'Administrador' : 'Colaborador';
+    const roleLabel = user.perfil === 'SUPER_ADMIN' ? 'Super Admin' : (user.perfil === 'ADMIN_EMPRESA' ? 'Administrador' : 'Colaborador');
     const inicial = user.nome.charAt(0).toUpperCase();
     const saldoExibido = parseFloat(user.saldo_disponivel || 0).toFixed(2);
+
+    const empresaBadge = user.perfil === 'SUPER_ADMIN'
+        ? `<span style="font-size: 0.65rem; font-weight: 500; color: var(--accent-primary); background: rgba(212,175,55,0.1); border: 1px solid rgba(212,175,55,0.2); padding: 2px 8px; border-radius: 12px; text-transform: uppercase; display: inline-block;">⚡ Plataforma</span>`
+        : `<span style="font-size: 0.65rem; font-weight: 500; color: var(--text-secondary); background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 12px; text-transform: uppercase; display: inline-block;">🏢 ${user.empresa_nome || 'Empresa'}</span>`;
+
+    const roleBadgeContent = user.perfil === 'SUPER_ADMIN'
+        ? `${roleLabel}`
+        : `${roleLabel} | <span id="userSaldoHeader">${saldoExibido} T$</span>`;
 
     headerEl.innerHTML = `
         <div style="display: flex; align-items: center;">
@@ -135,9 +175,9 @@ window.renderHeader = function(titulo, subtitulo) {
                 <div style="text-align: right; margin-right: 5px;">
                     <span id="userName" style="display: inline-flex; align-items: center; gap: 6px; font-weight: 600; justify-content: flex-end; width: 100%;">
                         ${user.nome}
-                        <span style="font-size: 0.65rem; font-weight: 500; color: var(--text-secondary); background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 12px; text-transform: uppercase; display: inline-block;">🏢 ${user.empresa_nome || 'Empresa'}</span>
+                        ${empresaBadge}
                     </span>
-                    <small id="userRoleBadge" style="color: var(--accent-primary); font-weight: 600; text-transform: uppercase; font-size: 0.75rem; display: block; margin-top: 2px;">${roleLabel} | <span id="userSaldoHeader">${saldoExibido} T$</span></small>
+                    <small id="userRoleBadge" style="color: var(--accent-primary); font-weight: 600; text-transform: uppercase; font-size: 0.75rem; display: block; margin-top: 2px;">${roleBadgeContent}</small>
                 </div>
                 <div class="user-avatar" id="userInitial" style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-primary), #9b59b6); color: #fff; font-size: 1.1rem; font-weight: 600; display: flex; align-items: center; justify-content: center; border: 2px solid rgba(255,255,255,0.1);">${inicial}</div>
             </div>
@@ -188,6 +228,19 @@ window.renderHeader = function(titulo, subtitulo) {
     }
 };
 
+// Aplica branding personalizado da empresa (Tenant)
+window.applyTenantBranding = function(user) {
+    if (!user || user.perfil === 'SUPER_ADMIN') return;
+    if (user.empresa_cor_primaria) {
+        document.documentElement.style.setProperty('--accent-primary', user.empresa_cor_primaria);
+        document.documentElement.style.setProperty('--accent-secondary', user.empresa_cor_primaria);
+    }
+    const logoEl = document.querySelector('.logo');
+    if (logoEl && user.empresa_logo_url) {
+        logoEl.innerHTML = `<img src="${user.empresa_logo_url}" alt="${user.empresa_nome || 'Logo'}" style="max-width: 100%; max-height: 50px; object-fit: contain;">`;
+    }
+};
+
 // Controle de Tema Unificado e Automático (Claro/Escuro)
 window.addEventListener('DOMContentLoaded', async () => {
     // A tela de login é sempre forçada a manter o tema escuro premium
@@ -198,6 +251,15 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     const token = localStorage.getItem('@VTalentos:token');
     let themeToApply = localStorage.getItem('theme') || 'dark';
+
+    // Aplica o branding cacheado imediatamente para evitar flash de cor padrão
+    const cachedUserStr = localStorage.getItem('@VTalentos:user');
+    if (cachedUserStr) {
+        try {
+            const cachedUser = JSON.parse(cachedUserStr);
+            window.applyTenantBranding(cachedUser);
+        } catch (e) {}
+    }
 
     // Se estiver logado, tenta sincronizar e aplicar o tema preferido do banco
     if (token) {
@@ -218,9 +280,60 @@ window.addEventListener('DOMContentLoaded', async () => {
                         email: userData.email,
                         saldo_disponivel: userData.saldo_disponivel,
                         saldo_a_receber: userData.saldo_a_receber,
-                        empresa_nome: userData.empresa_nome
+                        empresa_nome: userData.empresa_nome,
+                        empresa_logo_url: userData.empresa_logo_url,
+                        empresa_cor_primaria: userData.empresa_cor_primaria,
+                        empresa_status: userData.empresa_status,
+                        data_expiracao: userData.data_expiracao,
+                        liberacao_emergencia: userData.liberacao_emergencia,
+                        emergencia_expiracao: userData.emergencia_expiracao
                     };
                     localStorage.setItem('@VTalentos:user', JSON.stringify(updatedUser));
+                    window.applyTenantBranding(updatedUser);
+
+                    // Validação proativa de bloqueio de assinatura no page load (Tarefa 15.8)
+                    const agoraValidacao = new Date();
+                    const expirada = userData.data_expiracao ? new Date(userData.data_expiracao) < agoraValidacao : false;
+                    const suspensa = userData.empresa_status === 'SUSPENSO' || expirada;
+                    const cortesiaAtiva = userData.liberacao_emergencia &&
+                                          userData.emergencia_expiracao &&
+                                          new Date(userData.emergencia_expiracao) > agoraValidacao;
+
+                    if (userData.perfil !== 'SUPER_ADMIN') {
+                        if (suspensa && !cortesiaAtiva) {
+                            if (!window.location.pathname.includes('fatura-vencida.html') && !window.location.pathname.includes('login.html')) {
+                                window.location.href = 'fatura-vencida.html';
+                                return;
+                            }
+                        } else {
+                            if (window.location.pathname.includes('fatura-vencida.html')) {
+                                window.location.href = 'dashboard.html';
+                                return;
+                            }
+                        }
+                    }
+
+                    // Injeção Reativa do Banner de Cortesia do SaaS
+
+                    if (userData.liberacao_emergencia && userData.emergencia_expiracao) {
+                        const exp = new Date(userData.emergencia_expiracao);
+                        const agora = new Date();
+                        const diffTime = Math.max(0, exp - agora);
+                        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                        
+                        let banner = document.getElementById('cortesiaBanner');
+                        if (!banner && diffDays > 0) {
+                            banner = document.createElement('div');
+                            banner.id = 'cortesiaBanner';
+                            banner.style.cssText = 'background: rgba(243, 156, 18, 0.12); border: 1px solid rgba(243, 156, 18, 0.25); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); padding: 10px 20px; border-radius: 12px; margin: 15px 0; color: #f39c12; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15); border-left: 4px solid #f39c12; font-weight: 500; gap: 8px; text-align: center;';
+                            banner.innerHTML = `⚠️ <span><strong>Acesso de Emergência Concedido:</strong> Regularize a pendência de faturamento de sua empresa nos próximos <strong>${diffDays} dia(s)</strong> para evitar a suspensão da plataforma.</span>`;
+                            
+                            const headerContainer = document.getElementById('appHeader') || document.querySelector('header.header');
+                            if (headerContainer) {
+                                headerContainer.parentNode.insertBefore(banner, headerContainer.nextSibling);
+                            }
+                        }
+                    }
 
                     // Re-renderiza o cabeçalho dinamicamente para aplicar o nome da empresa e saldo atualizados imediatamente
                     if (window.renderHeader) {

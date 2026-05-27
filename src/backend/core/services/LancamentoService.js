@@ -87,18 +87,20 @@ class LancamentoService {
     return db('GamTransacao')
       .where({ 'GamTransacao.empresa_id': empresa_id, 'GamTransacao.origem': 'MANUAL' })
       .join('GamUsuario as Corretor', 'GamTransacao.usuario_id', 'Corretor.id')
-      .join('GamUsuario as Admin', 'GamTransacao.admin_id', 'Admin.id')
+      .leftJoin('GamUsuario as Admin', 'GamTransacao.admin_id', 'Admin.id')
       .select(
         'GamTransacao.id',
         'GamTransacao.valor',
         'GamTransacao.tipo',
+        'GamTransacao.origem',
+        'GamTransacao.status',
         'GamTransacao.justificativa',
         'GamTransacao.created_at',
         'Corretor.nome as corretor_nome',
-        'Admin.nome as admin_nome'
+        db.raw("COALESCE(Admin.nome, 'Sistema') as admin_nome")
       )
       .orderBy('GamTransacao.created_at', 'desc')
-      .limit(10);
+      .limit(20);
   }
 }
 

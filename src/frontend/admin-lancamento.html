@@ -20,6 +20,7 @@
                 <a href="admin-importacao.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">📤 Importação Excel</a>
                 <a href="admin-premios.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">⚙️ Gerenciar Prêmios</a>
                 <a href="admin-usuarios.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">👥 Gestão de Corretores</a>
+                <a href="admin-faturamento.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">💳 Faturamento SaaS</a>
 
                 <p style="color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; margin-top: 15px; margin-bottom: 10px;">PERFIL</p>
                 <a href="meu-perfil.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">👤 Meus Dados</a>
@@ -69,22 +70,26 @@
 
             <!-- Histórico Recente -->
             <section class="history-card glass">
-                <h2 style="font-size: 1.2rem; margin-bottom: 10px; color: var(--text-primary);">Histórico Recente de Lançamentos</h2>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <h2 style="font-size: 1.2rem; color: var(--text-primary);">📋 Histórico Recente de Lançamentos Manuais</h2>
+                    <span style="font-size:0.78rem; color:var(--text-secondary); font-style:italic;">Últimos 20 ajustes manuais desta empresa</span>
+                </div>
                 <div class="table-responsive">
                     <table>
                         <thead>
                             <tr>
-                                <th>Data</th>
+                                <th>Data / Hora</th>
                                 <th>Corretor</th>
                                 <th>Tipo</th>
-                                <th>Valor</th>
-                                <th>Autor por</th>
+                                <th>Valor (T$)</th>
+                                <th>Status</th>
+                                <th>Realizado por</th>
                                 <th>Justificativa</th>
                             </tr>
                         </thead>
                         <tbody id="historicoTableBody">
                             <tr>
-                                <td colspan="6" style="text-align: center; color: var(--text-secondary);">Nenhum lançamento registrado.</td>
+                                <td colspan="7" style="text-align: center; color: var(--text-secondary);">Nenhum lançamento registrado.</td>
                             </tr>
                         </tbody>
                     </table>
@@ -152,7 +157,7 @@
                 tbody.innerHTML = '';
 
                 if (data.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-secondary);">Nenhum lançamento registrado.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-secondary); padding: 20px 0;">Nenhum ajuste manual registrado ainda. Use o formulário acima para criar o primeiro lançamento.</td></tr>`;
                     return;
                 }
 
@@ -161,15 +166,24 @@
                     const dataFormatada = new Date(item.created_at).toLocaleString('pt-BR');
                     
                     const badgeClass = item.tipo.toLowerCase();
-                    const sinal = item.tipo === 'CREDITO' ? '+' : '';
+                    const valorAbs = Math.abs(parseFloat(item.valor));
+                    const isCred = item.tipo === 'CREDITO';
+                    const isEstorno = item.tipo === 'ESTORNO';
+                    const corValor = isCred ? 'var(--success)' : isEstorno ? 'var(--warning)' : 'var(--error)';
+                    const sinal = isCred ? '+' : isEstorno ? '±' : '-';
+
+                    const statusBadge = item.status
+                        ? `<span class="badge badge-${item.status.toLowerCase()}" style="font-size:0.7rem;">${item.status}</span>`
+                        : `<span style="color:var(--text-secondary); font-size:0.75rem;">—</span>`;
                     
                     tr.innerHTML = `
-                        <td>${dataFormatada}</td>
+                        <td style="font-size:0.82rem; white-space:nowrap;">${dataFormatada}</td>
                         <td><strong>${item.corretor_nome}</strong></td>
                         <td><span class="badge badge-${badgeClass}">${item.tipo}</span></td>
-                        <td><strong>${sinal}${parseFloat(item.valor).toFixed(2)}</strong></td>
-                        <td>${item.admin_nome}</td>
-                        <td style="color: var(--text-secondary); max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.justificativa}</td>
+                        <td><strong style="color:${corValor}; font-size:1rem;">${sinal}${valorAbs.toFixed(2)} T$</strong></td>
+                        <td>${statusBadge}</td>
+                        <td style="font-size:0.82rem; color:var(--text-secondary);">${item.admin_nome}</td>
+                        <td style="color: var(--text-secondary); max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size:0.82rem;" title="${item.justificativa}">${item.justificativa}</td>
                     `;
                     tbody.appendChild(tr);
                 });

@@ -123,8 +123,14 @@
                             <input type="text" id="cpfInput" placeholder="Ex: 000.000.000-00">
                         </div>
                         <div class="form-group" id="senhaGroup">
-                            <label for="senhaInput">Senha Temporária</label>
+                            <label for="senhaInput" id="senhaLabel">Senha Temporária</label>
                             <input type="password" id="senhaInput" placeholder="Mínimo 6 caracteres" required>
+                        </div>
+                        <div class="form-group" id="redefinirSenhaGroup" style="display:none;">
+                            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:0.85rem; color:var(--text-secondary); margin-bottom:8px;">
+                                <input type="checkbox" id="redefinirSenhaCheck" onchange="toggleNovaSenha()" style="width:16px; height:16px; cursor:pointer;"> Redefinir senha do corretor
+                            </label>
+                            <input type="password" id="novaSenhaInput" placeholder="Nova senha (opcional)" style="display:none;">
                         </div>
                     </div>
 
@@ -183,6 +189,56 @@
         </main>
     </div>
 
+    <!-- MODAL DE EXTRATO DO CORRETOR -->
+    <div id="extratoModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:1000; overflow-y:auto; padding: 20px;">
+        <div class="glass" style="max-width:900px; margin:0 auto; border-radius:16px; padding:28px; border:1px solid rgba(255,255,255,0.08);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <div>
+                    <h2 style="font-size:1.3rem; font-weight:700; color:var(--text-primary);" id="extratoModalTitle">Extrato do Corretor</h2>
+                    <p style="font-size:0.82rem; color:var(--text-secondary); margin-top:4px;" id="extratoModalSub">Todas as movimentações de Talentos</p>
+                </div>
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <button id="btnRecalcular" onclick="recalcularSaldo()" style="padding:8px 16px; border-radius:8px; background:rgba(212,175,55,0.15); border:1px solid rgba(212,175,55,0.3); color:var(--accent-primary); font-size:0.8rem; font-weight:600; cursor:pointer; transition:all 0.2s;" title="Recalcula o saldo a partir das transações registradas">↻ Recalcular Saldo</button>
+                    <button onclick="closeExtrato()" style="background:rgba(255,255,255,0.08); border:none; color:var(--text-primary); width:36px; height:36px; border-radius:8px; font-size:1.1rem; cursor:pointer;">✕</button>
+                </div>
+            </div>
+
+            <!-- Resumo de saldo -->
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:24px;" id="extratoResumo">
+                <div style="background:rgba(46,213,115,0.08); border:1px solid rgba(46,213,115,0.2); border-radius:12px; padding:16px;">
+                    <p style="font-size:0.75rem; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px;">💰 Saldo Disponível</p>
+                    <p style="font-size:1.6rem; font-weight:700; color:var(--success);" id="extratoSaldoDisp">0.00 T$</p>
+                </div>
+                <div style="background:rgba(255,165,0,0.08); border:1px solid rgba(255,165,0,0.2); border-radius:12px; padding:16px;">
+                    <p style="font-size:0.75rem; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px;">⏳ Saldo a Receber</p>
+                    <p style="font-size:1.6rem; font-weight:700; color:var(--warning);" id="extratoSaldoRec">0.00 T$</p>
+                </div>
+            </div>
+
+            <!-- Tabela de transações -->
+            <div style="overflow-x:auto;">
+                <table style="width:100%; border-collapse:collapse; font-size:0.83rem;">
+                    <thead>
+                        <tr style="border-bottom:1px solid rgba(255,255,255,0.08);">
+                            <th style="padding:10px 12px; text-align:left; color:var(--text-secondary); font-weight:600; text-transform:uppercase; font-size:0.72rem;">Data</th>
+                            <th style="padding:10px 12px; text-align:left; color:var(--text-secondary); font-weight:600; text-transform:uppercase; font-size:0.72rem;">Tipo</th>
+                            <th style="padding:10px 12px; text-align:left; color:var(--text-secondary); font-weight:600; text-transform:uppercase; font-size:0.72rem;">Origem</th>
+                            <th style="padding:10px 12px; text-align:right; color:var(--text-secondary); font-weight:600; text-transform:uppercase; font-size:0.72rem;">Valor</th>
+                            <th style="padding:10px 12px; text-align:center; color:var(--text-secondary); font-weight:600; text-transform:uppercase; font-size:0.72rem;">Status</th>
+                            <th style="padding:10px 12px; text-align:left; color:var(--text-secondary); font-weight:600; text-transform:uppercase; font-size:0.72rem;">Empreendimento / Justificativa</th>
+                            <th style="padding:10px 12px; text-align:left; color:var(--text-secondary); font-weight:600; text-transform:uppercase; font-size:0.72rem;">Autor</th>
+                        </tr>
+                    </thead>
+                    <tbody id="extratoTableBody">
+                        <tr><td colspan="7" style="text-align:center; padding:30px; color:var(--text-secondary);">Carregando extrato...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <p style="text-align:center; font-size:0.75rem; color:var(--text-secondary); margin-top:16px;">Exibindo até 50 transações mais recentes</p>
+        </div>
+    </div>
+
     <script src="assets/js/auth.js"></script>
     <script>
         // Check Admin Auth
@@ -218,6 +274,7 @@
                 <a href="admin-importacao.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">📤 Importação Excel</a>
                 <a href="admin-premios.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">⚙️ Gerenciar Prêmios</a>
                 <a href="admin-usuarios.html" class="active" style="color: var(--accent-primary); text-decoration: none; font-weight: 600;">👥 Gestão de Corretores</a>
+                <a href="admin-faturamento.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">💳 Faturamento SaaS</a>
             `;
         }
 
@@ -280,8 +337,9 @@
                         <td style="text-align: right;"><strong style="color: var(--accent-primary)">${parseFloat(u.saldo_disponivel).toFixed(2)} T$</strong></td>
                         <td style="text-align: right; color: var(--text-secondary);">${parseFloat(u.saldo_a_receber).toFixed(2)} T$</td>
                         <td style="text-align: center;">
-                            <div class="actions-btn" style="justify-content: center;">
+                            <div class="actions-btn" style="justify-content: center; gap: 6px;">
                                 <button class="btn btn-sm" onclick="editUsuario('${u.id}')" style="background: rgba(255,255,255,0.1); color: var(--text-primary);">Editar</button>
+                                <button class="btn btn-sm" onclick="openExtrato('${u.id}', '${u.nome}')" style="background: rgba(212,175,55,0.15); color: var(--accent-primary); border: 1px solid rgba(212,175,55,0.3);">Extrato</button>
                             </div>
                         </td>
                     `;
@@ -324,6 +382,15 @@
             const cpf = document.getElementById('cpfInput').value;
             const senha = document.getElementById('senhaInput').value;
 
+            // Nova senha opcional ao editar
+            const redefinirCheck = document.getElementById('redefinirSenhaCheck').checked;
+            const novaSenha = redefinirCheck ? document.getElementById('novaSenhaInput').value : null;
+
+            if (redefinirCheck && novaSenha && novaSenha.length < 6) {
+                showToast('A nova senha deve ter ao menos 6 caracteres.', 'error');
+                return;
+            }
+
             const btnSubmit = document.getElementById('btnSubmit');
 
             try {
@@ -333,7 +400,7 @@
                 const url = id ? `${API_BASE}/usuarios/${id}` : `${API_BASE}/usuarios`;
                 const method = id ? 'PUT' : 'POST';
 
-                const payload = { nome, email, cpf, ...(senha && { senha }) };
+                const payload = { nome, email, cpf, ...(senha && !id ? { senha } : {}), ...(novaSenha ? { senha: novaSenha } : {}) };
 
                 const response = await fetch(url, {
                     method,
@@ -371,16 +438,19 @@
             const usuario = stateUsuarios.find(u => u.id === id);
             if (!usuario) return;
 
-            document.getElementById('formTitle').innerText = 'Editar Corretor: ' + usuario.nome;
+            document.getElementById('formTitle').innerText = '✏️ Editando: ' + usuario.nome;
             document.getElementById('usuarioId').value = usuario.id;
             document.getElementById('nomeInput').value = usuario.nome;
             document.getElementById('emailInput').value = usuario.email;
             document.getElementById('cpfInput').value = usuario.cpf || '';
             
-            // Ao editar, a senha não é obrigatória
-            const senhaInput = document.getElementById('senhaInput');
-            senhaInput.required = false;
+            // No modo edição: oculta campo de senha obrigatória e mostra redefinir
             document.getElementById('senhaGroup').style.display = 'none';
+            document.getElementById('senhaInput').required = false;
+            document.getElementById('redefinirSenhaGroup').style.display = 'block';
+            document.getElementById('redefinirSenhaCheck').checked = false;
+            document.getElementById('novaSenhaInput').style.display = 'none';
+            document.getElementById('novaSenhaInput').value = '';
 
             document.getElementById('btnSubmit').innerText = 'ATUALIZAR CORRETOR';
             document.getElementById('btnCancelEdit').style.display = 'inline-block';
@@ -388,14 +458,24 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
+        function toggleNovaSenha() {
+            const checked = document.getElementById('redefinirSenhaCheck').checked;
+            document.getElementById('novaSenhaInput').style.display = checked ? 'block' : 'none';
+            if (!checked) document.getElementById('novaSenhaInput').value = '';
+        }
+
         function resetForm() {
             document.getElementById('formTitle').innerText = 'Novo Corretor';
             document.getElementById('usuarioId').value = '';
             document.getElementById('usuarioForm').reset();
-            
-            const senhaInput = document.getElementById('senhaInput');
-            senhaInput.required = true;
+
+            // Restaura campo de senha obrigatória
             document.getElementById('senhaGroup').style.display = 'block';
+            document.getElementById('senhaInput').required = true;
+            document.getElementById('redefinirSenhaGroup').style.display = 'none';
+            document.getElementById('redefinirSenhaCheck').checked = false;
+            document.getElementById('novaSenhaInput').style.display = 'none';
+            document.getElementById('novaSenhaInput').value = '';
 
             document.getElementById('btnSubmit').innerText = 'SALVAR CORRETOR';
             document.getElementById('btnCancelEdit').style.display = 'none';
@@ -405,6 +485,109 @@
             renderSidebar();
             renderHeader("Gestão de Corretores", "Cadastre, visualize e edite os corretores vinculados à sua imobiliária");
             fetchUsuarios(1);
+        });
+
+        let extratoUsuarioId = null;
+
+        async function openExtrato(userId, nomeCorretor) {
+            extratoUsuarioId = userId;
+            document.getElementById('extratoModalTitle').innerText = `Extrato: ${nomeCorretor}`;
+            document.getElementById('extratoModalSub').innerText = 'Carregando movimentações...';
+            document.getElementById('extratoSaldoDisp').innerText = '...';
+            document.getElementById('extratoSaldoRec').innerText = '...';
+            document.getElementById('extratoTableBody').innerHTML = `<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--text-secondary);">Carregando...</td></tr>`;
+            document.getElementById('extratoModal').style.display = 'block';
+            document.body.style.overflow = 'hidden';
+
+            try {
+                const res = await fetch(`${API_BASE}/usuarios/${userId}/extrato`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (!data.success) throw new Error(data.error);
+
+                const { corretor, transacoes } = data;
+                document.getElementById('extratoModalSub').innerText = `${corretor.email} — últimas 50 movimentações`;
+                document.getElementById('extratoSaldoDisp').innerText = `${parseFloat(corretor.saldo_disponivel).toFixed(2)} T$`;
+                document.getElementById('extratoSaldoRec').innerText = `${parseFloat(corretor.saldo_a_receber).toFixed(2)} T$`;
+
+                const tbody = document.getElementById('extratoTableBody');
+
+                if (transacoes.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--text-secondary);">Nenhuma movimentação registrada ainda.</td></tr>`;
+                    return;
+                }
+
+                const origemLabel = { MANUAL: '✏️ Manual', IMPORTACAO: '📤 Importação', PREMIO: '🎁 Prêmio', RENOVACAO: '🔄 Renovação' };
+                const statusColors = { COMPENSADO: 'var(--success)', PENDENTE: 'var(--warning)', CANCELADO: 'var(--error)' };
+
+                tbody.innerHTML = transacoes.map(t => {
+                    const valorAbs = Math.abs(parseFloat(t.valor));
+                    const isCred = t.tipo === 'CREDITO';
+                    const isEstorno = t.tipo === 'ESTORNO';
+                    const cor = isCred ? 'var(--success)' : isEstorno ? 'var(--warning)' : 'var(--error)';
+                    const sinal = isCred ? '+' : isEstorno ? '±' : '-';
+                    const data = new Date(t.created_at).toLocaleString('pt-BR');
+                    const origem = origemLabel[t.origem] || t.origem;
+                    const statusCor = statusColors[t.status] || 'var(--text-secondary)';
+                    const descricao = t.empreendimento
+                        ? `${t.empreendimento}${t.unidade ? ' / ' + t.unidade : ''}`
+                        : (t.justificativa || '—');
+
+                    return `<tr style="border-bottom:1px solid rgba(255,255,255,0.04); transition:background 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background='transparent'">
+                        <td style="padding:10px 12px; white-space:nowrap; font-size:0.78rem; color:var(--text-secondary);">${data}</td>
+                        <td style="padding:10px 12px;"><span class="badge badge-${t.tipo.toLowerCase()}" style="font-size:0.7rem;">${t.tipo}</span></td>
+                        <td style="padding:10px 12px; font-size:0.78rem;">${origem}</td>
+                        <td style="padding:10px 12px; text-align:right;"><strong style="color:${cor}; font-size:0.95rem;">${sinal}${valorAbs.toFixed(2)} T$</strong></td>
+                        <td style="padding:10px 12px; text-align:center;"><span style="font-size:0.72rem; font-weight:600; color:${statusCor};">${t.status || '—'}</span></td>
+                        <td style="padding:10px 12px; max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--text-secondary); font-size:0.78rem;" title="${descricao}">${descricao}</td>
+                        <td style="padding:10px 12px; font-size:0.78rem; color:var(--text-secondary);">${t.admin_nome}</td>
+                    </tr>`;
+                }).join('');
+
+            } catch (err) {
+                document.getElementById('extratoTableBody').innerHTML = `<tr><td colspan="7" style="text-align:center; padding:20px; color:var(--error);">${err.message}</td></tr>`;
+            }
+        }
+
+        function closeExtrato() {
+            document.getElementById('extratoModal').style.display = 'none';
+            document.body.style.overflow = '';
+            extratoUsuarioId = null;
+        }
+
+        async function recalcularSaldo() {
+            if (!extratoUsuarioId) return;
+            const btn = document.getElementById('btnRecalcular');
+            btn.disabled = true;
+            btn.innerText = '↻ Recalculando...';
+            try {
+                const res = await fetch(`${API_BASE}/usuarios/${extratoUsuarioId}/recalcular-saldo`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (!data.success) throw new Error(data.error);
+
+                // Atualiza os valores no modal
+                document.getElementById('extratoSaldoDisp').innerText = `${parseFloat(data.saldo_disponivel).toFixed(2)} T$`;
+                document.getElementById('extratoSaldoRec').innerText = `${parseFloat(data.saldo_a_receber).toFixed(2)} T$`;
+
+                showToast(`Saldo recalculado! Disponível: ${parseFloat(data.saldo_disponivel).toFixed(2)} T$ | A Receber: ${parseFloat(data.saldo_a_receber).toFixed(2)} T$`, 'success');
+
+                // Atualiza a tabela principal
+                await fetchUsuarios(pageAtual);
+            } catch (err) {
+                showToast(err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerText = '↻ Recalcular Saldo';
+            }
+        }
+
+        // Fechar modal ao clicar fora
+        document.getElementById('extratoModal')?.addEventListener('click', function(e) {
+            if (e.target === this) closeExtrato();
         });
     </script>
 </body>

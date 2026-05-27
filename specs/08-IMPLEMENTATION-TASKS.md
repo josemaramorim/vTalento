@@ -256,8 +256,55 @@ Esta fase introduz o papel de `SUPER_ADMIN` no ecossistema V-Talentos, incorpora
 - [x] **Tarefa 15.2 (Backend):** Atualizar o fluxo de login em `AutenticacaoService.js` para permitir a autenticação de empresas suspensas (para fins de pagamento) e refatorar `TenantMiddleware.js` para interceptar acessos suspensos/expirados (retornando HTTP 402) com bypass ativo de cortesia se `liberacao_emergencia === true` dentro do prazo.
 - [x] **Tarefa 15.3 (Backend):** Implementar rotas e serviços exclusivos do Super-Admin (`SuperAdminController` / `SuperAdminService`), englobando CRUD de empresas, concessão de acesso de emergência parametrizado, alteração de configurações globais (incluindo `dias_padrao_cortesia`), visualização de faturas e quitação com baixa manual.
 - [x] **Tarefa 15.4 (Backend):** Implementar gerenciamento lógico de usuários isolado por inquilino em rotas exclusivas do Super-Admin.
-- [/] **Tarefa 15.5 (Frontend):** Desenvolver a tela `super-dashboard.html` com gráficos translúcidos de faturamento acumulado, lista de empresas ativas/inadimplentes e aba de configurações de gateways e dias padrão de cortesia.
-- [ ] **Tarefa 15.6 (Frontend):** Desenvolver a tela `super-empresas.html` com listagem de inquilinos, modal de Acesso de Emergência dinâmico (com manipulação de dias) e aba de Saúde Financeira com quitação manual.
-- [ ] **Tarefa 15.7 (Frontend):** Desenvolver a tela `super-usuarios.html` para controle de usuários filtrado e isolado por dropdown de empresa.
-- [ ] **Tarefa 15.8 (Frontend):** Desenvolver as telas de faturamento do inquilino `admin-faturamento.html` e a tela de bloqueio `fatura-vencida.html` (com checkout simulado/gateways) e integrar interceptores reativos no `auth.js` com banner dinâmico de cortesia ativa.
+- [x] **Tarefa 15.5 (Frontend):** Desenvolver a tela `super-dashboard.html` com gráficos translúcidos de faturamento acumulado, lista de empresas ativas/inadimplentes e aba de configurações de gateways e dias padrão de cortesia.
+- [x] **Tarefa 15.6 (Frontend):** Desenvolver a tela `super-empresas.html` com listagem de inquilinos, modal de Acesso de Emergência dinâmico (com manipulação de dias) e aba de Saúde Financeira com quitação manual.
+- [x] **Tarefa 15.7 (Frontend):** Desenvolver a tela `super-usuarios.html` para controle de usuários filtrado e isolado por dropdown de empresa.
+- [x] **Tarefa 15.8 (Frontend):** Desenvolver as telas de faturamento do inquilino `admin-faturamento.html` e a tela de bloqueio `fatura-vencida.html` (com checkout simulado/gateways) e integrar interceptores reativos no `auth.js` com banner dinâmico de cortesia ativa.
 - [x] **Tarefa 15.9 (Testes):** Desenvolver suíte de testes de integração Jest/Supertest validando o bloqueio de tenant expirado, bypass de cortesia parametrizada e endpoints de faturamento e quitação do Super-Admin.
+
+---
+
+## FASE 9: Personalização de Marca (Auto-Branding) & Licenciamento Cumulativo
+
+Esta fase permite que o administrador da empresa (`ADMIN_EMPRESA`) gerencie a identidade visual da sua marca (Auto-Branding / White-Label) de forma autônoma na página de perfil, e adquira licenças adicionais de 30 dias que se acumulam de forma cumulativa com o saldo de dias restante da empresa.
+
+### Regras de Negócio e UX:
+- **Auto-Branding:** O administrador pode alterar o nome da empresa, URL da logomarca e cor principal. A logomarca e a cor temática (sobrescrevendo as variáveis CSS `--accent-primary` e `--accent-secondary`) são injetadas em tempo real em todas as páginas para o respectivo inquilino.
+- **Licenciamento Cumulativo:** O administrador visualiza um card com o comportamento cumulativo das licenças e pode clicar em "COMPRAR +30 DIAS" para auto-gerar uma fatura de licença no valor do plano contratado. A quitação de faturas soma +30 dias a partir da data de expiração existente, sem perda de nenhum dia atual.
+
+### Tarefas de Desenvolvimento
+
+- [x] **Tarefa 16.1 (Backend):** Atualizar o endpoint `/api/auth/me` para incluir o logotipo (`logo_url`) e a cor primária (`cor_primaria`) no retorno JSON da empresa.
+- [x] **Tarefa 16.2 (Backend):** Implementar e registrar as rotas de administrador `PUT /api/admin/empresa` (para atualização de branding) e `POST /api/admin/billing/faturas` (para criação de faturas de renovação antecipada).
+- [x] **Tarefa 16.3 (Frontend):** Atualizar `auth.js` para salvar os dados de branding no `localStorage` e aplicá-los dinamicamente nas cores e logo da barra lateral.
+- [x] **Tarefa 16.4 (Frontend):** Desenvolver a seção "Configurações da Empresa" em `meu-perfil.html` com colorpicker bidirecional sincronizado e lógica de salvamento.
+- [x] **Tarefa 16.5 (Frontend):** Desenvolver o card de Licenciamento Cumulativo e o botão de comprar licença em `admin-faturamento.html` com recarregamento reativo do painel.
+- [x] **Tarefa 16.6 (Testes):** Criar e rodar testes de integração Jest `TenantBillingBranding.test.js` para garantir 100% de cobertura nos novos endpoints de branding e faturas de inquilino.
+- [x] **Tarefa 16.7 (Frontend):** Desenvolver e integrar o card/alerta visual de expiração de licença no dashboard de administração (`dashboard.html`) seguindo as cores condicionais combinadas.
+
+---
+
+## FASE 10: Gestão Avançada de Corretores e Extrato de Movimentações da Equipe (Admin)
+
+### História 12: Inativação, Exclusão de Corretores e Extrato Filtrado de Movimentações
+*Como administrador, quero inativar ou excluir corretores para controlar o acesso ao app, e quero ter uma listagem detalhada de todas as movimentações da minha equipe, com filtros, resumos e totalizadores, para ter um controle perfeito sobre a saúde financeira.*
+
+#### Tarefas de Backend
+- [/] **Tarefa 17.1 (Infra / Banco):** Criar migration `20260527000100_add_ativo_to_usuarios.js` para adicionar a coluna `ativo` (boolean, default: true) à tabela `GamUsuario`.
+- [ ] **Tarefa 17.2 (Backend):** Atualizar `AutenticacaoService.js` no login para rejeitar usuários inativos (`ativo === false`).
+- [ ] **Tarefa 17.3 (Backend):** Atualizar `UsuarioService.js` e `UsuarioController.js` para permitir inativar/ativar e excluir (delete) corretores, garantindo isolamento multi-tenant (admin não pode excluir/inativar usuários de outras empresas).
+- [ ] **Tarefa 17.4 (Backend):** Criar endpoint `GET /api/admin/movimentacoes` no backend (protegido por `tenantMiddleware` + `adminMiddleware`), retornando o histórico filtrado e paginado de todas as transações dos corretores da empresa, com resumos consolidados de saldo disponível total, saldo a receber total, total de créditos e total de débitos.
+- [ ] **Tarefa 17.5 (Testes):** Escrever testes unitários e de integração validando login com usuário inativo, exclusão de usuários, isolamento e filtragem de movimentações da equipe.
+
+#### Tarefas de Frontend
+- [ ] **Tarefa 17.6 (Frontend):** Atualizar a tela `admin-usuarios.html` para incluir:
+  - Uma coluna de "Status" (Ativo / Inativo) e botão de alternar status (Inativar / Ativar).
+  - Um botão de "Excluir" com confirmação (exibindo toast de sucesso ou erro).
+  - Atualização dos modais de criação/edição se necessário.
+- [ ] **Tarefa 17.7 (Frontend):** Criar a nova página de Histórico/Movimentações da Equipe (`admin-movimentacoes.html`) com:
+  - Cards de resumo: Saldo Disponível Total, Saldo a Receber Total, Total de Créditos, Total de Débitos.
+  - Filtros: Tipo (Crédito/Débito/Estorno), Origem (Manual/Importação/Prêmio), Corretor (Dropdown de corretores ativos), Período (De/Até), Paginação (10/50/100 registros por página).
+  - Tabela com: Data/Hora, Corretor, Tipo, Origem, Valor (colorido), Descrição/Justificativa, Lançado por.
+  - Design Glassmorphism premium unificado.
+- [ ] **Tarefa 17.8 (Frontend):** Registrar no menu lateral dinâmico de `auth.js` o novo link "📈 Movimentações" para administradores.
+

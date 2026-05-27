@@ -15,6 +15,8 @@ routes.use(tenantMiddleware, adminMiddleware);
 routes.get('/usuarios', UsuarioController.listAdmin);
 routes.post('/usuarios', UsuarioController.create);
 routes.put('/usuarios/:id', UsuarioController.update);
+routes.get('/usuarios/:id/extrato', UsuarioController.getExtrato);
+routes.post('/usuarios/:id/recalcular-saldo', UsuarioController.recalcularSaldo);
 
 // Endpoint de lançamento manual
 routes.post('/lancamento-manual', LancamentoController.realizarLancamento);
@@ -48,4 +50,15 @@ routes.delete('/premios/:id', PremioController.delete);
 // Tarefa 11.4 — FASE 4.9 — Painel Admin de Resgates (specs/09-VITRINE-DE-PREMIOS.md Seção 6)
 routes.get('/resgates', PremioController.listAllResgatesAdmin);
 
+// Faturamento SaaS para Inquilino (FASE 8 / Tarefa 15.8)
+const BillingController = require('../controllers/BillingController');
+routes.get('/billing/status', BillingController.getStatus);
+routes.get('/billing/faturas', BillingController.getFaturas);
+routes.post('/billing/pagar', BillingController.pagarFatura);
+routes.put('/billing/provedor', BillingController.alterarMetodo);
+routes.put('/empresa', BillingController.updateEmpresaBranding);
+routes.post('/billing/faturas', BillingController.criarFaturaAdicional);
+routes.delete('/billing/faturas/:id', BillingController.cancelarFatura);
+
 module.exports = routes;
+

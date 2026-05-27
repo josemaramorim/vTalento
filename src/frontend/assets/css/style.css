@@ -273,9 +273,24 @@ h1, h2, h3, h4, .heading {
     transition: all 0.3s ease;
 }
 
-.form-group select option {
-    background-color: var(--bg-secondary);
-    color: var(--text-primary);
+/* Evita o colapso visual do seletor nativo de cores */
+input[type="color"] {
+    padding: 4px 6px !important;
+    height: 42px !important;
+    cursor: pointer;
+}
+/* Custom robust styling for select dropdown elements and options to prevent unreadable text */
+select {
+    color-scheme: light;
+}
+
+[data-theme="dark"] select {
+    color-scheme: dark;
+}
+
+select option {
+    background-color: var(--bg-secondary) !important;
+    color: var(--text-primary) !important;
 }
 
 .form-group input:focus, .form-group select:focus, .form-group textarea:focus {

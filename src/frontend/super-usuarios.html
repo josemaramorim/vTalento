@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão Isolada de Usuários - V-Talentos SaaS</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <style>
+        /* Estilos e Layout */
+        .page-header-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        .selector-box {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            padding: 15px 25px;
+            border-radius: var(--radius-md);
+            margin-bottom: 30px;
+            box-shadow: var(--shadow-sm);
+        }
+        .selector-box select {
+            min-width: 250px;
+            padding: 10px 15px;
+            border-radius: var(--radius-sm);
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            font-size: 0.95rem;
+            cursor: pointer;
+        }
+        .selector-box select:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+        .table-responsive {
+            overflow-x: auto;
+            width: 100%;
+            border-radius: var(--radius-md);
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--shadow-md);
+        }
+        .premium-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+        .premium-table th {
+            padding: 18px 24px;
+            background: rgba(255, 255, 255, 0.02);
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+        .premium-table td {
+            padding: 18px 24px;
+            border-bottom: 1px solid var(--glass-border);
+            font-size: 0.9rem;
+            color: var(--text-primary);
+        }
+        .premium-table tr:last-child td {
+            border-bottom: none;
+        }
+        .premium-table tr:hover {
+            background: rgba(255, 255, 255, 0.01);
+        }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .badge-admin { background: rgba(212, 175, 55, 0.1); color: var(--accent-primary); border: 1px solid rgba(212, 175, 55, 0.2); }
+        .badge-corretor { background: rgba(52, 152, 219, 0.1); color: #3498db; border: 1px solid rgba(52, 152, 219, 0.2); }
+
+        /* Modal Overlay Premium */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.55);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .modal-card {
+            width: 90%;
+            max-width: 500px;
+            padding: 35px;
+            border-radius: var(--radius-md);
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+        .modal-overlay.active .modal-card {
+            transform: scale(1);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            border-bottom: 1px solid var(--glass-border);
+            padding-bottom: 15px;
+        }
+        .modal-close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+        .modal-close-btn:hover {
+            color: var(--error);
+        }
+        .form-group {
+            margin-bottom: 18px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+        .form-control {
+            width: 100%;
+            padding: 10px 14px;
+            border-radius: var(--radius-sm);
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            font-size: 0.9rem;
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+        }
+        .pagination-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+        }
+        .pagination-btn {
+            padding: 8px 16px;
+            border-radius: var(--radius-sm);
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        .pagination-btn:hover:not(:disabled) {
+            border-color: var(--accent-primary);
+            background: rgba(255,255,255,0.08);
+        }
+        .pagination-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body data-theme="dark">
+    <div class="app-layout">
+        <aside class="sidebar">
+            <div class="logo">V-<span>TALENTOS</span></div>
+            <nav id="navLinks">
+                <!-- Injetado dinamicamente -->
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="header" id="appHeader"></header>
+
+            <div class="page-header-actions animate-fade">
+                <h1 style="font-size: 1.6rem; font-weight: 600;">👥 Gestão Lógica Isolada de Usuários</h1>
+                <button class="btn btn-primary" id="btnNovoUsuario" onclick="openNewUsuarioModal()" style="font-weight: 600;" disabled>➕ ADICIONAR NOVO USUÁRIO</button>
+            </div>
+
+            <!-- Seletor de Tenant -->
+            <div class="selector-box animate-fade" style="animation-delay: 0.05s;">
+                <label for="tenantSelect" style="font-weight: 600; font-size: 0.95rem;">Empresa Alvo (Isolamento):</label>
+                <select id="tenantSelect" onchange="handleTenantChange()">
+                    <option value="">Selecione uma empresa...</option>
+                </select>
+                <input type="text" id="buscaInput" class="form-control" placeholder="Buscar por Nome, E-mail ou CPF..." style="max-width: 300px; margin-left: auto;" oninput="handleSearch()" disabled>
+            </div>
+
+            <!-- Tabela de Usuários -->
+            <div class="table-responsive animate-fade" style="animation-delay: 0.1s;">
+                <table class="premium-table">
+                    <thead>
+                        <tr>
+                            <th>Nome Completo</th>
+                            <th>E-mail de Acesso</th>
+                            <th>CPF</th>
+                            <th>Perfil / Permissão</th>
+                            <th>Saldos (Disponível / A Receber)</th>
+                            <th style="text-align: right;">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usuariosTableBody">
+                        <tr>
+                            <td colspan="6" style="text-align: center; color: var(--text-secondary);">Selecione uma empresa acima para isolar e carregar os usuários.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Paginação -->
+            <div class="pagination-container animate-fade" style="animation-delay: 0.15s;">
+                <span id="pageInfo" style="font-size: 0.85rem; color: var(--text-secondary);">Página 1 de 1</span>
+                <div style="display: flex; gap: 10px;">
+                    <button class="pagination-btn" id="prevPageBtn" disabled>Anterior</button>
+                    <button class="pagination-btn" id="nextPageBtn" disabled>Próxima</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- MODAL: NOVO USUÁRIO -->
+    <div class="modal-overlay" id="newUsuarioModal">
+        <div class="modal-card glass">
+            <div class="modal-header">
+                <h2 id="newModalTitle" style="font-size: 1.2rem; font-weight: 600;">👥 Adicionar Usuário no Tenant</h2>
+                <button class="modal-close-btn" onclick="closeModal('newUsuarioModal')">✕</button>
+            </div>
+            <form id="newUsuarioForm">
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label style="color: var(--accent-primary); font-weight: 700; letter-spacing: 0.5px;">Empresa de Destino (Tenant)</label>
+                    <input type="text" id="newTenantDisplay" class="form-control" disabled style="background: rgba(255,255,255,0.05); cursor: not-allowed; font-weight: 600; color: var(--accent-primary); border-color: rgba(212,175,55,0.25);">
+                </div>
+                <div class="form-group">
+                    <label for="newNome">Nome Completo</label>
+                    <input type="text" id="newNome" class="form-control" required placeholder="Ex: João da Silva">
+                </div>
+                <div class="form-group">
+                    <label for="newEmail">E-mail de Acesso</label>
+                    <input type="email" id="newEmail" class="form-control" required placeholder="Ex: joao@empresa.com">
+                </div>
+                <div class="form-group">
+                    <label for="newSenha">Senha Provisória</label>
+                    <input type="password" id="newSenha" class="form-control" required placeholder="Mínimo 6 caracteres">
+                </div>
+                <div class="form-group">
+                    <label for="newCpf">CPF (Opcional)</label>
+                    <input type="text" id="newCpf" class="form-control" placeholder="Apenas números">
+                </div>
+                <div class="form-group">
+                    <label for="newPerfil">Perfil de Acesso</label>
+                    <select id="newPerfil" class="form-control">
+                        <option value="CORRETOR" selected>CORRETOR (Colaborador)</option>
+                        <option value="ADMIN_EMPRESA">ADMIN_EMPRESA (Administrador da Empresa)</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; font-weight: 600; margin-top: 15px;">SALVAR USUÁRIO</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: EDITAR USUÁRIO -->
+    <div class="modal-overlay" id="editUsuarioModal">
+        <div class="modal-card glass">
+            <div class="modal-header">
+                <h2 id="editModalTitle" style="font-size: 1.2rem; font-weight: 600;">✏️ Editar Dados do Usuário</h2>
+                <button class="modal-close-btn" onclick="closeModal('editUsuarioModal')">✕</button>
+            </div>
+            <form id="editUsuarioForm">
+                <input type="hidden" id="editId">
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label style="color: var(--accent-primary); font-weight: 700; letter-spacing: 0.5px;">Empresa de Destino (Tenant)</label>
+                    <input type="text" id="editTenantDisplay" class="form-control" disabled style="background: rgba(255,255,255,0.05); cursor: not-allowed; font-weight: 600; color: var(--accent-primary); border-color: rgba(212,175,55,0.25);">
+                </div>
+                <div class="form-group">
+                    <label for="editNome">Nome Completo</label>
+                    <input type="text" id="editNome" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="editEmail">E-mail</label>
+                    <input type="email" id="editEmail" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="editCpf">CPF (Opcional)</label>
+                    <input type="text" id="editCpf" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="editPerfil">Perfil de Acesso</label>
+                    <select id="editPerfil" class="form-control">
+                        <option value="CORRETOR">CORRETOR</option>
+                        <option value="ADMIN_EMPRESA">ADMIN_EMPRESA</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="editSenha">Alterar Senha (Opcional)</label>
+                    <input type="password" id="editSenha" class="form-control" placeholder="Deixe vazio para manter a atual">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; font-weight: 600; margin-top: 15px;">SALVAR ALTERAÇÕES</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="assets/js/auth.js"></script>
+    <script>
+        const token = localStorage.getItem('@VTalentos:token');
+        const userStr = localStorage.getItem('@VTalentos:user');
+
+        if (!token || !userStr) {
+            window.location.href = 'login.html';
+        }
+
+        const user = JSON.parse(userStr);
+        if (user.perfil !== 'SUPER_ADMIN') {
+            window.location.href = 'dashboard.html';
+        }
+
+        // Renderiza o cabeçalho dinâmico do Super-Admin
+        renderHeader('Usuários SaaS', 'Gestão e controle completo de corretores e administradores isolados por empresa');
+
+        // Renderiza Sidebar
+        const nav = document.getElementById('navLinks');
+        nav.innerHTML = `
+            <p style="color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; margin-bottom: 10px;">SAAS PLATAFORMA</p>
+            <a href="super-dashboard.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">📊 Plataforma Dashboard</a>
+            <a href="super-empresas.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">🏢 Inquilinos (Empresas)</a>
+            <a href="super-usuarios.html" class="active" style="color: var(--accent-primary); text-decoration: none; font-weight: 600;">👥 Usuários Isolados</a>
+            <p style="color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; margin-top: 20px; margin-bottom: 10px;">PERFIL</p>
+            <a href="meu-perfil.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">👤 Meus Dados</a>
+        `;
+
+        let currentPage = 1;
+        const limitPerPage = 10;
+        let selectedTenantId = '';
+        let searchTimeout = null;
+
+        // Formatação Helpers
+        function formatReal(val) {
+            return parseFloat(val || 0).toFixed(2) + ' T$';
+        }
+
+        // Carregar Dropdown de Empresas
+        async function loadTenants() {
+            try {
+                const res = await fetch('http://localhost:3001/api/super/empresas?limit=100', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    const select = document.getElementById('tenantSelect');
+                    select.innerHTML = '<option value="">Selecione uma empresa...</option>';
+                    data.data.forEach(emp => {
+                        const opt = document.createElement('option');
+                        opt.value = emp.id;
+                        opt.innerText = `${emp.nome} (/${emp.slug})`;
+                        select.appendChild(opt);
+                    });
+                }
+            } catch (err) {
+                showToast('Erro ao carregar lista de inquilinos.', 'error');
+            }
+        }
+
+        // Eventos do Dropdown
+        function handleTenantChange() {
+            const select = document.getElementById('tenantSelect');
+            selectedTenantId = select.value;
+            
+            const btn = document.getElementById('btnNovoUsuario');
+            const busca = document.getElementById('buscaInput');
+
+            if (selectedTenantId) {
+                btn.disabled = false;
+                busca.disabled = false;
+                fetchUsuarios(1);
+            } else {
+                btn.disabled = true;
+                busca.disabled = true;
+                document.getElementById('usuariosTableBody').innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-secondary);">Selecione uma empresa acima para isolar e carregar os usuários.</td></tr>`;
+                updatePagination({ page: 1, totalPages: 1 });
+            }
+        }
+
+        // Evento de Busca (Debounce 300ms)
+        function handleSearch() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                fetchUsuarios(1);
+            }, 300);
+        }
+
+        // Buscar Usuários
+        async function fetchUsuarios(page = 1) {
+            if (!selectedTenantId) return;
+
+            const busca = document.getElementById('buscaInput').value;
+
+            try {
+                const res = await fetch(`http://localhost:3001/api/super/empresas/${selectedTenantId}/usuarios?page=${page}&limit=${limitPerPage}&busca=${encodeURIComponent(busca)}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    currentPage = page;
+                    renderTable(data.data);
+                    updatePagination(data.meta);
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (err) {
+                showToast(err.message || 'Erro ao carregar usuários.', 'error');
+            }
+        }
+
+        function renderTable(usuarios) {
+            const tbody = document.getElementById('usuariosTableBody');
+            tbody.innerHTML = '';
+
+            if (usuarios.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-secondary);">Nenhum usuário cadastrado neste inquilino.</td></tr>`;
+                return;
+            }
+
+            usuarios.forEach(user => {
+                const tr = document.createElement('tr');
+                
+                const badgeClass = user.perfil === 'ADMIN_EMPRESA' ? 'badge-admin' : 'badge-corretor';
+                const roleLabel = user.perfil === 'ADMIN_EMPRESA' ? 'Admin' : 'Corretor';
+                
+                tr.innerHTML = `
+                    <td><strong>${user.nome}</strong></td>
+                    <td>${user.email}</td>
+                    <td>${user.cpf || 'Não informado'}</td>
+                    <td><span class="badge ${badgeClass}">${roleLabel}</span></td>
+                    <td><strong>${formatReal(user.saldo_disponivel)}</strong> / <span style="color:var(--text-secondary); font-size:0.8rem;">${formatReal(user.saldo_a_receber)}</span></td>
+                    <td style="text-align: right;">
+                        <button class="btn btn-primary" onclick="openEditUsuarioModal('${user.id}', '${user.nome}', '${user.email}', '${user.cpf || ''}', '${user.perfil}')" style="padding: 6px 12px; font-size: 0.75rem; font-weight:600; border-radius:4px; margin-right:5px; box-shadow:none;">✏️ EDITAR</button>
+                        <button class="btn" onclick="deletarUsuario('${user.id}')" style="padding: 6px 12px; font-size: 0.75rem; font-weight:600; background:rgba(255,0,0,0.1); color:var(--error); border-radius:4px;">❌ EXCLUIR</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function updatePagination(meta) {
+            document.getElementById('pageInfo').innerText = `Página ${meta.page} de ${meta.totalPages || 1}`;
+            
+            const prev = document.getElementById('prevPageBtn');
+            const next = document.getElementById('nextPageBtn');
+
+            prev.disabled = meta.page <= 1;
+            next.disabled = meta.page >= meta.totalPages;
+
+            // Remove antigos event listeners clonando os botões
+            const newPrev = prev.cloneNode(true);
+            prev.parentNode.replaceChild(newPrev, prev);
+            newPrev.addEventListener('click', () => fetchUsuarios(meta.page - 1));
+
+            const newNext = next.cloneNode(true);
+            next.parentNode.replaceChild(newNext, next);
+            newNext.addEventListener('click', () => fetchUsuarios(meta.page + 1));
+        }
+
+        // Modal Controle
+        function openModal(id) {
+            document.getElementById(id).classList.add('active');
+        }
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        // NOVO USUÁRIO
+        function openNewUsuarioModal() {
+            document.getElementById('newUsuarioForm').reset();
+            
+            // Busca o nome da empresa selecionada no combo box principal
+            const select = document.getElementById('tenantSelect');
+            const tenantName = select.options[select.selectedIndex].text;
+            
+            document.getElementById('newModalTitle').innerText = '👥 Adicionar Usuário';
+            document.getElementById('newTenantDisplay').value = tenantName;
+            
+            openModal('newUsuarioModal');
+        }
+        document.getElementById('newUsuarioForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const payload = {
+                nome: document.getElementById('newNome').value,
+                email: document.getElementById('newEmail').value,
+                senha: document.getElementById('newSenha').value,
+                cpf: document.getElementById('newCpf').value,
+                perfil: document.getElementById('newPerfil').value
+            };
+
+            try {
+                const res = await fetch(`http://localhost:3001/api/super/empresas/${selectedTenantId}/usuarios`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast('Usuário cadastrado com sucesso!', 'success');
+                    closeModal('newUsuarioModal');
+                    fetchUsuarios(currentPage);
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        });
+
+        // EDITAR USUÁRIO
+        function openEditUsuarioModal(id, nome, email, cpf, perfil) {
+            document.getElementById('editId').value = id;
+            document.getElementById('editNome').value = nome;
+            document.getElementById('editEmail').value = email;
+            document.getElementById('editCpf').value = cpf;
+            document.getElementById('editPerfil').value = perfil;
+            document.getElementById('editSenha').value = '';
+            
+            // Busca o nome da empresa selecionada no combo box principal
+            const select = document.getElementById('tenantSelect');
+            const tenantName = select.options[select.selectedIndex].text;
+            
+            document.getElementById('editModalTitle').innerText = '✏️ Editar Dados do Usuário';
+            document.getElementById('editTenantDisplay').value = tenantName;
+            
+            openModal('editUsuarioModal');
+        }
+        document.getElementById('editUsuarioForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('editId').value;
+            const payload = {
+                nome: document.getElementById('editNome').value,
+                email: document.getElementById('editEmail').value,
+                cpf: document.getElementById('editCpf').value,
+                perfil: document.getElementById('editPerfil').value
+            };
+            const senha = document.getElementById('editSenha').value;
+            if (senha) payload.senha = senha;
+
+            try {
+                const res = await fetch(`http://localhost:3001/api/super/empresas/${selectedTenantId}/usuarios/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast('Cadastro do usuário atualizado!', 'success');
+                    closeModal('editUsuarioModal');
+                    fetchUsuarios(currentPage);
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        });
+
+        // DELETAR USUÁRIO
+        async function deletarUsuario(id) {
+            if (!confirm('Deseja realmente excluir permanentemente este usuário da empresa? Esta ação não pode ser desfeita.')) return;
+
+            try {
+                const res = await fetch(`http://localhost:3001/api/super/empresas/${selectedTenantId}/usuarios/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast('Usuário excluído do tenant com sucesso!', 'success');
+                    fetchUsuarios(currentPage);
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('@VTalentos:token');
+            localStorage.removeItem('@VTalentos:user');
+            window.location.href = 'login.html';
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadTenants();
+        });
+    </script>
+</body>
+</html>

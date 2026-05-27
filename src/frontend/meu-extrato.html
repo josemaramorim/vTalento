@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>V-TALENTOS | Meu Extrato</title>
+    <meta name="description" content="Visualize todas as suas movimentações de Talentos com filtros detalhados.">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <style>
+        .resumo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+        .resumo-card {
+            padding: 20px;
+            border-radius: 14px;
+            position: relative;
+            overflow: hidden;
+        }
+        .resumo-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            border-radius: 14px 14px 0 0;
+        }
+        .resumo-card.disponivel { background: rgba(46,213,115,0.07); border: 1px solid rgba(46,213,115,0.2); }
+        .resumo-card.disponivel::before { background: var(--success); }
+        .resumo-card.areceber { background: rgba(255,165,0,0.07); border: 1px solid rgba(255,165,0,0.2); }
+        .resumo-card.areceber::before { background: var(--warning); }
+        .resumo-card.creditos { background: rgba(99,179,237,0.07); border: 1px solid rgba(99,179,237,0.2); }
+        .resumo-card.creditos::before { background: #63b3ed; }
+        .resumo-card.debitos { background: rgba(252,129,74,0.07); border: 1px solid rgba(252,129,74,0.2); }
+        .resumo-card.debitos::before { background: var(--error); }
+        .resumo-card .lbl {
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+        .resumo-card .val {
+            font-size: 1.5rem;
+            font-weight: 700;
+            font-family: var(--font-heading);
+        }
+        .resumo-card.disponivel .val { color: var(--success); }
+        .resumo-card.areceber .val { color: var(--warning); }
+        .resumo-card.creditos .val { color: #63b3ed; }
+        .resumo-card.debitos .val { color: var(--error); }
+
+        .filtros-section {
+            padding: 20px 24px;
+            border-radius: 14px;
+            margin-bottom: 24px;
+        }
+        .filtros-section h3 {
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+            margin-bottom: 14px;
+        }
+        .filtros-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 12px;
+            align-items: end;
+        }
+        .filtros-grid .form-group {
+            margin: 0;
+        }
+        .filtros-grid label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            display: block;
+        }
+        .btn-filtrar {
+            padding: 10px 20px;
+            border-radius: 8px;
+            background: var(--accent-primary);
+            color: #000;
+            font-weight: 700;
+            font-size: 0.82rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+        }
+        .btn-filtrar:hover { opacity: 0.88; }
+        .btn-limpar {
+            padding: 10px 20px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.06);
+            color: var(--text-secondary);
+            font-size: 0.82rem;
+            border: 1px solid rgba(255,255,255,0.1);
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+        }
+        .btn-limpar:hover { background: rgba(255,255,255,0.1); color: var(--text-primary); }
+
+        .extrato-table-wrap { overflow-x: auto; }
+        .extrato-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        .extrato-table thead tr { border-bottom: 1px solid rgba(255,255,255,0.08); }
+        .extrato-table th {
+            padding: 12px 14px;
+            text-align: left;
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.72rem;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+        .extrato-table td {
+            padding: 13px 14px;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            vertical-align: middle;
+        }
+        .extrato-table tbody tr {
+            transition: background 0.15s;
+        }
+        .extrato-table tbody tr:hover {
+            background: rgba(255,255,255,0.025);
+        }
+        .valor-pos { color: var(--success); font-weight: 700; font-size: 0.95rem; }
+        .valor-neg { color: var(--error); font-weight: 700; font-size: 0.95rem; }
+        .valor-neu { color: var(--warning); font-weight: 700; font-size: 0.95rem; }
+        .origem-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.75rem;
+            padding: 3px 8px;
+            border-radius: 20px;
+            background: rgba(255,255,255,0.06);
+            color: var(--text-secondary);
+        }
+        .status-chip {
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 20px;
+        }
+        .status-chip.compensado { background: rgba(46,213,115,0.15); color: var(--success); }
+        .status-chip.pendente { background: rgba(255,165,0,0.15); color: var(--warning); }
+        .status-chip.cancelado { background: rgba(252,129,74,0.15); color: var(--error); }
+
+        .pag-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .pag-info { font-size: 0.8rem; color: var(--text-secondary); }
+        .pag-btns { display: flex; gap: 8px; align-items: center; }
+        .pag-btn {
+            padding: 7px 14px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: var(--text-primary);
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .pag-btn:hover:not(:disabled) { background: var(--accent-primary); color: #000; border-color: var(--accent-primary); }
+        .pag-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+        .empty-state .icon { font-size: 3rem; margin-bottom: 16px; opacity: 0.5; }
+        .empty-state p { font-size: 0.9rem; }
+
+        @keyframes shimmer {
+            0% { opacity: 0.4; }
+            50% { opacity: 0.9; }
+            100% { opacity: 0.4; }
+        }
+        .loading-val { animation: shimmer 1.4s infinite; }
+    </style>
+</head>
+<body data-theme="dark">
+    <div class="app-layout">
+        <aside class="sidebar">
+            <div class="logo" style="font-size: 1.5rem; margin-bottom: 50px;">V-<span>TALENTOS</span></div>
+            <nav id="navLinks" style="display: flex; flex-direction: column; gap: 15px;"></nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="header" id="appHeader"></header>
+
+            <!-- Cards de Resumo -->
+            <div class="resumo-grid" id="resumoGrid">
+                <div class="resumo-card disponivel glass">
+                    <div class="lbl">💰 Saldo Disponível</div>
+                    <div class="val loading-val" id="valDisponivel">—</div>
+                </div>
+                <div class="resumo-card areceber glass">
+                    <div class="lbl">⏳ A Receber</div>
+                    <div class="val loading-val" id="valAReceber">—</div>
+                </div>
+                <div class="resumo-card creditos glass">
+                    <div class="lbl">📈 Total Créditos</div>
+                    <div class="val loading-val" id="valCreditos">—</div>
+                </div>
+                <div class="resumo-card debitos glass">
+                    <div class="lbl">📉 Total Débitos</div>
+                    <div class="val loading-val" id="valDebitos">—</div>
+                </div>
+            </div>
+
+            <!-- Filtros -->
+            <section class="filtros-section glass">
+                <h3>🔍 Filtrar Movimentações</h3>
+                <div class="filtros-grid">
+                    <div class="form-group">
+                        <label>Tipo</label>
+                        <select id="filtroTipo">
+                            <option value="">Todos</option>
+                            <option value="CREDITO">Crédito (+)</option>
+                            <option value="DEBITO">Débito (-)</option>
+                            <option value="ESTORNO">Estorno (±)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Origem</label>
+                        <select id="filtroOrigem">
+                            <option value="">Todas</option>
+                            <option value="MANUAL">✏️ Manual</option>
+                            <option value="IMPORTACAO">📤 Importação</option>
+                            <option value="PREMIO">🎁 Prêmio</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Status</label>
+                        <select id="filtroStatus">
+                            <option value="">Todos</option>
+                            <option value="COMPENSADO">✅ Compensado</option>
+                            <option value="PENDENTE">⏳ Pendente</option>
+                            <option value="CANCELADO">❌ Cancelado</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>De (data)</label>
+                        <input type="date" id="filtroDataInicio">
+                    </div>
+                    <div class="form-group">
+                        <label>Até (data)</label>
+                        <input type="date" id="filtroDataFim">
+                    </div>
+                    <div class="form-group">
+                        <label>Por página</label>
+                        <select id="filtroLimit">
+                            <option value="20">20</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="display:flex; gap:8px;">
+                        <button class="btn-filtrar" onclick="aplicarFiltros()">Filtrar</button>
+                        <button class="btn-limpar" onclick="limparFiltros()">Limpar</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tabela de Extrato -->
+            <section class="history-card glass" style="padding: 24px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;">
+                    <h2 style="font-size: 1.1rem; font-weight: 700; color: var(--text-primary);">📋 Movimentações</h2>
+                    <span id="totalLabel" style="font-size:0.8rem; color:var(--text-secondary);">Carregando...</span>
+                </div>
+
+                <div class="extrato-table-wrap">
+                    <table class="extrato-table">
+                        <thead>
+                            <tr>
+                                <th>Data / Hora</th>
+                                <th>Tipo</th>
+                                <th>Origem</th>
+                                <th style="text-align:right;">Valor</th>
+                                <th style="text-align:center;">Status</th>
+                                <th>Empreendimento / Descrição</th>
+                                <th>Lançado por</th>
+                            </tr>
+                        </thead>
+                        <tbody id="extratoBody">
+                            <tr><td colspan="7" style="text-align:center; padding:40px; color:var(--text-secondary);">Carregando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Paginação -->
+                <div class="pag-bar">
+                    <span class="pag-info" id="pagInfo">—</span>
+                    <div class="pag-btns">
+                        <button class="pag-btn" id="btnAnterior" onclick="mudarPag(-1)" disabled>← Anterior</button>
+                        <span id="pagNum" style="font-size:0.82rem; color:var(--text-secondary);">—</span>
+                        <button class="pag-btn" id="btnProximo" onclick="mudarPag(1)" disabled>Próximo →</button>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="assets/js/auth.js"></script>
+    <script>
+        const token = localStorage.getItem('@VTalentos:token');
+        const userStr = localStorage.getItem('@VTalentos:user');
+        if (!token || !userStr) { window.location.href = 'login.html'; }
+
+        const API_BASE = 'http://localhost:3001/api/auth';
+
+        let paginaAtual = 1;
+        let totalPaginas = 1;
+
+        function getFiltros() {
+            return {
+                tipo: document.getElementById('filtroTipo').value,
+                origem: document.getElementById('filtroOrigem').value,
+                status: document.getElementById('filtroStatus').value,
+                data_inicio: document.getElementById('filtroDataInicio').value,
+                data_fim: document.getElementById('filtroDataFim').value,
+                limit: document.getElementById('filtroLimit').value,
+            };
+        }
+
+        function buildQS(filtros, page) {
+            const params = new URLSearchParams({ page, limit: filtros.limit });
+            if (filtros.tipo) params.append('tipo', filtros.tipo);
+            if (filtros.origem) params.append('origem', filtros.origem);
+            if (filtros.status) params.append('status', filtros.status);
+            if (filtros.data_inicio) params.append('data_inicio', filtros.data_inicio);
+            if (filtros.data_fim) params.append('data_fim', filtros.data_fim);
+            return params.toString();
+        }
+
+        const origemLabel = {
+            MANUAL: '✏️ Manual',
+            IMPORTACAO: '📤 Importação',
+            PREMIO: '🎁 Prêmio',
+            RENOVACAO: '🔄 Renovação'
+        };
+
+        async function carregarExtrato(page = 1) {
+            paginaAtual = page;
+            const filtros = getFiltros();
+            const qs = buildQS(filtros, page);
+
+            try {
+                const res = await fetch(`${API_BASE}/meu-extrato?${qs}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (res.status === 401) { logout(); return; }
+
+                const json = await res.json();
+                if (!json.success) throw new Error(json.error);
+
+                // Atualiza resumo
+                const r = json.resumo;
+                document.getElementById('valDisponivel').classList.remove('loading-val');
+                document.getElementById('valAReceber').classList.remove('loading-val');
+                document.getElementById('valCreditos').classList.remove('loading-val');
+                document.getElementById('valDebitos').classList.remove('loading-val');
+
+                document.getElementById('valDisponivel').innerText = `${r.saldo_disponivel.toFixed(2)} T$`;
+                document.getElementById('valAReceber').innerText = `${r.saldo_a_receber.toFixed(2)} T$`;
+                document.getElementById('valCreditos').innerText = `+${r.total_creditos.toFixed(2)} T$`;
+                document.getElementById('valDebitos').innerText = `-${r.total_debitos.toFixed(2)} T$`;
+
+                // Paginação
+                const meta = json.meta;
+                totalPaginas = meta.totalPages || 1;
+                document.getElementById('totalLabel').innerText = `${meta.total} movimentação(ões) encontrada(s)`;
+                document.getElementById('pagInfo').innerText = `Página ${meta.page} de ${totalPaginas} — Total: ${meta.total}`;
+                document.getElementById('pagNum').innerText = `${meta.page} / ${totalPaginas}`;
+                document.getElementById('btnAnterior').disabled = meta.page <= 1;
+                document.getElementById('btnProximo').disabled = meta.page >= totalPaginas;
+
+                // Renderiza linhas
+                const tbody = document.getElementById('extratoBody');
+
+                if (json.data.length === 0) {
+                    tbody.innerHTML = `
+                        <tr><td colspan="7">
+                            <div class="empty-state">
+                                <div class="icon">📭</div>
+                                <p>Nenhuma movimentação encontrada com os filtros aplicados.</p>
+                            </div>
+                        </td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = json.data.map(t => {
+                    const valorAbs = Math.abs(parseFloat(t.valor));
+                    const isCred = t.tipo === 'CREDITO';
+                    const isEst = t.tipo === 'ESTORNO';
+                    const corClass = isCred ? 'valor-pos' : isEst ? 'valor-neu' : 'valor-neg';
+                    const sinal = isCred ? '+' : isEst ? '±' : '-';
+                    const data = new Date(t.created_at).toLocaleString('pt-BR');
+                    const origem = origemLabel[t.origem] || t.origem;
+                    const statusClass = (t.status || '').toLowerCase();
+                    const descricao = t.empreendimento
+                        ? `${t.empreendimento}${t.unidade ? ' / ' + t.unidade : ''}`
+                        : (t.justificativa || '—');
+
+                    return `<tr>
+                        <td style="white-space:nowrap; font-size:0.8rem; color:var(--text-secondary);">${data}</td>
+                        <td><span class="badge badge-${t.tipo.toLowerCase()}" style="font-size:0.72rem;">${t.tipo}</span></td>
+                        <td><span class="origem-tag">${origem}</span></td>
+                        <td style="text-align:right;"><span class="${corClass}">${sinal}${valorAbs.toFixed(2)} T$</span></td>
+                        <td style="text-align:center;">
+                            <span class="status-chip ${statusClass}">${t.status || '—'}</span>
+                        </td>
+                        <td style="max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--text-secondary); font-size:0.8rem;" title="${descricao}">${descricao}</td>
+                        <td style="font-size:0.8rem; color:var(--text-secondary);">${t.admin_nome}</td>
+                    </tr>`;
+                }).join('');
+
+            } catch (err) {
+                document.getElementById('extratoBody').innerHTML =
+                    `<tr><td colspan="7" style="text-align:center; padding:30px; color:var(--error);">${err.message}</td></tr>`;
+            }
+        }
+
+        function aplicarFiltros() { carregarExtrato(1); }
+
+        function limparFiltros() {
+            document.getElementById('filtroTipo').value = '';
+            document.getElementById('filtroOrigem').value = '';
+            document.getElementById('filtroStatus').value = '';
+            document.getElementById('filtroDataInicio').value = '';
+            document.getElementById('filtroDataFim').value = '';
+            document.getElementById('filtroLimit').value = '20';
+            carregarExtrato(1);
+        }
+
+        function mudarPag(delta) {
+            const nova = paginaAtual + delta;
+            if (nova >= 1 && nova <= totalPaginas) carregarExtrato(nova);
+        }
+
+        function renderSidebar() {
+            const nav = document.getElementById('navLinks');
+            const currentUser = JSON.parse(userStr);
+            const isAdmin = currentUser.perfil === 'ADMIN_EMPRESA' || currentUser.perfil === 'SUPER_ADMIN';
+
+            nav.innerHTML = `
+                <p style="color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; margin-bottom: 10px;">MENU PRINCIPAL</p>
+                <a href="dashboard.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">🏠 Dashboard</a>
+                <a href="vitrine.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">🎁 Vitrine de Prêmios</a>
+                <a href="meu-extrato.html" style="color: var(--accent-primary); text-decoration: none; font-weight: 600;">📊 Meu Extrato</a>
+            `;
+
+            if (isAdmin) {
+                nav.innerHTML += `
+                    <p style="color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; margin-top: 15px; margin-bottom: 10px;">ADMINISTRAÇÃO</p>
+                    <a href="admin-lancamento.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">💎 Lançamento Manual</a>
+                    <a href="admin-importacao.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">📤 Importação Excel</a>
+                    <a href="admin-premios.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">⚙️ Gerenciar Prêmios</a>
+                    <a href="admin-usuarios.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">👥 Gestão de Corretores</a>
+                    <a href="admin-faturamento.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">💳 Faturamento SaaS</a>
+                `;
+            }
+
+            nav.innerHTML += `
+                <p style="color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; margin-top: 15px; margin-bottom: 10px;">PERFIL</p>
+                <a href="meu-perfil.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">👤 Meus Dados</a>
+            `;
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            renderSidebar();
+            renderHeader('Meu Extrato', 'Histórico completo das suas movimentações de Talentos');
+            carregarExtrato(1);
+        });
+    </script>
+</body>
+</html>

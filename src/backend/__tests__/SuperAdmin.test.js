@@ -250,4 +250,100 @@ describe('SuperAdmin Module & Tenant Licensing Integration Tests', () => {
       expect(response.body.success).toBe(true);
     });
   });
+
+  describe('Faturamento SaaS do Inquilino (Billing)', () => {
+    it('Deve carregar status de faturamento da empresa', async () => {
+      db.mockImplementation((table) => {
+        if (table === 'GamEmpresa') {
+          return createChainMock({
+            first: {
+              id: 'empresa-1',
+              nome: 'Minha Empresa',
+              status: 'ATIVO',
+              data_expiracao: '2026-06-26',
+              provedor_pagamento: 'STRIPE'
+            }
+          });
+        }
+        if (table === 'GamUsuario') {
+          return createChainMock({ count: [{ total: 5 }] });
+        }
+        if (table === 'GamSaaSConfig') {
+          return createChainMock({ first: { valor: 'true' } });
+        }
+        return createChainMock();
+      });
+
+      const response = await request(app)
+        .get('/api/admin/billing/status')
+        .set('Authorization', `Bearer ${getAdminToken()}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.corretores_ativos).toBe(5);
+      expect(response.body.empresa.provedor_pagamento).toBe('STRIPE');
+    });
+
+    it('Deve carregar faturas da empresa', async () => {
+      const mockFaturas = [
+        { id: 'fatura-1', valor: 199.00, status: 'PENDENTE' }
+      ];
+      db.mockImplementation((table) => {
+        if (table === 'GamFatura') {
+          return createChainMock({ offset: mockFaturas });
+        }
+        return createChainMock();
+      });
+
+      const response = await request(app)
+        .get('/api/admin/billing/faturas')
+        .set('Authorization', `Bearer ${getAdminToken()}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data).toHaveLength(1);
+    });
+
+    it('Deve pagar fatura simulada (Sandbox) e estender a licença', async () => {
+      db.mockImplementation((table) => {
+        if (table === 'GamFatura') {
+          return createChainMock({
+            first: { id: 'fatura-1', empresa_id: 'empresa-1', status: 'PENDENTE', valor: 199.00 }
+          });
+        }
+        if (table === 'GamEmpresa') {
+          return createChainMock({
+            first: { id: 'empresa-1', status: 'ATIVO', data_expiracao: '2026-06-26' }
+          });
+        }
+        if (table === 'GamSaaSConfig') {
+          return createChainMock({ first: { valor: 'true' } }); // simular_pagamentos = true
+        }
+        return createChainMock();
+      });
+
+      const response = await request(app)
+        .post('/api/admin/billing/pagar')
+        .set('Authorization', `Bearer ${getAdminToken()}`)
+        .send({ faturaId: 'fatura-1', metodo_pagamento: 'PIX' });
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.simulado).toBe(true);
+    });
+
+    it('Deve alterar método/provedor de pagamento preferencial', async () => {
+      db.mockImplementation(() => createChainMock({ update: 1 }));
+
+      const response = await request(app)
+        .put('/api/admin/billing/provedor')
+        .set('Authorization', `Bearer ${getAdminToken()}`)
+        .send({ provedor: 'ASAAS' });
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(response.body.message).toBe('Provedor de pagamento preferencial atualizado');
+    });
+  });
 });
+

@@ -58,14 +58,15 @@ class UsuarioController {
     try {
       const { empresa_id } = req;
       const { id } = req.params;
-      const { nome, email, cpf } = req.body;
+      const { nome, email, cpf, senha } = req.body;
 
       const usuarioAtualizado = await UsuarioService.updateUsuarioAdmin({
         empresa_id,
         id,
         nome,
         email,
-        cpf
+        cpf,
+        senha
       });
 
       return res.status(200).json({
@@ -104,6 +105,100 @@ class UsuarioController {
         success: false,
         error: err.message
       });
+    }
+  }
+  // GET /api/admin/usuarios/:id/extrato
+  async getExtrato(req, res) {
+    try {
+      const { empresa_id } = req;
+      const { id } = req.params;
+      const db = require('../../infra/db');
+
+      // Validar que o corretor pertence à empresa
+      const usuario = await db('GamUsuario').where({ id, empresa_id }).first();
+      if (!usuario) {
+        return res.status(404).json({ success: false, error: 'Corretor não encontrado.' });
+      }
+
+      const transacoes = await db('GamTransacao')
+        .where({ 'GamTransacao.usuario_id': id })
+        .leftJoin('GamUsuario as Admin', 'GamTransacao.admin_id', 'Admin.id')
+        .select(
+          'GamTransacao.id',
+          'GamTransacao.tipo',
+          'GamTransacao.valor',
+          'GamTransacao.origem',
+          'GamTransacao.status',
+          'GamTransacao.justificativa',
+          'GamTransacao.empreendimento',
+          'GamTransacao.unidade',
+          'GamTransacao.data_vencimento',
+          'GamTransacao.created_at',
+          db.raw("COALESCE(Admin.nome, 'Sistema') as admin_nome")
+        )
+        .orderBy('GamTransacao.created_at', 'desc')
+        .limit(50);
+
+      return res.json({
+        success: true,
+        corretor: {
+          id: usuario.id,
+          nome: usuario.nome,
+          email: usuario.email,
+          saldo_disponivel: usuario.saldo_disponivel,
+          saldo_a_receber: usuario.saldo_a_receber
+        },
+        transacoes
+      });
+    } catch (err) {
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  }
+
+  // POST /api/admin/usuarios/:id/recalcular-saldo
+  async recalcularSaldo(req, res) {
+    try {
+      const { empresa_id } = req;
+      const { id } = req.params;
+      const db = require('../../infra/db');
+
+      const usuario = await db('GamUsuario').where({ id, empresa_id }).first();
+      if (!usuario) {
+        return res.status(404).json({ success: false, error: 'Corretor não encontrado.' });
+      }
+
+      const transacoes = await db('GamTransacao').where({ usuario_id: id });
+
+      let novoDisponivel = 0;
+      let novoAReceber = 0;
+
+      transacoes.forEach(t => {
+        const v = parseFloat(t.valor);
+        if (t.status === 'COMPENSADO') {
+          novoDisponivel += v; // valor já vem negativo para DEBITO
+        } else if (t.status === 'PENDENTE') {
+          if (t.tipo === 'CREDITO') novoAReceber += v;
+        }
+      });
+
+      const saldoDisponivel = Math.max(0, novoDisponivel);
+      const saldoAReceber = Math.max(0, novoAReceber);
+
+      await db('GamUsuario').where({ id }).update({
+        saldo_disponivel: saldoDisponivel,
+        saldo_a_receber: saldoAReceber,
+        updated_at: db.fn.now()
+      });
+
+      return res.json({
+        success: true,
+        message: 'Saldo recalculado com base nas transações registradas.',
+        saldo_disponivel: saldoDisponivel,
+        saldo_a_receber: saldoAReceber,
+        transacoes_processadas: transacoes.length
+      });
+    } catch (err) {
+      return res.status(500).json({ success: false, error: err.message });
     }
   }
 }

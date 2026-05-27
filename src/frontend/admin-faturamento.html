@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Faturamento & Assinatura - V-Talentos SaaS</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <style>
+        .plans-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        .plan-card {
+            padding: 30px;
+            border-radius: var(--radius-md);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            border: 1px solid var(--glass-border);
+            transition: all 0.3s ease;
+        }
+        .plan-card.popular {
+            border: 2px solid var(--accent-primary);
+            box-shadow: 0 8px 32px rgba(212, 175, 55, 0.15);
+        }
+        .plan-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-md);
+        }
+        .plan-card .plan-badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: var(--success);
+            color: #fff;
+            font-size: 0.65rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 20px;
+            text-transform: uppercase;
+        }
+        .plan-card .title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            font-family: var(--font-heading);
+            color: var(--text-primary);
+        }
+        .plan-card .price {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--accent-primary);
+            font-family: var(--font-heading);
+        }
+        .plan-card .price span {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+        .plan-card .features {
+            list-style: none;
+            padding: 0;
+            margin-bottom: 25px;
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .plan-card .features li {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        .plan-card .btn-plan {
+            width: 100%;
+            padding: 12px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            border-radius: var(--radius-sm);
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .plan-card.popular .btn-plan {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: #fff;
+            border: none;
+            box-shadow: 0 4px 15px rgba(240, 165, 0, 0.2);
+        }
+        .plan-card.active-plan {
+            border-color: var(--success);
+            box-shadow: 0 8px 32px rgba(46, 204, 113, 0.1);
+        }
+        .plan-card.active-plan .btn-plan {
+            background: var(--success) !important;
+            color: #fff !important;
+            border: none !important;
+        }
+
+        .billing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        .billing-card {
+            padding: 30px;
+            border-radius: var(--radius-md);
+            position: relative;
+            overflow: hidden;
+        }
+        .billing-card.status-green {
+            border-left: 4px solid var(--success);
+        }
+        .billing-card.status-yellow {
+            border-left: 4px solid var(--warning);
+        }
+        .billing-card.status-red {
+            border-left: 4px solid var(--error);
+        }
+        .billing-card .metric-val {
+            font-size: 2.2rem;
+            font-weight: 700;
+            font-family: var(--font-heading);
+            margin: 10px 0;
+            display: flex;
+            align-items: baseline;
+            gap: 5px;
+        }
+        .billing-card .metric-val small {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+        .progress-bar-container {
+            width: 100%;
+            height: 8px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 4px;
+            margin-top: 15px;
+            overflow: hidden;
+            border: 1px solid var(--glass-border);
+        }
+        .progress-bar {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+        .table-responsive {
+            overflow-x: auto;
+            width: 100%;
+            border-radius: var(--radius-md);
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--shadow-md);
+            margin-top: 20px;
+        }
+        .premium-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+        .premium-table th {
+            padding: 18px 24px;
+            background: rgba(255, 255, 255, 0.02);
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid var(--glass-border);
+        }
+        .premium-table td {
+            padding: 18px 24px;
+            border-bottom: 1px solid var(--glass-border);
+            font-size: 0.9rem;
+            color: var(--text-primary);
+        }
+        .premium-table tr:last-child td {
+            border-bottom: none;
+        }
+        .premium-table tr:hover {
+            background: rgba(255, 255, 255, 0.01);
+        }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .badge-paga { background: rgba(46, 204, 113, 0.1); color: var(--success); border: 1px solid rgba(46, 204, 113, 0.2); }
+        .badge-pendente { background: rgba(241, 196, 15, 0.1); color: #f1c40f; border: 1px solid rgba(241, 196, 15, 0.2); }
+        .badge-vencida { background: rgba(231, 76, 60, 0.1); color: var(--error); border: 1px solid rgba(231, 76, 60, 0.2); }
+        
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.55);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .modal-card {
+            width: 90%;
+            max-width: 500px;
+            padding: 35px;
+            border-radius: var(--radius-md);
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+        .modal-overlay.active .modal-card {
+            transform: scale(1);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            border-bottom: 1px solid var(--glass-border);
+            padding-bottom: 15px;
+        }
+        .modal-close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+        .modal-close-btn:hover {
+            color: var(--error);
+        }
+        .payment-methods-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin: 20px 0;
+        }
+        .method-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-sm);
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        .method-card:hover, .method-card.active {
+            border-color: var(--accent-primary);
+            background: rgba(255, 255, 255, 0.06);
+        }
+        .method-card .icon {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+            display: block;
+        }
+        .method-card span {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+        .method-card.active span {
+            color: var(--accent-primary);
+        }
+        .copia-cola-input {
+            width: 100%;
+            background: rgba(0,0,0,0.2);
+            border: 1px solid var(--glass-border);
+            color: var(--text-primary);
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-family: monospace;
+            text-align: center;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body data-theme="dark">
+    <div class="app-layout">
+        <aside class="sidebar">
+            <div class="logo">V-<span>TALENTOS</span></div>
+            <nav id="navLinks">
+                <!-- Preenchido via JS -->
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="header" id="appHeader"></header>
+
+
+            <!-- Grid de Assinatura -->
+            <div class="billing-grid animate-fade" style="animation-delay: 0.05s;">
+                <!-- Status da Licença -->
+                <div class="billing-card glass" id="licenseStatusCard">
+                    <p style="text-transform: uppercase; letter-spacing: 0.5px; font-size: 0.75rem; color: var(--text-secondary); font-weight: 600;">⏱️ Licença Ativa por</p>
+                    <div class="metric-val" id="diasVal">0 <small>dias restantes</small></div>
+                    <p style="font-size: 0.82rem; margin-top: 6px;" id="expInfo">Expira em: --/--/----</p>
+                    <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 4px; font-style: italic;" id="expAlert"></p>
+                </div>
+
+                <!-- Plano e Limites -->
+                <div class="billing-card glass" style="border-left: 4px solid var(--accent-primary);">
+                    <p style="text-transform: uppercase; letter-spacing: 0.5px; font-size: 0.75rem; color: var(--text-secondary); font-weight: 600;">Seu Plano</p>
+                    <div class="metric-val" id="planoNome" style="color: var(--accent-primary);">ESSENCIAL</div>
+                    <div style="font-size: 0.85rem; display: flex; justify-content: space-between;" id="limiteTexto">
+                        <span>Corretores Ativos:</span>
+                        <strong>0 / 20</strong>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" id="progressBar" style="width: 0%; background: var(--accent-primary);"></div>
+                    </div>
+                </div>
+
+                <!-- Método de Pagamento Preferido -->
+                <div class="billing-card glass" style="border-left: 4px solid #9b59b6;">
+                    <p style="text-transform: uppercase; letter-spacing: 0.5px; font-size: 0.75rem; color: var(--text-secondary); font-weight: 600;">Gateway Preferido</p>
+                    <div class="metric-val" id="gatewayNome" style="color: #9b59b6; font-size: 1.8rem; margin: 15px 0;">STRIPE</div>
+                    
+                    <div style="display: flex; gap: 10px; margin-top: 10px;">
+                        <select id="selectProvedorPreferido" class="btn" style="background:rgba(255,255,255,0.03); border:1px solid var(--glass-border); color:var(--text-primary); font-size:0.8rem; padding:8px 12px; border-radius:4px; flex:1;" onchange="alterarGatewayPreferido()">
+                            <option value="STRIPE">Stripe (Cartão)</option>
+                            <option value="ASAAS">Asaas (Pix/Boleto)</option>
+                        </select>
+                    </div>
+                </div>
+            </div> <!-- Fecha .billing-grid -->
+
+            <!-- Seção de Planos SaaS -->
+            <div class="animate-fade" style="animation-delay: 0.08s; margin-bottom: 35px; margin-top: 10px;">
+                <h2 style="font-size: 1.2rem; font-weight: 600; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">🚀 Planos de Assinatura SaaS</h2>
+                <div class="plans-grid">
+                    <!-- Plano Essencial -->
+                    <div class="plan-card glass" id="planCardESSENCIAL">
+                        <div class="plan-badge" id="planBadgeESSENCIAL" style="display:none;">ATIVO</div>
+                        <h3 class="title">ESSENCIAL</h3>
+                        <div class="price">R$ 199,00<span>/mês</span></div>
+                        <ul class="features">
+                            <li>👥 Até 20 Corretores</li>
+                            <li>📤 1 Perfil de Importação</li>
+                            <li>🎁 Loja de Prêmios Ativa</li>
+                            <li>✉️ Suporte por E-mail</li>
+                        </ul>
+                        <button class="btn-plan" id="btnPlanESSENCIAL" onclick="selecionarPlano('ESSENCIAL')">RENOVAR PLANO</button>
+                    </div>
+
+                    <!-- Plano Profissional -->
+                    <div class="plan-card glass popular" id="planCardPROFISSIONAL">
+                        <div class="plan-badge" id="planBadgePROFISSIONAL" style="display:none;">ATIVO</div>
+                        <h3 class="title">PROFISSIONAL</h3>
+                        <div class="price">R$ 399,00<span>/mês</span></div>
+                        <ul class="features">
+                            <li>👥 Até 60 Corretores</li>
+                            <li>📤 Até 5 Perfis de Importação</li>
+                            <li>📊 Dashboard Preditivo</li>
+                            <li>💬 Suporte via WhatsApp</li>
+                        </ul>
+                        <button class="btn-plan" id="btnPlanPROFISSIONAL" onclick="selecionarPlano('PROFISSIONAL')">RENOVAR PLANO</button>
+                    </div>
+
+                    <!-- Plano Enterprise -->
+                    <div class="plan-card glass" id="planCardENTERPRISE">
+                        <div class="plan-badge" id="planBadgeENTERPRISE" style="display:none;">ATIVO</div>
+                        <h3 class="title">ENTERPRISE</h3>
+                        <div class="price">R$ 899,00<span>/mês</span></div>
+                        <ul class="features">
+                            <li>👥 Até 150 Corretores</li>
+                            <li>📤 Perfis Ilimitados</li>
+                            <li>📈 Relatórios & Gráficos</li>
+                            <li>👑 Suporte Dedicado 24/7</li>
+                        </ul>
+                        <button class="btn-plan" id="btnPlanENTERPRISE" onclick="selecionarPlano('ENTERPRISE')">RENOVAR PLANO</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabela de Faturas -->
+            <div class="animate-fade" style="animation-delay: 0.1s;">
+                <h2 style="font-size: 1.2rem; font-weight: 600; margin-bottom: 15px;">📋 Histórico de Faturamento</h2>
+                <div class="table-responsive">
+                    <table class="premium-table">
+                        <thead>
+                            <tr>
+                                <th>Código</th>
+                                <th>Valor</th>
+                                <th title="Prazo para efetuar o pagamento">Prazo de Pgto.</th>
+                                <th title="Período de licença que será ativado após o pagamento">Período Coberto</th>
+                                <th>Método / Gateway</th>
+                                <th>Status</th>
+                                <th style="text-align: right;">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="faturasTableBody">
+                            <tr>
+                                <td colspan="6" style="text-align: center; color: var(--text-secondary);">Carregando faturas...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- MODAL DE CHECKOUT/PAGAMENTO -->
+    <div class="modal-overlay" id="checkoutModal">
+        <div class="modal-card glass">
+            <div class="modal-header">
+                <h2 style="font-size: 1.2rem; font-weight: 600;">💳 Realizar Pagamento</h2>
+                <button class="modal-close-btn" onclick="closeModal()">✕</button>
+            </div>
+            
+            <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); padding: 15px; border-radius: 8px; font-size:0.9rem; margin-bottom:20px;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                    <span>Fatura ID:</span>
+                    <strong id="modalFaturaId" style="font-family: monospace; font-size:0.8rem;">---</strong>
+                </div>
+                <div style="display:flex; justify-content:space-between;">
+                    <span>Valor em Aberto:</span>
+                    <strong id="modalFaturaValor" style="color:var(--error);">0,00 R$</strong>
+                </div>
+            </div>
+
+            <h3 style="font-size: 0.9rem; font-weight: 600; margin-bottom: 10px;">Forma de Pagamento:</h3>
+            <div class="payment-methods-grid">
+                <div class="method-card active" id="modalMethodCard" onclick="selectModalMethod('CARTAO')">
+                    <span class="icon">💳</span>
+                    <span>Cartão</span>
+                </div>
+                <div class="method-card" id="modalMethodPix" onclick="selectModalMethod('PIX')">
+                    <span class="icon">⚡</span>
+                    <span>Pix</span>
+                </div>
+                <div class="method-card" id="modalMethodBoleto" onclick="selectModalMethod('BOLETO')">
+                    <span class="icon">📄</span>
+                    <span>Boleto</span>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" id="btnConfirmarPagamento" style="width:100%; font-weight:700; padding:12px;" onclick="confirmarPagamento()">EFETUAR PAGAMENTO</button>
+
+            <!-- Área de Instruções Mockadas -->
+            <div id="modalInstructionsBox" style="display:none; margin-top:20px; background: rgba(255,255,255,0.03); border:1px solid var(--glass-border); padding:15px; border-radius:8px; text-align:center;">
+                <!-- Preenchido dinamicamente -->
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/auth.js"></script>
+    <script>
+        const token = localStorage.getItem('@VTalentos:token');
+        const userStr = localStorage.getItem('@VTalentos:user');
+
+        if (!token || !userStr) {
+            window.location.href = 'login.html';
+        }
+
+        const user = JSON.parse(userStr);
+
+        renderHeader('Assinatura & Faturamento', 'Controle e histórico financeiro de sua empresa');
+
+        // Renderização Dinâmica de Menus Laterais (Sidebar)
+        const nav = document.getElementById('navLinks');
+        nav.innerHTML = `
+            <p style="color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; margin-bottom: 10px;">MENU PRINCIPAL</p>
+            <a href="dashboard.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">🏠 Dashboard</a>
+            <a href="vitrine.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">🎁 Vitrine de Prêmios</a>
+        `;
+
+        if (user.perfil === 'ADMIN_EMPRESA' || user.perfil === 'SUPER_ADMIN') {
+            nav.innerHTML += `
+                <p style="color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; margin-top: 15px; margin-bottom: 10px;">ADMINISTRAÇÃO</p>
+                <a href="admin-lancamento.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">💎 Lançamento Manual</a>
+                <a href="admin-importacao.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">📤 Importação Excel</a>
+                <a href="admin-premios.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">⚙️ Gerenciar Prêmios</a>
+                <a href="admin-usuarios.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">👥 Gestão de Corretores</a>
+                <a href="admin-faturamento.html" class="active" style="color: var(--accent-primary); text-decoration: none; font-weight: 600;">💳 Faturamento SaaS</a>
+            `;
+        }
+        nav.innerHTML += `
+            <p style="color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; margin-top: 15px; margin-bottom: 10px;">PERFIL</p>
+            <a href="meu-perfil.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">👤 Meus Dados</a>
+        `;
+
+        let selectedModalMethodValue = 'CARTAO';
+        let currentFaturaIdToPay = null;
+        let currentFaturaValorToPay = 0;
+        let isSandbox = true;
+
+        async function initBillingPanel() {
+            try {
+                // 1. Carrega status de faturamento
+                const resStatus = await fetch('http://localhost:3001/api/admin/billing/status', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const dataStatus = await resStatus.json();
+
+                if (dataStatus.success) {
+                    isSandbox = dataStatus.simular_pagamentos;
+                    const emp = dataStatus.empresa;
+
+                    // Ajusta seletor de provedores ativos dinamicamente
+                    const select = document.getElementById('selectProvedorPreferido');
+                    select.innerHTML = '';
+                    const provs = dataStatus.provedores_disponiveis || [];
+                    if (provs.length === 0) {
+                        select.innerHTML = '<option value="stripe_default">Stripe (Cartão)</option>';
+                    } else {
+                        provs.forEach(p => {
+                            const opt = document.createElement('option');
+                            opt.value = p.id;
+                            opt.innerText = `${p.nome} (${p.tipo === 'STRIPE' ? 'Cartão' : 'Pix/Boleto'})`;
+                            select.appendChild(opt);
+                        });
+                    }
+                    const activeProvId = emp.provedor_pagamento || (provs[0] ? provs[0].id : 'stripe_default');
+                    select.value = activeProvId;
+                    const activeProv = provs.find(p => p.id === activeProvId);
+                    document.getElementById('gatewayNome').innerText = activeProv ? activeProv.nome.toUpperCase() : 'STRIPE';
+
+                    // Dias Restantes
+                    const exp = new Date(emp.data_expiracao);
+                    const agora = new Date();
+                    const diffTime = exp - agora;
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    
+                    const diasVal = document.getElementById('diasVal');
+                    diasVal.innerHTML = `${diffDays > 0 ? diffDays : 0} <small>dias restantes</small>`;
+                    document.getElementById('expInfo').innerText = `Expira em: ${exp.toLocaleDateString('pt-BR')}`;
+
+                    // Mensagem de alerta/contexto sobre a licença
+                    const expAlert = document.getElementById('expAlert');
+                    if (diffDays > 15) {
+                        expAlert.innerText = '✅ Licença em dia. Renove quando desejar.';
+                        expAlert.style.color = 'var(--success)';
+                    } else if (diffDays > 5) {
+                        expAlert.innerText = '⚠️ Atenção: Renove sua licença em breve!';
+                        expAlert.style.color = 'var(--warning)';
+                    } else if (diffDays > 0) {
+                        expAlert.innerText = '🔴 Urgente: Licença expira em poucos dias!';
+                        expAlert.style.color = 'var(--error)';
+                    } else {
+                        expAlert.innerText = '❌ Licença expirada. Renove agora para continuar.';
+                        expAlert.style.color = 'var(--error)';
+                    }
+
+                    // Aplicar cores de acordo com a expiração (>15 Verde, <=15 Amarelo, <=5 Vermelho)
+                    const statusCard = document.getElementById('licenseStatusCard');
+                    statusCard.className = 'billing-card glass'; // reseta
+
+                    if (diffDays > 15) {
+                        statusCard.classList.add('status-green');
+                    } else if (diffDays <= 15 && diffDays > 5) {
+                        statusCard.classList.add('status-yellow');
+                    } else {
+                        statusCard.classList.add('status-red');
+                    }
+
+                    // Plano
+                    document.getElementById('planoNome').innerText = emp.plano;
+                    
+                    const limite = emp.limite_corretores || 20;
+                    document.getElementById('limiteTexto').innerHTML = `<span>Corretores Ativos:</span> <strong>${dataStatus.corretores_ativos} / ${limite}</strong>`;
+
+                    // Progresso
+                    const percent = Math.min(100, (dataStatus.corretores_ativos / limite) * 100);
+                    const pBar = document.getElementById('progressBar');
+                    pBar.style.width = `${percent}%`;
+                    if (percent >= 90) {
+                        pBar.style.background = 'var(--error)';
+                    } else if (percent >= 70) {
+                        pBar.style.background = 'var(--warning)';
+                    } else {
+                        pBar.style.background = 'var(--success)';
+                    }
+
+                    // Atualiza e exibe os cards de Planos SaaS
+                    const activePlan = emp.plano; // e.g. "ESSENCIAL", "PROFISSIONAL", "ENTERPRISE"
+                    
+                    ['ESSENCIAL', 'PROFISSIONAL', 'ENTERPRISE'].forEach(p => {
+                        const card = document.getElementById(`planCard${p}`);
+                        const badge = document.getElementById(`planBadge${p}`);
+                        const btn = document.getElementById(`btnPlan${p}`);
+                        
+                        if (card && badge && btn) {
+                            card.classList.remove('active-plan');
+                            badge.style.display = 'none';
+                            btn.innerText = 'CONTRATAR PLANO';
+                            btn.style.background = '';
+                        }
+                    });
+
+                    const activeCard = document.getElementById(`planCard${activePlan}`);
+                    const activeBadge = document.getElementById(`planBadge${activePlan}`);
+                    const activeBtn = document.getElementById(`btnPlan${activePlan}`);
+                    
+                    if (activeCard && activeBadge && activeBtn) {
+                        activeCard.classList.add('active-plan');
+                        activeBadge.style.display = 'block';
+                        activeBtn.innerText = 'RENOVAR PLANO';
+                        activeBtn.style.background = 'var(--success)';
+                    }
+                }
+
+                // 2. Carrega Faturas
+                await loadFaturas();
+
+            } catch (err) {
+                console.error(err);
+                showToast('Falha ao inicializar o painel de faturamento.', 'error');
+            }
+        }
+
+        async function loadFaturas() {
+            try {
+                const resFaturas = await fetch('http://localhost:3001/api/admin/billing/faturas', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const dataFaturas = await resFaturas.json();
+
+                const tbody = document.getElementById('faturasTableBody');
+                tbody.innerHTML = '';
+
+                if (dataFaturas.success && dataFaturas.data.length > 0) {
+                    dataFaturas.data.forEach(fat => {
+                        const tr = document.createElement('tr');
+                        const prazoVenc = new Date(fat.data_vencimento).toLocaleDateString('pt-BR');
+                        const statusClass = `badge-${fat.status.toLowerCase()}`;
+
+                        // Período coberto: se paga, usa data de pagamento; se pendente, calcula a partir de hoje
+                        let periodoStr = '-';
+                        if (fat.status === 'PAGA' && fat.data_pagamento) {
+                            const inicio = new Date(fat.data_pagamento);
+                            const fim = new Date(inicio);
+                            fim.setDate(fim.getDate() + 30);
+                            periodoStr = `${inicio.toLocaleDateString('pt-BR')} &rarr; ${fim.toLocaleDateString('pt-BR')}`;
+                        } else if (fat.status === 'PENDENTE') {
+                            periodoStr = `<span style="color:var(--warning); font-size:0.75rem;">A ativar após pagamento (+30 dias)</span>`;
+                        }
+
+                        let actionBtns = '';
+                        if (fat.status !== 'PAGA' && fat.status !== 'CANCELADA') {
+                            actionBtns = `
+                                <div style="display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap;">
+                                    <button class="btn btn-primary" onclick="openCheckoutModal('${fat.id}', ${fat.valor})" style="padding: 6px 12px; font-size: 0.75rem; font-weight:600; border-radius:4px;">💳 PAGAR</button>
+                                    <button onclick="cancelarFatura('${fat.id}')" style="padding: 6px 12px; font-size: 0.75rem; font-weight:600; border-radius:4px; background:rgba(231,76,60,0.12); border:1px solid rgba(231,76,60,0.3); color:var(--error); cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='rgba(231,76,60,0.25)'" onmouseout="this.style.background='rgba(231,76,60,0.12)'">🗑️ EXCLUIR</button>
+                                </div>`;
+                        } else {
+                            actionBtns = `<span style="color:var(--text-secondary); font-size:0.8rem; font-weight:500;">Sem ações</span>`;
+                        }
+
+                        tr.innerHTML = `
+                            <td><code style="font-family: monospace; font-size: 0.8rem; color:var(--text-secondary);">${fat.id.substring(0, 8)}...</code></td>
+                            <td><strong>${parseFloat(fat.valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</strong></td>
+                            <td><span style="font-size:0.82rem;">${prazoVenc}</span></td>
+                            <td style="font-size:0.82rem;">${periodoStr}</td>
+                            <td><span style="font-size:0.75rem; font-weight:600; text-transform:uppercase; color:var(--text-secondary);">${fat.metodo_pagamento || '-'} (${fat.provedor || 'PLATAFORMA'})</span></td>
+                            <td><span class="badge ${statusClass}">${fat.status}</span></td>
+                            <td style="text-align: right;">${actionBtns}</td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                } else {
+                    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-secondary);">Nenhuma fatura encontrada.</td></tr>`;
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('Erro ao carregar histórico de faturamento.', 'error');
+            }
+        }
+
+        async function cancelarFatura(faturaId) {
+            if (!confirm('Tem certeza que deseja EXCLUIR esta fatura pendente? Esta ação não pode ser desfeita.')) {
+                return;
+            }
+
+            try {
+                const res = await fetch(`http://localhost:3001/api/admin/billing/faturas/${faturaId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                const data = await res.json();
+                if (data.success) {
+                    showToast(data.message, 'success');
+                    await loadFaturas();
+                } else {
+                    throw new Error(data.error || 'Erro ao excluir fatura.');
+                }
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        async function alterarGatewayPreferido() {
+            const select = document.getElementById('selectProvedorPreferido');
+            const prov = select.value;
+
+            try {
+                const res = await fetch('http://localhost:3001/api/admin/billing/provedor', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ provedor: prov })
+                });
+
+                const data = await res.json();
+                if (data.success) {
+                    showToast('Gateway preferencial atualizado!', 'success');
+                    document.getElementById('gatewayNome').innerText = prov;
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        // Controle de Modal
+        function openCheckoutModal(faturaId, valor) {
+            currentFaturaIdToPay = faturaId;
+            currentFaturaValorToPay = valor;
+
+            document.getElementById('modalFaturaId').innerText = faturaId;
+            document.getElementById('modalFaturaValor').innerText = parseFloat(valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            
+            selectModalMethod('CARTAO');
+            document.getElementById('modalInstructionsBox').style.display = 'none';
+
+            const btn = document.getElementById('btnConfirmarPagamento');
+            if (isSandbox) {
+                btn.innerText = 'EFETUAR PAGAMENTO (SIMULAÇÃO)';
+            } else {
+                btn.innerText = 'GERAR COBRANÇA';
+            }
+
+            document.getElementById('checkoutModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('checkoutModal').classList.remove('active');
+        }
+
+        function selectModalMethod(method) {
+            selectedModalMethodValue = method;
+            document.querySelectorAll('#checkoutModal .method-card').forEach(card => card.classList.remove('active'));
+
+            if (method === 'CARTAO') document.getElementById('modalMethodCard').classList.add('active');
+            if (method === 'PIX') document.getElementById('modalMethodPix').classList.add('active');
+            if (method === 'BOLETO') document.getElementById('modalMethodBoleto').classList.add('active');
+
+            document.getElementById('modalInstructionsBox').style.display = 'none';
+        }
+
+        async function confirmarPagamento() {
+            if (!currentFaturaIdToPay) return;
+
+            const btn = document.getElementById('btnConfirmarPagamento');
+            btn.disabled = true;
+            btn.innerText = 'PROCESSANDO...';
+
+            const prov = document.getElementById('selectProvedorPreferido').value;
+
+            try {
+                const res = await fetch('http://localhost:3001/api/admin/billing/pagar', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        faturaId: currentFaturaIdToPay,
+                        metodo_pagamento: selectedModalMethodValue,
+                        provedor: prov
+                    })
+                });
+
+                const data = await res.json();
+                if (data.success) {
+                    if (data.simulado) {
+                        showToast('Pagamento efetuado com sucesso! (Simulado)', 'success');
+                        closeModal();
+                        await initBillingPanel();
+                    } else {
+                        // Exibe instruções
+                        showToast('Instruções geradas!', 'success');
+                        const box = document.getElementById('modalInstructionsBox');
+                        box.style.display = 'block';
+
+                        if (selectedModalMethodValue === 'CARTAO') {
+                            box.innerHTML = `
+                                <p style="font-size:0.85rem; margin-bottom:10px; color:var(--text-primary);">A fatura foi enviada para o gateway. Toque abaixo para pagar:</p>
+                                <a href="${data.paymentInfo.checkout_url}" target="_blank" class="btn btn-primary" style="width:100%; font-size:0.85rem; padding:8px;">PAGAR CARTÃO DE CRÉDITO</a>
+                            `;
+                        } else if (selectedModalMethodValue === 'PIX') {
+                            box.innerHTML = `
+                                <p style="font-size:0.85rem; margin-bottom:10px; color:var(--text-primary);">Copie o código Copia e Cola para pagar no Pix:</p>
+                                <input type="text" class="copia-cola-input" value="${data.paymentInfo.pix_copia_cola}" readonly onclick="copyModalPix(this)">
+                                <small style="display:block; color:var(--success); margin-top:8px;">💡 Clique no campo para copiar!</small>
+                            `;
+                        } else if (selectedModalMethodValue === 'BOLETO') {
+                            box.innerHTML = `
+                                <p style="font-size:0.85rem; margin-bottom:10px; color:var(--text-primary);">Código de barras do boleto:</p>
+                                <input type="text" class="copia-cola-input" value="${data.paymentInfo.boleto_linha}" readonly onclick="copyModalPix(this)">
+                                <a href="${data.paymentInfo.checkout_url}" target="_blank" class="btn" style="width:100%; font-size:0.85rem; padding:8px; margin-top:10px; background:rgba(255,255,255,0.05); border:1px solid var(--glass-border); color:var(--text-primary);">VER BOLETO PDF</a>
+                            `;
+                        }
+                    }
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (err) {
+                showToast(err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerText = isSandbox ? 'EFETUAR PAGAMENTO (SIMULAÇÃO)' : 'GERAR COBRANÇA';
+            }
+        }
+
+        async function selecionarPlano(plano) {
+            const precos = {
+                'ESSENCIAL': 'R$ 199,00',
+                'PROFISSIONAL': 'R$ 399,00',
+                'ENTERPRISE': 'R$ 899,00'
+            };
+
+            const btn = document.getElementById(`btnPlan${plano}`);
+            const isCurrentPlan = btn.innerText.includes('RENOVAR');
+            const mensagem = isCurrentPlan
+                ? `Deseja realmente gerar uma fatura de RENOVAÇÃO (+30 dias) para o plano ${plano} no valor de ${precos[plano] || ''}?`
+                : `Deseja realmente CONTRATAR o plano ${plano} no valor de ${precos[plano] || ''}/mês? Uma fatura pendente será gerada para ativação.`;
+
+            if (!confirm(mensagem)) {
+                return;
+            }
+
+            const originalText = btn.innerText;
+            
+            try {
+                btn.disabled = true;
+                btn.innerText = 'PROCESSANDO...';
+
+                const res = await fetch('http://localhost:3001/api/admin/billing/faturas', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ plano })
+                });
+
+                const data = await res.json();
+                if (data.success) {
+                    showToast(data.message, 'success');
+                    // Reinicializa o painel para atualizar a lista de faturas e o card ativo
+                    await initBillingPanel();
+                } else {
+                    throw new Error(data.error || 'Erro ao processar plano.');
+                }
+            } catch (err) {
+                showToast(err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerText = originalText;
+            }
+        }
+
+        function copyModalPix(input) {
+            input.select();
+            document.execCommand('copy');
+            showToast('Copiado com sucesso!', 'success');
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            initBillingPanel();
+        });
+    </script>
+</body>
+</html>
