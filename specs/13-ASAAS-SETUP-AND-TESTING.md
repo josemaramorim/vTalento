@@ -20,7 +20,7 @@
 2. Acesse a aplicação no seu navegador: [http://localhost:3000](http://localhost:3000).
 3. Faça login com a conta de **Super Admin**:
    * **E-mail:** `super@plataforma.com.br`
-   * **Senha:** `admin123` *(ou a senha padrão do seu banco local)*.
+   * **Senha:** `123456` *(ou a senha padrão do seu banco local)*.
 
 ### Passo 2: Cadastrar/Atualizar as credenciais do Asaas
 1. No menu lateral, sob a seção **Super Admin**, clique em **💳 Provedores de Pagamento** (ou acesse diretamente em `super-provedores.html`).
