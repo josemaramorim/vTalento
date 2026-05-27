@@ -364,7 +364,7 @@ Esta fase permite que o administrador da empresa (`ADMIN_EMPRESA`) gerencie a id
 - [x] **Tarefa 20.7 (Frontend):** Implementar interceptor dinâmico global de API no `auth.js` para transição transparente entre localhost e produção.
 - [x] **Tarefa 20.8 (Docs):** Criar o guia de implantação e deploy em produção do ecossistema em `specs/15-PRODUCTION-DEPLOYMENT-GUIDE.md`.
 - [x] **Tarefa 20.9 (Hotfix/Infra):** Corrigir migration de check constraint de transações para suportar dialeto pg do PostgreSQL de forma não destrutiva.
-- [/] **Tarefa 20.10 (Infra/Produção):** Criar script CLI de inicialização segura em produção para cadastrar o primeiro SUPER_ADMIN e configurações de SaaS se não existirem no banco PostgreSQL.
+- [x] **Tarefa 20.10 (Infra/Produção):** Criar script CLI de inicialização segura em produção para cadastrar o primeiro SUPER_ADMIN e configurações de SaaS se não existirem no banco PostgreSQL.
 
 
 
