@@ -32,6 +32,17 @@ No desenvolvimento local, a plataforma utiliza **SQLite** (`database.sqlite`) gr
    ```bash
    npx knex migrate:latest
    ```
+4. Em seguida, execute o comando utilitário de inicialização para cadastrar com segurança o primeiro usuário `SUPER_ADMIN` e as configurações gerais de SaaS (sem alterar nenhum dado existente se o banco já estiver povoado):
+   ```bash
+   npm run db:init-admin
+   ```
+   **Credenciais Padrão Criadas:**
+   * **E-mail:** `super@plataforma.com.br` (configurável pela variável `.env` `INITIAL_SUPER_ADMIN_EMAIL`)
+   * **Senha:** `123456` (configurável pela variável `.env` `INITIAL_SUPER_ADMIN_PASSWORD`)
+
+   > [!IMPORTANT]
+   > Faça login imediatamente utilizando as credenciais acima e altere a senha na página **Meu Perfil** para garantir a segurança da sua implantação!
+
 
 ---
 

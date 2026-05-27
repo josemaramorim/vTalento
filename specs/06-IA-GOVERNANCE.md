@@ -90,6 +90,7 @@ Para garantir a continuidade perfeita e o alinhamento do projeto, a IA deve segu
 | **DESENVOLVIMENTO** | ✅ Concluído | Fase 4.7: Lapidação e Melhorias no App do Corretor | `develop` | Correção na associação do req.usuario_id nos resgates; dual card de saldos (Disponível + A Receber) e extrato de transações individuais no dashboard do Corretor. |
 | **DESENVOLVIMENTO** | ✅ Concluído | Fase 11: Gestão de Provedores e Pattern Strategy/Adapter | `develop` | Padrão Strategy/Adapter de pagamentos implementado para Stripe, Asaas e Genérico; nova página premium `super-provedores.html` com formulário dinâmico chave-valor e segurança de segredos; 73/73 testes integrados passando. |
 | **DESENVOLVIMENTO** | ✅ Concluído | Fases 12 e 13: Webhooks & Dashboard Charts | `develop` | Webhooks de Stripe/Asaas, renovações cumulativas, dashboard com gráficos neon interativos Chart.js, especificações de configuração (specs 12, 13, 14 e 15) e 81/81 testes passando. |
+| **IMPLANTAÇÃO** | ✅ Concluído | Fase 14: Inicialização Segura em Produção | `develop` | Correção da migration para PostgreSQL (Pg check constraint) e criação do utilitário CLI `npm run db:init-admin` para inicialização segura e cadastramento do primeiro SUPER_ADMIN em produção; 81/81 testes passando. |
 
 ---
 

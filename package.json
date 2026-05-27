@@ -19,7 +19,8 @@
     "backend:dev": "node src/backend/app.js",
     "frontend:dev": "serve src/frontend -l 3000",
     "dev": "concurrently \"npm run backend:dev\" \"npm run frontend:dev\"",
-    "test": "jest"
+    "test": "jest",
+    "db:init-admin": "node src/backend/infra/scripts/initSuperAdmin.js"
   },
   "keywords": [],
   "author": "",
