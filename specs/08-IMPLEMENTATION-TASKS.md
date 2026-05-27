@@ -306,4 +306,6 @@ Esta fase permite que o administrador da empresa (`ADMIN_EMPRESA`) gerencie a id
   - Filtros: Tipo (Crédito/Débito/Estorno), Origem (Manual/Importação/Prêmio), Corretor (Dropdown de corretores ativos), Período (De/Até), Paginação (10/50/100 registros por página).
   - Tabela com: Data/Hora, Corretor, Tipo, Origem, Valor (colorido), Descrição/Justificativa, Lançado por.
   - Design Glassmorphism premium unificado.
-- [/] **Tarefa 17.8 (Frontend):** Registrar no menu lateral dinâmico de `auth.js` o novo link "📈 Movimentações" para administradores.
+- [x] **Tarefa 17.8 (Frontend):** Registrar no menu lateral dinâmico de `auth.js` o novo link "📈 Movimentações" para administradores.
+- [/] **Tarefa 17.9 (UX / Refatoração):** Substituir o modal de extrato simplificado na tela de usuários por um redirecionamento direto para a tela de movimentações filtrada por corretor, eliminando código redundante e permitindo filtros avançados.
+

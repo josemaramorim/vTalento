@@ -421,6 +421,14 @@
             renderSidebar();
             renderHeader("Movimentações da Equipe", "Acompanhe e filtre todo o histórico financeiro e de transações da sua equipe em tempo real");
             await populateCorretoresDropdown();
+            
+            // Verifica se há filtro de corretor vindo da URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const usuarioId = urlParams.get('usuario_id');
+            if (usuarioId) {
+                document.getElementById('corretorFilter').value = usuarioId;
+            }
+            
             fetchMovimentacoes(1);
         });
     </script>
