@@ -357,7 +357,7 @@ Esta fase permite que o administrador da empresa (`ADMIN_EMPRESA`) gerencie a id
 
 - [x] **Tarefa 20.1 (Backend):** Criar endpoint `GET /api/admin/dashboard-graficos` no `LancamentoController.js` para retornar dados agrupados por mês (créditos vs débitos), ranking top 5 corretores e distribuição de prêmios.
 - [x] **Tarefa 20.2 (Frontend):** Carregar Chart.js via CDN em `dashboard.html` e criar contêineres canvas no layout para os 3 gráficos.
-- [/] **Tarefa 20.3 (Frontend):** Implementar lógica JavaScript no frontend para carregar os dados analíticos e instanciar os gráficos interativos.
+- [x] **Tarefa 20.3 (Frontend):** Implementar lógica JavaScript no frontend para carregar os dados analíticos e instanciar os gráficos interativos.
 - [x] **Tarefa 20.4 (Testes):** Adicionar testes de integração Jest para validar o novo endpoint de dados gráficos.
 
 
