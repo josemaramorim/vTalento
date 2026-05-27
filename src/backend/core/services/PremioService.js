@@ -12,7 +12,7 @@ class PremioService {
   }
 
   async create({ empresa_id, titulo, descricao, quantidade_disponivel, custo_pontos, ativo = true }) {
-    const [id] = await db('Premio').insert({
+    const [inserted] = await db('Premio').insert({
       empresa_id,
       titulo,
       descricao,
@@ -21,7 +21,8 @@ class PremioService {
       ativo,
       created_at: db.fn.now(),
       updated_at: db.fn.now()
-    });
+    }).returning('id');
+    const id = typeof inserted === 'object' ? inserted.id : inserted;
     return { id };
   }
 
@@ -78,7 +79,7 @@ class PremioService {
 
     try {
       const result = await db.transaction(async (trx) => {
-        const [resgateId] = await trx('Resgate').insert({
+        const [insertedResgate] = await trx('Resgate').insert({
           usuario_id,
           premio_id,
           quantidade,
@@ -86,7 +87,8 @@ class PremioService {
           status: 'pendente',
           created_at: db.fn.now(),
           updated_at: db.fn.now()
-        });
+        }).returning('id');
+        const resgateId = typeof insertedResgate === 'object' ? insertedResgate.id : insertedResgate;
 
         const transacaoId = require('crypto').randomUUID();
         await trx('GamTransacao').insert({

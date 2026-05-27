@@ -25,7 +25,7 @@ describe('PremioService - caminho feliz e concorrência leve', () => {
         return { where: () => ({ first: () => Promise.resolve({ id: 'u2', saldo_disponivel: 100.00, empresa_id: 'e1' }), update: () => Promise.resolve(1) }) };
       }
       if (table === 'Resgate') {
-        return { insert: () => Promise.resolve([11]), where: () => ({ update: () => Promise.resolve(1) }) };
+        return { insert: () => ({ returning: () => Promise.resolve([11]) }), where: () => ({ update: () => Promise.resolve(1) }) };
       }
       if (table === 'GamTransacao') {
         return { insert: () => Promise.resolve([1]) };
@@ -54,7 +54,7 @@ describe('PremioService - caminho feliz e concorrência leve', () => {
         return { where: () => ({ first: () => Promise.resolve({ id: 'u3', saldo_disponivel: 100.00, empresa_id: 'e1' }), update: () => Promise.resolve(1) }) };
       }
       if (table === 'Resgate') {
-        return { insert: () => Promise.resolve([21]), where: () => ({ update: () => Promise.resolve(1) }) };
+        return { insert: () => ({ returning: () => Promise.resolve([21]) }), where: () => ({ update: () => Promise.resolve(1) }) };
       }
       if (table === 'GamTransacao') {
         return { insert: () => Promise.resolve([1]) };
