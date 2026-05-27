@@ -76,7 +76,7 @@ Este documento é o guia de execução do projeto. Nenhuma tarefa deve ser inici
 
 - [x] **Tarefa 4.1:** Criar SPEC de Vitrine de Prêmios em `specs/09-VITRINE-DE-PREMIOS.md`.
 - [x] **Tarefa 4.2:** Criar migração inicial para tabelas `Premio`, `VitrineItem` e `Resgate`.
-- [/] **Tarefa 4.3:** Implementar `PremioService` com métodos `list`, `create` e `requestResgate`.
+- [x] **Tarefa 4.3:** Implementar `PremioService` com métodos `list`, `create` e `requestResgate`.
 - [x] **Tarefa 4.4:** Implementar `PremioController` e rotas públicas/admin.
 - [x] **Tarefa 4.5:** Escrever testes para `PremioService` e `PremioController` (`supertest`).
 - [x] **Tarefa 4.6:** Implementar Frontend Admin para CRUD de prêmios (`admin-premios.html`).
