@@ -362,6 +362,7 @@ Esta fase permite que o administrador da empresa (`ADMIN_EMPRESA`) gerencie a id
 - [x] **Tarefa 20.5 (Docs):** Criar o guia operacional de configuração e testes do Asaas em `specs/13-ASAAS-SETUP-AND-TESTING.md`.
 - [x] **Tarefa 20.6 (Docs):** Criar o guia operacional de configuração e testes da Stripe em `specs/14-STRIPE-SETUP-AND-TESTING.md`.
 - [x] **Tarefa 20.7 (Frontend):** Implementar interceptor dinâmico global de API no `auth.js` para transição transparente entre localhost e produção.
+- [x] **Tarefa 20.8 (Docs):** Criar o guia de implantação e deploy em produção do ecossistema em `specs/15-PRODUCTION-DEPLOYMENT-GUIDE.md`.
 
 
 
