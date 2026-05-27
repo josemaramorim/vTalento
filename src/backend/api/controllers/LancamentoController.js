@@ -135,6 +135,95 @@ class LancamentoController {
       return res.status(400).json({ error: err.message });
     }
   }
+
+  async obterDadosGraficos(req, res) {
+    try {
+      const db = require('../../infra/db');
+      const empresa_id = req.empresa_id;
+
+      // 1. Evolução Mensal (últimos 6 meses)
+      const seisMesesAtras = new Date();
+      seisMesesAtras.setMonth(seisMesesAtras.getMonth() - 6);
+
+      const transacoes = await db('GamTransacao')
+        .where({ empresa_id })
+        .andWhere('created_at', '>=', seisMesesAtras.toISOString())
+        .select('valor', 'tipo', 'created_at')
+        .orderBy('created_at', 'asc');
+
+      const nomesMeses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+      const ultimosSeisMeses = [];
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date();
+        d.setMonth(d.getMonth() - i);
+        ultimosSeisMeses.push({
+          anoMes: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
+          mes: nomesMeses[d.getMonth()],
+          creditos: 0,
+          debitos: 0
+        });
+      }
+
+      for (const t of transacoes) {
+        if (!t.created_at) continue;
+        const dataTransacao = new Date(t.created_at);
+        const anoMesTransacao = `${dataTransacao.getFullYear()}-${String(dataTransacao.getMonth() + 1).padStart(2, '0')}`;
+        const bucket = ultimosSeisMeses.find(b => b.anoMes === anoMesTransacao);
+        if (bucket) {
+          const valorAbs = Math.abs(parseFloat(t.valor || 0));
+          if (t.tipo === 'CREDITO' || (t.tipo === 'ESTORNO' && t.valor > 0)) {
+            bucket.creditos += valorAbs;
+          } else {
+            bucket.debitos += valorAbs;
+          }
+        }
+      }
+
+      const evolucaoMensal = ultimosSeisMeses.map(b => ({
+        mes: b.mes,
+        creditos: Math.round(b.creditos * 100) / 100,
+        debitos: Math.round(b.debitos * 100) / 100
+      }));
+
+      // 2. Top 5 Corretores com maior saldo disponível
+      const topCorretoresRaw = await db('GamUsuario')
+        .where({ empresa_id, perfil: 'CORRETOR', ativo: true })
+        .select('nome', 'saldo_disponivel as saldo')
+        .orderBy('saldo_disponivel', 'desc')
+        .limit(5);
+
+      const topCorretores = topCorretoresRaw.map(u => ({
+        nome: u.nome,
+        saldo: parseFloat(u.saldo || 0)
+      }));
+
+      // 3. Distribuição de prêmios resgatados (confirmados)
+      const distribuicaoPremiosRaw = await db('Resgate')
+        .join('Premio', 'Resgate.premio_id', 'Premio.id')
+        .join('GamUsuario', 'Resgate.usuario_id', 'GamUsuario.id')
+        .where('GamUsuario.empresa_id', empresa_id)
+        .where('Resgate.status', 'confirmado')
+        .select('Premio.titulo')
+        .count('Resgate.id as total_resgatado')
+        .groupBy('Premio.titulo')
+        .orderBy('total_resgatado', 'desc')
+        .limit(5);
+
+      const distribuicaoPremios = distribuicaoPremiosRaw.map(p => ({
+        titulo: p.titulo,
+        total_resgatado: parseInt(p.total_resgatado || 0, 10)
+      }));
+
+      return res.json({
+        success: true,
+        evolucaoMensal,
+        topCorretores,
+        distribuicaoPremios
+      });
+    } catch (err) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
 }
 
 module.exports = new LancamentoController();

@@ -31,6 +31,9 @@ routes.get('/historico-recente', LancamentoController.obterHistoricoRecente);
 // Endpoint de métricas consolidada do Dashboard Admin
 routes.get('/dashboard-indicadores', LancamentoController.obterIndicadoresAdmin);
 
+// Endpoint de dados analíticos para gráficos
+routes.get('/dashboard-graficos', LancamentoController.obterDadosGraficos);
+
 // Endpoint de extrato/movimentações de toda a equipe
 routes.get('/movimentacoes', LancamentoController.obterMovimentacoesEquipe);
 

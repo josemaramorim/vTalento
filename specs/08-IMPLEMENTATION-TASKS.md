@@ -327,7 +327,39 @@ Esta fase permite que o administrador da empresa (`ADMIN_EMPRESA`) gerencie a id
 - [x] **Tarefa 18.3 (Backend):** Refatorar `BillingController.js` para consumir a fábrica de adapters e delegar a geração de cobranças.
 - [x] **Tarefa 18.4 (Frontend):** Criar a nova página `super-provedores.html` com layout de cards, exclusão física e cadastro dinâmico chave-valor.
 - [x] **Tarefa 18.5 (Frontend):** Atualizar sidebar de todas as páginas do Super-Admin (`super-dashboard.html`, `super-empresas.html`, `super-usuarios.html`, `meu-perfil.html`) e limpar o dashboard.
-- [/] **Tarefa 18.6 (Testes):** Criar testes integrados em Jest para os adapters de pagamentos e fábrica.
+- [x] **Tarefa 18.6 (Testes):** Criar testes integrados em Jest para os adapters de pagamentos e fábrica.
+
+---
+
+## FASE 12: Integração Segura de Webhooks (SaaS)
+
+### Regras de Negócio e UX:
+- **Automatização:** O recebimento de confirmações de pagamento dos gateways liquida a fatura e estende a licença do inquilino de forma transparente.
+- **Segurança Estrita:** Assinaturas e tokens de autenticação de webhooks são checados e validados rigorosamente.
+
+### Tarefas de Desenvolvimento
+
+- [x] **Tarefa 19.1 (Backend):** Criar a nova rota pública `src/backend/api/routes/webhooks.js` e montá-la em `app.js` sem filtros de Bearer token.
+- [x] **Tarefa 19.2 (Backend):** Implementar o `WebhookController.js` para processar eventos do Asaas (`PAYMENT_CONFIRMED`/`PAYMENT_RECEIVED`) e atualizar faturas e prorrogar licenças de forma cumulativa.
+- [x] **Tarefa 19.3 (Backend):** Implementar suporte ao Stripe no `WebhookController.js` (eventos `checkout.session.completed` / `charge.succeeded`).
+- [x] **Tarefa 19.4 (Backend):** Adicionar segurança e validação de assinaturas de webhooks para Asaas (`asaas-access-token`) e Stripe (`stripe-signature`).
+- [x] **Tarefa 19.5 (Testes):** Criar suíte de testes `WebhookController.test.js` cobrindo fluxos de sucesso e assinaturas inválidas.
+
+---
+
+## FASE 13: Dashboard Avançado e Indicadores Gráficos (Admin)
+
+### Regras de Negócio e UX:
+- **Visibilidade:** Administradores possuem gráficos dinâmicos e interativos para acompanhar o saldo, transações e performance.
+- **Aestética Premium:** Gráficos desenvolvidos com gradientes neon suaves e design Airy Glassmorphism elegante.
+
+### Tarefas de Desenvolvimento
+
+- [x] **Tarefa 20.1 (Backend):** Criar endpoint `GET /api/admin/dashboard-graficos` no `LancamentoController.js` para retornar dados agrupados por mês (créditos vs débitos), ranking top 5 corretores e distribuição de prêmios.
+- [x] **Tarefa 20.2 (Frontend):** Carregar Chart.js via CDN em `dashboard.html` e criar contêineres canvas no layout para os 3 gráficos.
+- [/] **Tarefa 20.3 (Frontend):** Implementar lógica JavaScript no frontend para carregar os dados analíticos e instanciar os gráficos interativos.
+- [x] **Tarefa 20.4 (Testes):** Adicionar testes de integração Jest para validar o novo endpoint de dados gráficos.
+
 
 
 

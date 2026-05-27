@@ -5,6 +5,7 @@ const authRoutes = require('./api/routes/auth');
 const adminRoutes = require('./api/routes/admin');
 const premiosRoutes = require('./api/routes/premios');
 const superRoutes = require('./api/routes/super');
+const webhookRoutes = require('./api/routes/webhooks');
 
 const app = express();
 
@@ -16,6 +17,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api', premiosRoutes);
 app.use('/api/super', superRoutes);
+app.use('/api/webhooks', webhookRoutes);
+
 
 const PORT = process.env.PORT || 3001;
 

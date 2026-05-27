@@ -12,6 +12,39 @@
             gap: 25px;
             margin-bottom: 30px;
         }
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 25px;
+            margin-bottom: 35px;
+        }
+        .chart-card-premium {
+            padding: 22px;
+            border-radius: var(--radius-md);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            height: 340px;
+        }
+        .chart-card-premium h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: var(--font-heading);
+        }
+        .chart-container {
+            position: relative;
+            flex-grow: 1;
+            width: 100%;
+            height: 100%;
+            min-height: 0;
+        }
         .stat-card-premium {
             padding: 25px;
             border-radius: var(--radius-md);
@@ -63,6 +96,7 @@
             background: rgba(255, 255, 255, 0.04);
         }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body data-theme="dark">
     <div class="app-layout">
@@ -200,6 +234,30 @@
                             <strong>Gerenciar Vitrine</strong>
                             <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 5px;">Controle total de recompensas</p>
                         </a>
+                    </section>
+
+                    <h2 style="font-size: 1.2rem; margin-top: 35px; margin-bottom: 15px; color: var(--text-primary);">📊 Desempenho e Indicadores Recentes</h2>
+                    <section class="charts-grid">
+                        <div class="chart-card-premium glass">
+                            <h3>📈 Evolução de Pontos</h3>
+                            <div class="chart-container">
+                                <canvas id="chartEvolucao"></canvas>
+                            </div>
+                        </div>
+                        
+                        <div class="chart-card-premium glass">
+                            <h3>🏆 Top 5 Corretores (Saldo)</h3>
+                            <div class="chart-container">
+                                <canvas id="chartTopCorretores"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="chart-card-premium glass">
+                            <h3>🎁 Prêmios Mais Desejados</h3>
+                            <div class="chart-container">
+                                <canvas id="chartPremios"></canvas>
+                            </div>
+                        </div>
                     </section>
 
                     <!-- Últimas Transações Globais -->
@@ -418,7 +476,148 @@
                     console.error(err);
                     showToast('Erro ao carregar indicadores do Dashboard Administrativo.', 'error');
                 }
+
+                // Carrega Dados dos Gráficos Analíticos
+                try {
+                    const responseGraficos = await fetch('http://localhost:3001/api/admin/dashboard-graficos', {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (responseGraficos.ok) {
+                        const graficosData = await responseGraficos.json();
+                        renderAnalyticsCharts(graficosData);
+                    }
+                } catch (e) {
+                    console.error('Erro ao buscar dados dos gráficos analíticos:', e);
+                }
             }
+        }
+
+        function renderAnalyticsCharts(data) {
+            // Configuração dos Padrões do Chart.js
+            Chart.defaults.color = 'rgba(255, 255, 255, 0.7)';
+            Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.08)';
+            Chart.defaults.font.family = 'system-ui, -apple-system, sans-serif';
+
+            const activeThemeColor = localStorage.getItem('@VTalentos:accentColor') || '#D4AF37';
+
+            // 1. Chart Evolução (Line)
+            const ctxEvolucao = document.getElementById('chartEvolucao').getContext('2d');
+            
+            const gradCredito = ctxEvolucao.createLinearGradient(0, 0, 0, 200);
+            gradCredito.addColorStop(0, 'rgba(0, 229, 255, 0.25)');
+            gradCredito.addColorStop(1, 'rgba(0, 229, 255, 0.0)');
+            
+            const gradDebito = ctxEvolucao.createLinearGradient(0, 0, 0, 200);
+            gradDebito.addColorStop(0, 'rgba(255, 45, 85, 0.25)');
+            gradDebito.addColorStop(1, 'rgba(255, 45, 85, 0.0)');
+
+            new Chart(ctxEvolucao, {
+                type: 'line',
+                data: {
+                    labels: data.evolucaoMensal.map(item => item.mes),
+                    datasets: [
+                        {
+                            label: 'Créditos',
+                            data: data.evolucaoMensal.map(item => item.creditos),
+                            borderColor: 'rgba(0, 229, 255, 1)',
+                            backgroundColor: gradCredito,
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.4,
+                            pointBackgroundColor: 'rgba(0, 229, 255, 1)',
+                            pointHoverRadius: 6
+                        },
+                        {
+                            label: 'Débitos / Resgates',
+                            data: data.evolucaoMensal.map(item => item.debitos),
+                            borderColor: 'rgba(255, 45, 85, 1)',
+                            backgroundColor: gradDebito,
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.4,
+                            pointBackgroundColor: 'rgba(255, 45, 85, 1)',
+                            pointHoverRadius: 6
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top', labels: { boxWidth: 12, padding: 15 } }
+                    },
+                    scales: {
+                        y: { grid: { color: 'rgba(255,255,255,0.05)' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+
+            // 2. Chart Top Corretores (Horizontal Bar)
+            const ctxCorretores = document.getElementById('chartTopCorretores').getContext('2d');
+            const gradCorretores = ctxCorretores.createLinearGradient(0, 0, 300, 0);
+            gradCorretores.addColorStop(0, activeThemeColor);
+            gradCorretores.addColorStop(1, 'rgba(255, 255, 255, 0.15)');
+
+            new Chart(ctxCorretores, {
+                type: 'bar',
+                data: {
+                    labels: data.topCorretores.map(item => item.nome),
+                    datasets: [{
+                        label: 'Saldo Disponível (T$)',
+                        data: data.topCorretores.map(item => item.saldo),
+                        backgroundColor: gradCorretores,
+                        borderColor: activeThemeColor,
+                        borderWidth: 1,
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: { grid: { color: 'rgba(255,255,255,0.05)' } },
+                        y: { grid: { display: false } }
+                    }
+                }
+            });
+
+            // 3. Chart Prêmios Mais Desejados (Doughnut)
+            const ctxPremios = document.getElementById('chartPremios').getContext('2d');
+            
+            new Chart(ctxPremios, {
+                type: 'doughnut',
+                data: {
+                    labels: data.distribuicaoPremios.map(item => item.titulo),
+                    datasets: [{
+                        data: data.distribuicaoPremios.map(item => item.total_resgatado),
+                        backgroundColor: [
+                            'rgba(142, 68, 173, 0.85)',
+                            'rgba(46, 204, 113, 0.85)',
+                            'rgba(230, 126, 34, 0.85)',
+                            'rgba(52, 152, 219, 0.85)',
+                            'rgba(241, 196, 15, 0.85)'
+                        ],
+                        borderColor: 'rgba(255, 255, 255, 0.1)',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: { boxWidth: 10, padding: 12 }
+                        }
+                    },
+                    cutout: '65%'
+                }
+            });
         }
 
         function logout() {
