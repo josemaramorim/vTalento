@@ -359,6 +359,7 @@ Esta fase permite que o administrador da empresa (`ADMIN_EMPRESA`) gerencie a id
 - [x] **Tarefa 20.2 (Frontend):** Carregar Chart.js via CDN em `dashboard.html` e criar contêineres canvas no layout para os 3 gráficos.
 - [x] **Tarefa 20.3 (Frontend):** Implementar lógica JavaScript no frontend para carregar os dados analíticos e instanciar os gráficos interativos.
 - [x] **Tarefa 20.4 (Testes):** Adicionar testes de integração Jest para validar o novo endpoint de dados gráficos.
+- [x] **Tarefa 20.5 (Docs):** Criar o guia operacional de configuração e testes do Asaas em `specs/13-ASAAS-SETUP-AND-TESTING.md`.
 
 
 

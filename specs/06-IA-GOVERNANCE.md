@@ -89,7 +89,7 @@ Para garantir a continuidade perfeita e o alinhamento do projeto, a IA deve segu
 | **DESENVOLVIMENTO** | ✅ Concluído | Fase 4.5: Estabilização, Toasts e Premium Admin Dashboard | `develop` | Substituição de alert() por Toasts em todas as telas de admin; correção de toggle de tema; persistência de tema preferido em GamUsuario; dashboard premium de métricas para Admin. |
 | **DESENVOLVIMENTO** | ✅ Concluído | Fase 4.7: Lapidação e Melhorias no App do Corretor | `develop` | Correção na associação do req.usuario_id nos resgates; dual card de saldos (Disponível + A Receber) e extrato de transações individuais no dashboard do Corretor. |
 | **DESENVOLVIMENTO** | ✅ Concluído | Fase 11: Gestão de Provedores e Pattern Strategy/Adapter | `develop` | Padrão Strategy/Adapter de pagamentos implementado para Stripe, Asaas e Genérico; nova página premium `super-provedores.html` com formulário dinâmico chave-valor e segurança de segredos; 73/73 testes integrados passando. |
-| **DESENVOLVIMENTO** | ✅ Concluído | Fases 12 e 13: Webhooks & Dashboard Charts | `develop` | Webhooks de Stripe/Asaas, renovações cumulativas, dashboard com gráficos neon interativos Chart.js, especificações de configuração e 81/81 testes passando. |
+| **DESENVOLVIMENTO** | ✅ Concluído | Fases 12 e 13: Webhooks & Dashboard Charts | `develop` | Webhooks de Stripe/Asaas, renovações cumulativas, dashboard com gráficos neon interativos Chart.js, especificações de configuração (specs 12 e 13) e 81/81 testes passando. |
 
 ---
 
