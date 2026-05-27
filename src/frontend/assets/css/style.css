@@ -140,7 +140,14 @@ h1, h2, h3, h4, .heading {
     padding: 30px 20px;
     display: flex;
     flex-direction: column;
+    overflow-y: auto;
+    scrollbar-width: none; /* Firefox */
 }
+
+.sidebar::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+}
+
 
 .sidebar .logo {
     font-size: 1.5rem;
