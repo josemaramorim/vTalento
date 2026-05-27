@@ -1,9 +1,21 @@
-const API_URL = 'http://localhost:3001/api';
+const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+window.API_URL = isLocal ? 'http://localhost:3001/api' : `${window.location.origin}/api`;
 
-// Interceptor Global Fetch para Bloqueio de Mensalidades do SaaS (HTTP 402)
+const API_URL = window.API_URL;
+
+// Interceptor Global Fetch para Redirecionamento Dinâmico de API & Bloqueio de Mensalidades do SaaS (HTTP 402)
 const originalFetch = window.fetch;
-window.fetch = async function(...args) {
-    const response = await originalFetch(...args);
+window.fetch = async function(input, init) {
+    let url = typeof input === 'string' ? input : '';
+    
+    // Reescreve a URL se apontar para localhost:3001 em ambiente de produção
+    if (url.startsWith('http://localhost:3001/api')) {
+        url = url.replace('http://localhost:3001/api', window.API_URL);
+        input = url;
+    }
+    
+    const response = await originalFetch(input, init);
+    
     if (response.status === 402) {
         const data = await response.clone().json().catch(() => ({}));
         if (data.error === 'SUBSCRIPTION_EXPIRED') {
@@ -212,7 +224,7 @@ async function saveThemePreference(theme) {
     const token = localStorage.getItem('@VTalentos:token');
     if (!token) return;
     try {
-        await fetch('http://localhost:3001/api/auth/theme', {
+        await fetch(`${API_URL}/auth/theme`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -348,7 +360,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     // Se estiver logado, tenta sincronizar e aplicar o tema preferido do banco
     if (token) {
         try {
-            const response = await fetch('http://localhost:3001/api/auth/me', {
+            const response = await fetch(`${API_URL}/auth/me`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (response.ok) {
