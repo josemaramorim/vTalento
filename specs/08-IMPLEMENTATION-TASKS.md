@@ -307,5 +307,7 @@ Esta fase permite que o administrador da empresa (`ADMIN_EMPRESA`) gerencie a id
   - Tabela com: Data/Hora, Corretor, Tipo, Origem, Valor (colorido), Descrição/Justificativa, Lançado por.
   - Design Glassmorphism premium unificado.
 - [x] **Tarefa 17.8 (Frontend):** Registrar no menu lateral dinâmico de `auth.js` o novo link "📈 Movimentações" para administradores.
-- [/] **Tarefa 17.9 (UX / Refatoração):** Substituir o modal de extrato simplificado na tela de usuários por um redirecionamento direto para a tela de movimentações filtrada por corretor, eliminando código redundante e permitindo filtros avançados.
+- [x] **Tarefa 17.9 (UX / Refatoração):** Substituir o modal de extrato simplificado na tela de usuários por um redirecionamento direto para a tela de movimentações filtrada por corretor, eliminando código redundante e permitindo filtros avançados.
+- [/] **Tarefa 17.10 (UX / Integração):** Sincronizar o link do Meu Extrato na barra de navegação dinâmica do dashboard para garantir acesso uniforme a todos os usuários.
+
 
