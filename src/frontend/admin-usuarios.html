@@ -86,6 +86,8 @@
             opacity: 0.35;
             cursor: not-allowed;
         }
+        .badge-admin { background: rgba(212, 175, 55, 0.1); color: var(--accent-primary); border: 1px solid rgba(212, 175, 55, 0.2); }
+        .badge-corretor { background: rgba(52, 152, 219, 0.1); color: #3498db; border: 1px solid rgba(52, 152, 219, 0.2); }
     </style>
 </head>
 <body data-theme="dark">
@@ -134,7 +136,17 @@
                         </div>
                     </div>
 
-                    <div style="text-align: right; display: flex; justify-content: flex-end; gap: 10px;">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="perfilSelect">Perfil de Acesso</label>
+                            <select id="perfilSelect" style="width:100%; padding: 10px 14px; border-radius: var(--radius-sm); background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: var(--text-primary); font-family: var(--font-main); font-size: 0.9rem; cursor: pointer;">
+                                <option value="CORRETOR" selected>CORRETOR (Colaborador da Equipe)</option>
+                                <option value="ADMIN_EMPRESA">ADMIN_EMPRESA (Administrador de Imobiliária)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="text-align: right; display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px;">
                         <button type="button" class="btn" id="btnCancelEdit" style="display: none; background: var(--bg-card); color: var(--text-primary);" onclick="resetForm()">CANCELAR</button>
                         <button type="submit" class="btn btn-primary" id="btnSubmit">SALVAR CORRETOR</button>
                     </div>
@@ -158,6 +170,7 @@
                                 <th>Nome</th>
                                 <th>E-mail</th>
                                 <th style="text-align: center;">CPF</th>
+                                <th style="text-align: center;">Perfil</th>
                                 <th style="text-align: right;">Saldo Disponível</th>
                                 <th style="text-align: right;">Saldo a Receber</th>
                                 <th style="text-align: center;">Status</th>
@@ -166,7 +179,7 @@
                         </thead>
                         <tbody id="usuariosTableBody">
                             <tr>
-                                <td colspan="7" style="text-align: center; color: var(--text-secondary);">Carregando equipe...</td>
+                                <td colspan="8" style="text-align: center; color: var(--text-secondary);">Carregando equipe...</td>
                             </tr>
                         </tbody>
                     </table>
@@ -292,7 +305,7 @@
                 document.getElementById('btnPagProximo').disabled = pageAtual >= totalPages;
 
                 if (stateUsuarios.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-secondary); padding: 30px 0;">Nenhum corretor encontrado.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-secondary); padding: 30px 0;">Nenhum corretor encontrado.</td></tr>`;
                     return;
                 }
 
@@ -304,11 +317,16 @@
                         ? 'background: rgba(235, 77, 75, 0.15); color: var(--error); border: 1px solid rgba(235, 77, 75, 0.3);' 
                         : 'background: rgba(46, 213, 115, 0.15); color: var(--success); border: 1px solid rgba(46, 213, 115, 0.3);';
 
+                    const badgeClass = u.perfil === 'ADMIN_EMPRESA' ? 'badge-admin' : 'badge-corretor';
+                    const roleLabel = u.perfil === 'ADMIN_EMPRESA' ? 'Admin' : 'Corretor';
+                    const roleBadge = `<span class="badge ${badgeClass}">${roleLabel}</span>`;
+
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
                         <td><strong>${u.nome}</strong></td>
                         <td>${u.email}</td>
                         <td style="text-align: center;">${u.cpf || '—'}</td>
+                        <td style="text-align: center;">${roleBadge}</td>
                         <td style="text-align: right;"><strong style="color: var(--accent-primary)">${parseFloat(u.saldo_disponivel).toFixed(2)} T$</strong></td>
                         <td style="text-align: right; color: var(--text-secondary);">${parseFloat(u.saldo_a_receber).toFixed(2)} T$</td>
                         <td style="text-align: center;"><span class="badge" style="background: rgba(255,255,255,0.05); color: ${statusColor}; font-size: 0.72rem; padding: 4px 8px; border-radius: 4px; font-weight: 600;">${statusText}</span></td>
@@ -359,6 +377,7 @@
             const email = document.getElementById('emailInput').value;
             const cpf = document.getElementById('cpfInput').value;
             const senha = document.getElementById('senhaInput').value;
+            const perfil = document.getElementById('perfilSelect').value;
 
             // Nova senha opcional ao editar
             const redefinirCheck = document.getElementById('redefinirSenhaCheck').checked;
@@ -378,7 +397,7 @@
                 const url = id ? `${API_BASE}/usuarios/${id}` : `${API_BASE}/usuarios`;
                 const method = id ? 'PUT' : 'POST';
 
-                const payload = { nome, email, cpf, ...(senha && !id ? { senha } : {}), ...(novaSenha ? { senha: novaSenha } : {}) };
+                const payload = { nome, email, cpf, perfil, ...(senha && !id ? { senha } : {}), ...(novaSenha ? { senha: novaSenha } : {}) };
 
                 const response = await fetch(url, {
                     method,
@@ -421,6 +440,7 @@
             document.getElementById('nomeInput').value = usuario.nome;
             document.getElementById('emailInput').value = usuario.email;
             document.getElementById('cpfInput').value = usuario.cpf || '';
+            document.getElementById('perfilSelect').value = usuario.perfil || 'CORRETOR';
             
             // No modo edição: oculta campo de senha obrigatória e mostra redefinir
             document.getElementById('senhaGroup').style.display = 'none';
@@ -446,6 +466,7 @@
             document.getElementById('formTitle').innerText = 'Novo Corretor';
             document.getElementById('usuarioId').value = '';
             document.getElementById('usuarioForm').reset();
+            document.getElementById('perfilSelect').value = 'CORRETOR';
 
             // Restaura campo de senha obrigatória
             document.getElementById('senhaGroup').style.display = 'block';

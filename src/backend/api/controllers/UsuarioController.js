@@ -31,14 +31,15 @@ class UsuarioController {
   async create(req, res) {
     try {
       const { empresa_id } = req;
-      const { nome, email, senha, cpf } = req.body;
+      const { nome, email, senha, cpf, perfil } = req.body;
 
       const novoUsuario = await UsuarioService.createUsuarioAdmin({
         empresa_id,
         nome,
         email,
         senha,
-        cpf
+        cpf,
+        perfil
       });
 
       return res.status(201).json({
@@ -58,7 +59,7 @@ class UsuarioController {
     try {
       const { empresa_id } = req;
       const { id } = req.params;
-      const { nome, email, cpf, senha, ativo } = req.body;
+      const { nome, email, cpf, senha, ativo, perfil } = req.body;
 
       const usuarioAtualizado = await UsuarioService.updateUsuarioAdmin({
         empresa_id,
@@ -67,7 +68,8 @@ class UsuarioController {
         email,
         cpf,
         senha,
-        ativo
+        ativo,
+        perfil
       });
 
       return res.status(200).json({

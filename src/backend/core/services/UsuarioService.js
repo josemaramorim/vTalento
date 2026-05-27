@@ -44,7 +44,7 @@ class UsuarioService {
   }
 
   // Tarefa 12.2 — FASE 5 — Cadastrar novo corretor no tenant
-  async createUsuarioAdmin({ empresa_id, nome, email, senha, cpf }) {
+  async createUsuarioAdmin({ empresa_id, nome, email, senha, cpf, perfil }) {
     if (!nome || !email || !senha) {
       throw new Error('Nome, e-mail e senha são obrigatórios.');
     }
@@ -64,18 +64,22 @@ class UsuarioService {
       }
     }
 
+    // Valida e sanitiza perfil (somente CORRETOR e ADMIN_EMPRESA são permitidos)
+    const perfilSanitizado = (perfil === 'ADMIN_EMPRESA' || perfil === 'CORRETOR') ? perfil : 'CORRETOR';
+
     // Gera hash criptografado da senha
     const salt = await bcrypt.genSalt(10);
     const senha_hash = await bcrypt.hash(senha, salt);
 
+    const novoUserId = require('crypto').randomUUID();
     const novoUsuario = {
-      id: db.fn.uuid ? db.fn.uuid() : require('crypto').randomUUID(),
+      id: novoUserId,
       empresa_id,
       nome,
       email,
       senha_hash,
       cpf: cpf || null,
-      perfil: 'CORRETOR',
+      perfil: perfilSanitizado,
       saldo_disponivel: 0,
       saldo_a_receber: 0,
       tema_preferido: 'dark',
@@ -86,13 +90,17 @@ class UsuarioService {
 
     await db('GamUsuario').insert(novoUsuario);
 
-    // Retorna sem o hash da senha
-    const { senha_hash: _, ...retorno } = novoUsuario;
-    return retorno;
+    // Re-busca do banco de dados para evitar retornar o helper circular db.fn.now() do Knex
+    const cadastrado = await db('GamUsuario')
+      .where({ id: novoUserId, empresa_id })
+      .select('id', 'nome', 'email', 'cpf', 'perfil', 'saldo_disponivel', 'saldo_a_receber', 'ativo', 'created_at', 'updated_at')
+      .first();
+
+    return cadastrado;
   }
 
   // Tarefa 12.3 — FASE 5 — Editar dados de um usuário pelo Admin
-  async updateUsuarioAdmin({ empresa_id, id, nome, email, cpf, senha, ativo }) {
+  async updateUsuarioAdmin({ empresa_id, id, nome, email, cpf, senha, ativo, perfil }) {
     const usuario = await db('GamUsuario').where({ id, empresa_id }).first();
     if (!usuario) {
       throw new Error('Usuário não encontrado.');
@@ -113,6 +121,13 @@ class UsuarioService {
       ativo: ativo !== undefined ? (ativo === true || ativo === 'true' || ativo === 1 || ativo === '1') : usuario.ativo,
       updated_at: db.fn.now()
     };
+
+    // Valida e aplica perfil se fornecido
+    if (perfil) {
+      if (perfil === 'ADMIN_EMPRESA' || perfil === 'CORRETOR') {
+        updates.perfil = perfil;
+      }
+    }
 
     // Se uma nova senha foi fornecida, hash e inclui no update
     if (senha && senha.length >= 6) {

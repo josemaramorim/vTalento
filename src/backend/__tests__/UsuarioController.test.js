@@ -75,23 +75,39 @@ describe('UsuarioController (FASE 5 Integration Tests)', () => {
 
   describe('POST /api/admin/usuarios — Criar Corretor', () => {
     it('Cria um novo corretor com sucesso no tenant e gera hash de senha', async () => {
+      const mockChainUsuario = createChainMock({
+        count: [{ total: 5 }], // limite não atingido
+        insert: [1]
+      });
+
+      // Primeira chamada (verificação de e-mail): retorna null
+      // Segunda chamada (re-busca do usuário criado): retorna o usuário criado
+      mockChainUsuario.first = jest.fn()
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({
+          id: 'c1',
+          nome: 'Novo Corretor',
+          email: 'novo@corretor.com',
+          cpf: '222',
+          perfil: 'CORRETOR',
+          saldo_disponivel: 0,
+          saldo_a_receber: 0,
+          ativo: true,
+          created_at: 'mock-timestamp',
+          updated_at: 'mock-timestamp'
+        });
+
+      const mockChainEmpresa = createChainMock({
+        first: { id: 'empresa-a', limite_corretores: 10 }
+      });
+
       // Mock dinâmico com base na tabela acessada na query
       db.mockImplementation((table) => {
         if (table === 'GamUsuario') {
-          // Chamado 1: verificar email único (first)
-          // Chamado 2: verificar contagem limite corretores (count)
-          // Chamado 3: inserir usuário (insert)
-          const mockChain = createChainMock({
-            first: null, // e-mail único
-            count: [{ total: 5 }], // limite não atingido
-            insert: [1]
-          });
-          return mockChain;
+          return mockChainUsuario;
         }
         if (table === 'GamEmpresa') {
-          return createChainMock({
-            first: { id: 'empresa-a', limite_corretores: 10 }
-          });
+          return mockChainEmpresa;
         }
         return createChainMock();
       });
