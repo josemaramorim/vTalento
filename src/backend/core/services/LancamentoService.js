@@ -102,6 +102,101 @@ class LancamentoService {
       .orderBy('GamTransacao.created_at', 'desc')
       .limit(20);
   }
+
+  async listarMovimentacoesEquipe({ empresa_id, page = 1, limit = 10, tipo, origem, usuario_id, data_inicio, data_fim }) {
+    const limitSanitizado = [10, 50, 100].includes(parseInt(limit, 10)) ? parseInt(limit, 10) : 10;
+    const paginaSanitizada = Math.max(1, parseInt(page, 10) || 1);
+    const offset = (paginaSanitizada - 1) * limitSanitizado;
+
+    let query = db('GamTransacao')
+      .where('GamTransacao.empresa_id', empresa_id)
+      .join('GamUsuario as Corretor', 'GamTransacao.usuario_id', 'Corretor.id')
+      .leftJoin('GamUsuario as Admin', 'GamTransacao.admin_id', 'Admin.id');
+
+    if (tipo) {
+      query = query.where('GamTransacao.tipo', tipo);
+    }
+    if (origem) {
+      query = query.where('GamTransacao.origem', origem);
+    }
+    if (usuario_id) {
+      query = query.where('GamTransacao.usuario_id', usuario_id);
+    }
+    if (data_inicio) {
+      query = query.where('GamTransacao.created_at', '>=', `${data_inicio} 00:00:00`);
+    }
+    if (data_fim) {
+      query = query.where('GamTransacao.created_at', '<=', `${data_fim} 23:59:59`);
+    }
+
+    // Conta total de registros para paginação
+    const [{ total }] = await query.clone().count('GamTransacao.id as total');
+    const totalRegistros = parseInt(total, 10) || 0;
+    const totalPages = Math.ceil(totalRegistros / limitSanitizado);
+
+    // Busca registros
+    const data = await query
+      .select(
+        'GamTransacao.id',
+        'GamTransacao.valor',
+        'GamTransacao.tipo',
+        'GamTransacao.origem',
+        'GamTransacao.status',
+        'GamTransacao.justificativa',
+        'GamTransacao.empreendimento',
+        'GamTransacao.unidade',
+        'GamTransacao.created_at',
+        'Corretor.nome as corretor_nome',
+        'Corretor.email as corretor_email',
+        db.raw("COALESCE(Admin.nome, 'Sistema') as admin_nome")
+      )
+      .orderBy('GamTransacao.created_at', 'desc')
+      .limit(limitSanitizado)
+      .offset(offset);
+
+    // Métricas consolidadas
+    const [usuariosSaldos] = await db('GamUsuario')
+      .where({ empresa_id, perfil: 'CORRETOR' })
+      .sum({ disp_total: 'saldo_disponivel', rec_total: 'saldo_a_receber' });
+
+    // Soma de créditos e débitos da empresa (filtrados se aplicável)
+    let totalCreditosQuery = db('GamTransacao')
+      .where({ empresa_id, tipo: 'CREDITO' });
+    let totalDebitosQuery = db('GamTransacao')
+      .where({ empresa_id, tipo: 'DEBITO' });
+
+    if (usuario_id) {
+      totalCreditosQuery = totalCreditosQuery.where('usuario_id', usuario_id);
+      totalDebitosQuery = totalDebitosQuery.where('usuario_id', usuario_id);
+    }
+    if (data_inicio) {
+      totalCreditosQuery = totalCreditosQuery.where('created_at', '>=', `${data_inicio} 00:00:00`);
+      totalDebitosQuery = totalDebitosQuery.where('created_at', '>=', `${data_inicio} 00:00:00`);
+    }
+    if (data_fim) {
+      totalCreditosQuery = totalCreditosQuery.where('created_at', '<=', `${data_fim} 23:59:59`);
+      totalDebitosQuery = totalDebitosQuery.where('created_at', '<=', `${data_fim} 23:59:59`);
+    }
+
+    const [{ total_cred }] = await totalCreditosQuery.sum('valor as total_cred');
+    const [{ total_deb }] = await totalDebitosQuery.sum('valor as total_deb');
+
+    return {
+      data,
+      meta: {
+        total: totalRegistros,
+        page: paginaSanitizada,
+        totalPages,
+        limit: limitSanitizado
+      },
+      resumo: {
+        saldo_disponivel_total: parseFloat(usuariosSaldos.disp_total || 0),
+        saldo_a_receber_total: parseFloat(usuariosSaldos.rec_total || 0),
+        creditos_total: parseFloat(total_cred || 0),
+        debitos_total: Math.abs(parseFloat(total_deb || 0))
+      }
+    };
+  }
 }
 
 module.exports = new LancamentoService();

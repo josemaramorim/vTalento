@@ -27,7 +27,7 @@ class UsuarioService {
 
     // Busca os registros selecionados com limitação
     const data = await query
-      .select('id', 'nome', 'email', 'cpf', 'perfil', 'saldo_disponivel', 'saldo_a_receber', 'tema_preferido', 'created_at')
+      .select('id', 'nome', 'email', 'cpf', 'perfil', 'saldo_disponivel', 'saldo_a_receber', 'tema_preferido', 'ativo', 'created_at')
       .orderBy('nome', 'asc')
       .limit(limitSanitizado)
       .offset(offset);
@@ -79,6 +79,7 @@ class UsuarioService {
       saldo_disponivel: 0,
       saldo_a_receber: 0,
       tema_preferido: 'dark',
+      ativo: true,
       created_at: db.fn.now(),
       updated_at: db.fn.now()
     };
@@ -91,7 +92,7 @@ class UsuarioService {
   }
 
   // Tarefa 12.3 — FASE 5 — Editar dados de um usuário pelo Admin
-  async updateUsuarioAdmin({ empresa_id, id, nome, email, cpf, senha }) {
+  async updateUsuarioAdmin({ empresa_id, id, nome, email, cpf, senha, ativo }) {
     const usuario = await db('GamUsuario').where({ id, empresa_id }).first();
     if (!usuario) {
       throw new Error('Usuário não encontrado.');
@@ -109,6 +110,7 @@ class UsuarioService {
       nome: nome || usuario.nome,
       email: email || usuario.email,
       cpf: cpf !== undefined ? cpf : usuario.cpf,
+      ativo: ativo !== undefined ? (ativo === true || ativo === 'true' || ativo === 1 || ativo === '1') : usuario.ativo,
       updated_at: db.fn.now()
     };
 
@@ -123,7 +125,7 @@ class UsuarioService {
     // Re-fetch to avoid returning raw db.fn.now() Timeout objects that break JSON serialization
     const atualizado = await db('GamUsuario')
       .where({ id, empresa_id })
-      .select('id', 'nome', 'email', 'cpf', 'perfil', 'saldo_disponivel', 'saldo_a_receber', 'created_at', 'updated_at')
+      .select('id', 'nome', 'email', 'cpf', 'perfil', 'saldo_disponivel', 'saldo_a_receber', 'ativo', 'created_at', 'updated_at')
       .first();
 
     return atualizado;
@@ -168,6 +170,17 @@ class UsuarioService {
 
     const { senha_hash: _, ...usuarioAtualizado } = { ...usuario, ...updates };
     return usuarioAtualizado;
+  }
+
+  // Excluir um corretor da empresa pelo Admin
+  async deleteUsuarioAdmin({ empresa_id, id }) {
+    const usuario = await db('GamUsuario').where({ id, empresa_id }).first();
+    if (!usuario) {
+      throw new Error('Usuário não encontrado.');
+    }
+    // Não permitir excluir a si mesmo
+    await db('GamUsuario').where({ id, empresa_id }).delete();
+    return true;
   }
 }
 

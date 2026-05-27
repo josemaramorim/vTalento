@@ -15,6 +15,7 @@ routes.use(tenantMiddleware, adminMiddleware);
 routes.get('/usuarios', UsuarioController.listAdmin);
 routes.post('/usuarios', UsuarioController.create);
 routes.put('/usuarios/:id', UsuarioController.update);
+routes.delete('/usuarios/:id', UsuarioController.delete);
 routes.get('/usuarios/:id/extrato', UsuarioController.getExtrato);
 routes.post('/usuarios/:id/recalcular-saldo', UsuarioController.recalcularSaldo);
 
@@ -29,6 +30,9 @@ routes.get('/historico-recente', LancamentoController.obterHistoricoRecente);
 
 // Endpoint de métricas consolidada do Dashboard Admin
 routes.get('/dashboard-indicadores', LancamentoController.obterIndicadoresAdmin);
+
+// Endpoint de extrato/movimentações de toda a equipe
+routes.get('/movimentacoes', LancamentoController.obterMovimentacoesEquipe);
 
 // Endpoints de perfis de importação
 routes.get('/importacao/perfis', ImportacaoController.obterPerfis);

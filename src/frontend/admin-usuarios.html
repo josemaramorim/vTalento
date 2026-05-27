@@ -160,12 +160,13 @@
                                 <th style="text-align: center;">CPF</th>
                                 <th style="text-align: right;">Saldo Disponível</th>
                                 <th style="text-align: right;">Saldo a Receber</th>
+                                <th style="text-align: center;">Status</th>
                                 <th style="text-align: center;">Ações</th>
                             </tr>
                         </thead>
                         <tbody id="usuariosTableBody">
                             <tr>
-                                <td colspan="6" style="text-align: center; color: var(--text-secondary);">Carregando equipe...</td>
+                                <td colspan="7" style="text-align: center; color: var(--text-secondary);">Carregando equipe...</td>
                             </tr>
                         </tbody>
                     </table>
@@ -236,6 +237,21 @@
             </div>
 
             <p style="text-align:center; font-size:0.75rem; color:var(--text-secondary); margin-top:16px;">Exibindo até 50 transações mais recentes</p>
+        </div>
+    </div>
+
+    <!-- MODAL DE CONFIRMAÇÃO DE EXCLUSÃO PREMIUM -->
+    <div id="excluirModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:1001; align-items:center; justify-content:center; padding: 20px; backdrop-filter: blur(10px);">
+        <div class="glass" style="max-width:450px; width:100%; border-radius:16px; padding:32px; border:1px solid rgba(255,255,255,0.08); text-align:center; box-shadow: 0 20px 40px rgba(0,0,0,0.5);">
+            <div style="font-size: 3rem; color: var(--error); margin-bottom: 16px;">⚠️</div>
+            <h3 style="font-size: 1.3rem; font-weight: 700; color: var(--text-primary); margin-bottom: 12px;">Confirmar Exclusão</h3>
+            <p style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 24px;">
+                Atenção: A exclusão de <strong id="excluirNome" style="color:var(--text-primary);"></strong> é permanente e <span style="color: var(--error); font-weight: 600;">todos os seus dados e histórico de transações associados serão apagados definitivamente</span> do sistema. Deseja continuar?
+            </p>
+            <div style="display: flex; gap: 12px; justify-content: center;">
+                <button onclick="closeExcluirModal()" class="btn" style="background: rgba(255,255,255,0.08); color: var(--text-primary); padding: 10px 24px; border-radius: 8px;">Cancelar</button>
+                <button id="btnConfirmarExclusao" class="btn" style="background: var(--error); color: #fff; padding: 10px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; transition: all 0.2s;" onmouseover="this.style.filter='brightness(1.15)'" onmouseout="this.style.filter='brightness(1)'">Sim, Excluir</button>
+            </div>
         </div>
     </div>
 
@@ -324,11 +340,18 @@
                 document.getElementById('btnPagProximo').disabled = pageAtual >= totalPages;
 
                 if (stateUsuarios.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-secondary); padding: 30px 0;">Nenhum corretor encontrado.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-secondary); padding: 30px 0;">Nenhum corretor encontrado.</td></tr>`;
                     return;
                 }
 
                 stateUsuarios.forEach(u => {
+                    const statusText = u.ativo ? 'Ativo' : 'Inativo';
+                    const statusColor = u.ativo ? 'var(--success)' : 'var(--error)';
+                    const toggleLabel = u.ativo ? 'Inativar' : 'Ativar';
+                    const toggleStyle = u.ativo 
+                        ? 'background: rgba(235, 77, 75, 0.15); color: var(--error); border: 1px solid rgba(235, 77, 75, 0.3);' 
+                        : 'background: rgba(46, 213, 115, 0.15); color: var(--success); border: 1px solid rgba(46, 213, 115, 0.3);';
+
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
                         <td><strong>${u.nome}</strong></td>
@@ -336,10 +359,13 @@
                         <td style="text-align: center;">${u.cpf || '—'}</td>
                         <td style="text-align: right;"><strong style="color: var(--accent-primary)">${parseFloat(u.saldo_disponivel).toFixed(2)} T$</strong></td>
                         <td style="text-align: right; color: var(--text-secondary);">${parseFloat(u.saldo_a_receber).toFixed(2)} T$</td>
+                        <td style="text-align: center;"><span class="badge" style="background: rgba(255,255,255,0.05); color: ${statusColor}; font-size: 0.72rem; padding: 4px 8px; border-radius: 4px; font-weight: 600;">${statusText}</span></td>
                         <td style="text-align: center;">
                             <div class="actions-btn" style="justify-content: center; gap: 6px;">
                                 <button class="btn btn-sm" onclick="editUsuario('${u.id}')" style="background: rgba(255,255,255,0.1); color: var(--text-primary);">Editar</button>
+                                <button class="btn btn-sm" onclick="toggleStatus('${u.id}', ${u.ativo})" style="${toggleStyle}">${toggleLabel}</button>
                                 <button class="btn btn-sm" onclick="openExtrato('${u.id}', '${u.nome}')" style="background: rgba(212,175,55,0.15); color: var(--accent-primary); border: 1px solid rgba(212,175,55,0.3);">Extrato</button>
+                                <button class="btn btn-sm" onclick="confirmExcluir('${u.id}', '${u.nome}')" style="background: rgba(235, 77, 75, 0.2); color: var(--error); border: 1px solid rgba(235, 77, 75, 0.4);">Excluir</button>
                             </div>
                         </td>
                     `;
@@ -588,6 +614,68 @@
         // Fechar modal ao clicar fora
         document.getElementById('extratoModal')?.addEventListener('click', function(e) {
             if (e.target === this) closeExtrato();
+        });
+
+        let excluirUsuarioId = null;
+
+        function confirmExcluir(id, nome) {
+            excluirUsuarioId = id;
+            document.getElementById('excluirNome').innerText = nome;
+            const modal = document.getElementById('excluirModal');
+            modal.style.display = 'flex';
+            
+            // Define o clique do botão de confirmação
+            document.getElementById('btnConfirmarExclusao').onclick = async () => {
+                const btn = document.getElementById('btnConfirmarExclusao');
+                btn.disabled = true;
+                btn.innerText = 'Excluindo...';
+                try {
+                    const res = await fetch(`${API_BASE}/usuarios/${id}`, {
+                        method: 'DELETE',
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    const data = await res.json();
+                    if (!data.success) throw new Error(data.error);
+
+                    showToast('Corretor excluído com sucesso!', 'success');
+                    closeExcluirModal();
+                    fetchUsuarios(pageAtual);
+                } catch (err) {
+                    showToast(err.message, 'error');
+                } finally {
+                    btn.disabled = false;
+                    btn.innerText = 'Sim, Excluir';
+                }
+            };
+        }
+
+        function closeExcluirModal() {
+            document.getElementById('excluirModal').style.display = 'none';
+            excluirUsuarioId = null;
+        }
+
+        async function toggleStatus(id, currentAtivo) {
+            try {
+                const res = await fetch(`${API_BASE}/usuarios/${id}`, {
+                    method: 'PUT',
+                    headers: { 
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ ativo: !currentAtivo })
+                });
+                const data = await res.json();
+                if (!data.success) throw new Error(data.error);
+
+                showToast(`Status do corretor atualizado para ${!currentAtivo ? 'Ativo' : 'Inativo'}`, 'success');
+                fetchUsuarios(pageAtual);
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        }
+
+        document.getElementById('excluirModal')?.addEventListener('click', function(e) {
+            if (e.target === this) closeExcluirModal();
         });
     </script>
 </body>

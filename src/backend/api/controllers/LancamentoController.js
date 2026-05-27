@@ -108,6 +108,33 @@ class LancamentoController {
       return res.status(500).json({ error: err.message });
     }
   }
+
+  async obterMovimentacoesEquipe(req, res) {
+    try {
+      const empresa_id = req.empresa_id;
+      const { page, limit, tipo, origem, usuario_id, data_inicio, data_fim } = req.query;
+
+      const result = await LancamentoService.listarMovimentacoesEquipe({
+        empresa_id,
+        page,
+        limit,
+        tipo,
+        origem,
+        usuario_id,
+        data_inicio,
+        data_fim
+      });
+
+      return res.json({
+        success: true,
+        data: result.data,
+        meta: result.meta,
+        resumo: result.resumo
+      });
+    } catch (err) {
+      return res.status(400).json({ error: err.message });
+    }
+  }
 }
 
 module.exports = new LancamentoController();

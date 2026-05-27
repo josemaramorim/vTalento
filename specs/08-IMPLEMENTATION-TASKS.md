@@ -290,21 +290,20 @@ Esta fase permite que o administrador da empresa (`ADMIN_EMPRESA`) gerencie a id
 *Como administrador, quero inativar ou excluir corretores para controlar o acesso ao app, e quero ter uma listagem detalhada de todas as movimentações da minha equipe, com filtros, resumos e totalizadores, para ter um controle perfeito sobre a saúde financeira.*
 
 #### Tarefas de Backend
-- [/] **Tarefa 17.1 (Infra / Banco):** Criar migration `20260527000100_add_ativo_to_usuarios.js` para adicionar a coluna `ativo` (boolean, default: true) à tabela `GamUsuario`.
-- [ ] **Tarefa 17.2 (Backend):** Atualizar `AutenticacaoService.js` no login para rejeitar usuários inativos (`ativo === false`).
-- [ ] **Tarefa 17.3 (Backend):** Atualizar `UsuarioService.js` e `UsuarioController.js` para permitir inativar/ativar e excluir (delete) corretores, garantindo isolamento multi-tenant (admin não pode excluir/inativar usuários de outras empresas).
-- [ ] **Tarefa 17.4 (Backend):** Criar endpoint `GET /api/admin/movimentacoes` no backend (protegido por `tenantMiddleware` + `adminMiddleware`), retornando o histórico filtrado e paginado de todas as transações dos corretores da empresa, com resumos consolidados de saldo disponível total, saldo a receber total, total de créditos e total de débitos.
-- [ ] **Tarefa 17.5 (Testes):** Escrever testes unitários e de integração validando login com usuário inativo, exclusão de usuários, isolamento e filtragem de movimentações da equipe.
+- [x] **Tarefa 17.1 (Infra / Banco):** Criar migration `20260527000100_add_ativo_to_usuarios.js` para adicionar a coluna `ativo` (boolean, default: true) à tabela `GamUsuario`.
+- [x] **Tarefa 17.2 (Backend):** Atualizar `AutenticacaoService.js` no login para rejeitar usuários inativos (`ativo === false`).
+- [x] **Tarefa 17.3 (Backend):** Atualizar `UsuarioService.js` e `UsuarioController.js` para permitir inativar/ativar e excluir (delete) corretores, garantindo isolamento multi-tenant (admin não pode excluir/inativar usuários de outras empresas).
+- [x] **Tarefa 17.4 (Backend):** Criar endpoint `GET /api/admin/movimentacoes` no backend (protegido por `tenantMiddleware` + `adminMiddleware`), retornando o histórico filtrado e paginado de todas as transações dos corretores da empresa, com resumos consolidados de saldo disponível total, saldo a receber total, total de créditos e total de débitos.
+- [x] **Tarefa 17.5 (Testes):** Escrever testes unitários e de integração validando login com usuário inativo, exclusão de usuários, isolamento e filtragem de movimentações da equipe.
 
 #### Tarefas de Frontend
-- [ ] **Tarefa 17.6 (Frontend):** Atualizar a tela `admin-usuarios.html` para incluir:
+- [x] **Tarefa 17.6 (Frontend):** Atualizar a tela `admin-usuarios.html` para incluir:
   - Uma coluna de "Status" (Ativo / Inativo) e botão de alternar status (Inativar / Ativar).
   - Um botão de "Excluir" que exibe um Modal de Confirmação Premium (Glassmorphism) com alerta explícito e elegante destacando que todos os dados e histórico de transações associados serão apagados definitivamente.
   - Atualização dos modais de criação/edição se necessário.
-- [ ] **Tarefa 17.7 (Frontend):** Criar a nova página de Histórico/Movimentações da Equipe (`admin-movimentacoes.html`) com:
+- [x] **Tarefa 17.7 (Frontend):** Criar a nova página de Histórico/Movimentações da Equipe (`admin-movimentacoes.html`) com:
   - Cards de resumo: Saldo Disponível Total, Saldo a Receber Total, Total de Créditos, Total de Débitos.
   - Filtros: Tipo (Crédito/Débito/Estorno), Origem (Manual/Importação/Prêmio), Corretor (Dropdown de corretores ativos), Período (De/Até), Paginação (10/50/100 registros por página).
   - Tabela com: Data/Hora, Corretor, Tipo, Origem, Valor (colorido), Descrição/Justificativa, Lançado por.
   - Design Glassmorphism premium unificado.
-- [ ] **Tarefa 17.8 (Frontend):** Registrar no menu lateral dinâmico de `auth.js` o novo link "📈 Movimentações" para administradores.
-
+- [/] **Tarefa 17.8 (Frontend):** Registrar no menu lateral dinâmico de `auth.js` o novo link "📈 Movimentações" para administradores.

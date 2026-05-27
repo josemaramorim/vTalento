@@ -58,7 +58,7 @@ class UsuarioController {
     try {
       const { empresa_id } = req;
       const { id } = req.params;
-      const { nome, email, cpf, senha } = req.body;
+      const { nome, email, cpf, senha, ativo } = req.body;
 
       const usuarioAtualizado = await UsuarioService.updateUsuarioAdmin({
         empresa_id,
@@ -66,12 +66,36 @@ class UsuarioController {
         nome,
         email,
         cpf,
-        senha
+        senha,
+        ativo
       });
 
       return res.status(200).json({
         success: true,
         data: usuarioAtualizado
+      });
+    } catch (err) {
+      return res.status(400).json({
+        success: false,
+        error: err.message
+      });
+    }
+  }
+
+  // DELETE /api/admin/usuarios/:id
+  async delete(req, res) {
+    try {
+      const { empresa_id } = req;
+      const { id } = req.params;
+
+      await UsuarioService.deleteUsuarioAdmin({
+        empresa_id,
+        id
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: 'Corretor excluído com sucesso.'
       });
     } catch (err) {
       return res.status(400).json({

@@ -13,6 +13,11 @@ class AutenticacaoService {
       throw new Error('Credenciais inválidas');
     }
 
+    // Valida se o usuário está ativo
+    if (usuario.ativo === false || usuario.ativo === 0) {
+      throw new Error('Usuário inativo. Contate o administrador.');
+    }
+
     // 2. Valida a senha
     const senhaValida = await bcrypt.compare(senha, usuario.senha_hash);
     if (!senhaValida) {
