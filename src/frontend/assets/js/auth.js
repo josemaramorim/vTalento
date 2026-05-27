@@ -115,6 +115,90 @@ window.showToast = function(message, type = 'error') {
     }, 4000);
 };
 
+window.logout = function() {
+    localStorage.removeItem('@VTalentos:token');
+    localStorage.removeItem('@VTalentos:user');
+    window.location.href = 'login.html';
+};
+
+// Função global para Modal de Confirmação Premium Glassmorphism (Tarefa 17.6 / specs/06-IA-GOVERNANCE)
+window.showConfirmModal = function(title, message, onConfirm, onCancel = null) {
+    // Evita modais duplicados
+    const existing = document.getElementById('premiumConfirmModal');
+    if (existing) existing.remove();
+
+    const backdrop = document.createElement('div');
+    backdrop.id = 'premiumConfirmModal';
+    backdrop.style.cssText = `
+        position: fixed;
+        top: 0; left: 0;
+        width: 100vw; height: 100vh;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    `;
+
+    const card = document.createElement('div');
+    card.className = 'modal-card glass';
+    card.style.cssText = `
+        max-width: 480px;
+        width: 90%;
+        padding: 30px;
+        border-radius: var(--radius-md);
+        border: 1px solid var(--glass-border);
+        background: var(--glass-bg);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        transform: scale(0.9);
+        transition: transform 0.3s ease;
+        text-align: center;
+    `;
+
+    card.innerHTML = `
+        <div style="font-size: 2.5rem; margin-bottom: 15px; color: var(--accent-primary);">⚠️</div>
+        <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 12px; color: var(--text-primary);">${title}</h3>
+        <p style="font-size: 0.88rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 25px;">${message}</p>
+        <div style="display: flex; justify-content: center; gap: 12px;">
+            <button id="modalBtnCancel" class="btn" style="background: rgba(255, 255, 255, 0.05); color: var(--text-secondary); border: 1px solid var(--glass-border); padding: 10px 20px; font-weight: 600;">Cancelar</button>
+            <button id="modalBtnConfirm" class="btn btn-primary" style="padding: 10px 24px; font-weight: 600;">Confirmar</button>
+        </div>
+    `;
+
+    backdrop.appendChild(card);
+    document.body.appendChild(backdrop);
+
+    // Fade in
+    setTimeout(() => {
+        backdrop.style.opacity = '1';
+        card.style.transform = 'scale(1)';
+    }, 10);
+
+    const close = () => {
+        backdrop.style.opacity = '0';
+        card.style.transform = 'scale(0.9)';
+        setTimeout(() => {
+            backdrop.remove();
+        }, 300);
+    };
+
+    backdrop.querySelector('#modalBtnConfirm').addEventListener('click', () => {
+        close();
+        if (onConfirm) onConfirm();
+    });
+
+    const cancelAction = () => {
+        close();
+        if (onCancel) onCancel();
+    };
+
+    backdrop.querySelector('#modalBtnCancel').addEventListener('click', cancelAction);
+};
+
 // Função para verificar se está logado
 function checkAuth() {
     const token = localStorage.getItem('@VTalentos:token');

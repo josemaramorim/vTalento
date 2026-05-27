@@ -209,45 +209,54 @@
                 return;
             }
 
-            try {
-                btnSubmit.disabled = true;
-                btnSubmit.innerText = 'PROCESSANDO...';
+            const selectEl = document.getElementById('corretorSelect');
+            const corretorNome = selectEl.options[selectEl.selectedIndex].text;
 
-                const response = await fetch(`${API_BASE}/lancamento-manual`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({ usuario_id, tipo, valor, justificativa })
-                });
+            const tipoFormatado = tipo === 'CREDITO' ? 'CRÉDITO (+)' : tipo === 'DEBITO' ? 'DÉBITO (-)' : 'ESTORNO';
+            const mensagem = `Deseja realmente realizar um ajuste de <strong>${tipoFormatado}</strong> de <strong>${valor.toFixed(2)} T$</strong> para o corretor <strong>${corretorNome}</strong>?<br><br><span style="color: var(--error); font-weight: 700;">⚠️ Atenção: Esta operação será auditada e gravada permanentemente. Não é possível excluir lançamentos de saldo.</span>`;
 
-                const data = await response.json();
+            showConfirmModal('Ajustes de Saldo', mensagem, async () => {
+                try {
+                    btnSubmit.disabled = true;
+                    btnSubmit.innerText = 'PROCESSANDO...';
 
-                if (!response.ok) {
-                    throw new Error(data.error || 'Erro ao realizar lançamento');
+                    const response = await fetch(`${API_BASE}/lancamento-manual`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ usuario_id, tipo, valor, justificativa })
+                    });
+
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(data.error || 'Erro ao realizar lançamento');
+                    }
+
+                    showToast('Lançamento efetuado com sucesso!', 'success');
+                    
+                    // Reset form
+                    document.getElementById('lancamentoForm').reset();
+                    
+                    // Refresh data
+                    await fetchHistorico();
+                    
+                    // Clean and reload corretor options to update balances
+                    const select = document.getElementById('corretorSelect');
+                    select.innerHTML = '<option value="" disabled selected>Selecione um Corretor...</option>';
+                    await fetchCorretores();
+
+                } catch (err) {
+                    showToast(err.message, 'error');
+                } finally {
+                    btnSubmit.disabled = false;
+                    btnSubmit.innerText = 'EFETUAR LANÇAMENTO';
                 }
-
-                showToast('Lançamento efetuado com sucesso!', 'success');
-                
-                // Reset form
-                document.getElementById('lancamentoForm').reset();
-                
-                // Refresh data
-                await fetchHistorico();
-                
-                // Clean and reload corretor options to update balances
-                const select = document.getElementById('corretorSelect');
-                select.innerHTML = '<option value="" disabled selected>Selecione um Corretor...</option>';
-                await fetchCorretores();
-
-            } catch (err) {
-                showToast(err.message, 'error');
-            } finally {
-                btnSubmit.disabled = false;
-                btnSubmit.innerText = 'EFETUAR LANÇAMENTO';
-            }
+            });
         });
+
 
         // Init
         window.addEventListener('DOMContentLoaded', () => {

@@ -690,27 +690,26 @@
         }
 
         async function cancelarFatura(faturaId) {
-            if (!confirm('Tem certeza que deseja EXCLUIR esta fatura pendente? Esta ação não pode ser desfeita.')) {
-                return;
-            }
+            showConfirmModal('Excluir Fatura', 'Tem certeza que deseja EXCLUIR esta fatura pendente? Esta ação não pode ser desfeita.', async () => {
+                try {
+                    const res = await fetch(`http://localhost:3001/api/admin/billing/faturas/${faturaId}`, {
+                        method: 'DELETE',
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
 
-            try {
-                const res = await fetch(`http://localhost:3001/api/admin/billing/faturas/${faturaId}`, {
-                    method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-
-                const data = await res.json();
-                if (data.success) {
-                    showToast(data.message, 'success');
-                    await loadFaturas();
-                } else {
-                    throw new Error(data.error || 'Erro ao excluir fatura.');
+                    const data = await res.json();
+                    if (data.success) {
+                        showToast(data.message, 'success');
+                        await loadFaturas();
+                    } else {
+                        throw new Error(data.error || 'Erro ao excluir fatura.');
+                    }
+                } catch (err) {
+                    showToast(err.message, 'error');
                 }
-            } catch (err) {
-                showToast(err.message, 'error');
-            }
+            });
         }
+
 
         async function alterarGatewayPreferido() {
             const select = document.getElementById('selectProvedorPreferido');
@@ -848,43 +847,42 @@
 
             const btn = document.getElementById(`btnPlan${plano}`);
             const isCurrentPlan = btn.innerText.includes('RENOVAR');
+            const tituloModal = isCurrentPlan ? 'Confirmar Renovação' : 'Contratar Plano';
             const mensagem = isCurrentPlan
                 ? `Deseja realmente gerar uma fatura de RENOVAÇÃO (+30 dias) para o plano ${plano} no valor de ${precos[plano] || ''}?`
                 : `Deseja realmente CONTRATAR o plano ${plano} no valor de ${precos[plano] || ''}/mês? Uma fatura pendente será gerada para ativação.`;
 
-            if (!confirm(mensagem)) {
-                return;
-            }
+            showConfirmModal(tituloModal, mensagem, async () => {
+                const originalText = btn.innerText;
+                
+                try {
+                    btn.disabled = true;
+                    btn.innerText = 'PROCESSANDO...';
 
-            const originalText = btn.innerText;
-            
-            try {
-                btn.disabled = true;
-                btn.innerText = 'PROCESSANDO...';
+                    const res = await fetch('http://localhost:3001/api/admin/billing/faturas', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ plano })
+                    });
 
-                const res = await fetch('http://localhost:3001/api/admin/billing/faturas', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({ plano })
-                });
-
-                const data = await res.json();
-                if (data.success) {
-                    showToast(data.message, 'success');
-                    // Reinicializa o painel para atualizar a lista de faturas e o card ativo
-                    await initBillingPanel();
-                } else {
-                    throw new Error(data.error || 'Erro ao processar plano.');
+                    const data = await res.json();
+                    if (data.success) {
+                        showToast(data.message, 'success');
+                        // Reinicializa o painel para atualizar a lista de faturas e o card ativo
+                        await initBillingPanel();
+                    } else {
+                        throw new Error(data.error || 'Erro ao processar plano.');
+                    }
+                } catch (err) {
+                    showToast(err.message, 'error');
+                } finally {
+                    btn.disabled = false;
+                    btn.innerText = originalText;
                 }
-            } catch (err) {
-                showToast(err.message, 'error');
-            } finally {
-                btn.disabled = false;
-                btn.innerText = originalText;
-            }
+            });
         }
 
         function copyModalPix(input) {
