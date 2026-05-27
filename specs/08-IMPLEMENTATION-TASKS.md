@@ -299,7 +299,7 @@ Esta fase permite que o administrador da empresa (`ADMIN_EMPRESA`) gerencie a id
 #### Tarefas de Frontend
 - [ ] **Tarefa 17.6 (Frontend):** Atualizar a tela `admin-usuarios.html` para incluir:
   - Uma coluna de "Status" (Ativo / Inativo) e botão de alternar status (Inativar / Ativar).
-  - Um botão de "Excluir" com confirmação (exibindo toast de sucesso ou erro).
+  - Um botão de "Excluir" que exibe um Modal de Confirmação Premium (Glassmorphism) com alerta explícito e elegante destacando que todos os dados e histórico de transações associados serão apagados definitivamente.
   - Atualização dos modais de criação/edição se necessário.
 - [ ] **Tarefa 17.7 (Frontend):** Criar a nova página de Histórico/Movimentações da Equipe (`admin-movimentacoes.html`) com:
   - Cards de resumo: Saldo Disponível Total, Saldo a Receber Total, Total de Créditos, Total de Débitos.
