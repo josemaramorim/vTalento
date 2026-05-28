@@ -177,6 +177,6 @@ describe('ImportacaoController (Integração)', () => {
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual(mockConfirmResult);
-    expect(ImportacaoService.confirmarImportacao).toHaveBeenCalledWith('empresa-456', 'admin-123', 'fake-base64-data', 'perfil-123');
+    expect(ImportacaoService.confirmarImportacao).toHaveBeenCalledWith('empresa-456', 'admin-123', 'fake-base64-data', 'perfil-123', {});
   });
 });

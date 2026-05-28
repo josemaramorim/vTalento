@@ -242,17 +242,17 @@ Este documento é o guia de execução do projeto. Nenhuma tarefa deve ser inici
   - Critério de Aceite: Suites verdes em CI local.
 
 #### Tarefas de Frontend (detalhadas)
-- [ ] **Tarefa 12.8:** Arquitetura de páginas
+- [/] **Tarefa 12.8:** Arquitetura de páginas
   - Criar as páginas `src/frontend/admin-importacao-upload.html`, `admin-importacao-preview.html`, `admin-importacao-confirm.html` (ou rotas SPA equivalentes).
   - Cada página tem responsabilidades únicas e botões de navegação (Avançar/Voltar).
   - Critério de Aceite: páginas navegáveis e load/restore do estado do upload.
-- [ ] **Tarefa 12.9:** UI de Perfis e Campos Extras
+- [/] **Tarefa 12.9:** UI de Perfis e Campos Extras
   - Modal/rota para criar/editar `PerfilImportacao` com campos: `nome`, `linha_cabecalho`, `separador`, `identificador_extra_coluna` (select) e `campos_extras` (lista dinâmica de label+coluna).
   - Critério de Aceite: perfil salvo via API e listado corretamente.
-- [ ] **Tarefa 12.10:** Persistência entre etapas
+- [/] **Tarefa 12.10:** Persistência entre etapas
   - Implementar persistência temporária (localStorage ou sessionStorage) para manter `selectedFileBase64`, `perfilSelecionado`, e mapeamentos entre páginas.
   - Critério de Aceite: usuário pode navegar entre etapas sem perder dados.
-- [ ] **Tarefa 12.11:** Preview & Confirm UI
+- [/] **Tarefa 12.11:** Preview & Confirm UI
   - Preview mostra primeiras N linhas, inconsistências, candidatos para correção manual (quando múltiplos matches), resumo de estatísticas.
   - Confirm executa POST `/api/admin/importacao/confirm` e mostra resultado detalhado.
   - Critério de Aceite: publicação do import resulta em registros persistidos com `dados_extras`.

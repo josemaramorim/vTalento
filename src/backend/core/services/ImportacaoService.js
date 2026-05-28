@@ -112,6 +112,11 @@ class ImportacaoService {
       .toLowerCase();
   }
 
+  _limparCPF(valor) {
+    if (valor === undefined || valor === null) return '';
+    return String(valor).replace(/[.\-\/\s]/g, '').trim();
+  }
+
   _matchHeader(headers, patterns) {
     for (const pattern of patterns) {
       const normalizedPattern = this._normalizeText(pattern);
@@ -468,11 +473,32 @@ class ImportacaoService {
     };
   }
 
-  async confirmarImportacao(empresa_id, admin_id, fileBase64, perfil_id) {
+  async confirmarImportacao(empresa_id, admin_id, fileBase64, perfil_id, resolucoes = {}) {
     const preview = await this.previewImportacao(empresa_id, fileBase64, perfil_id);
-    
-    if (preview.inconsistencias > 0) {
-      throw new Error(`Existem ${preview.inconsistencias} corretores não localizados ou com nomes ambíguos no sistema. Cadastre-os ou resolva-os antes de efetuar a importação definitiva.`);
+
+    // Aplicar resolucões manuais de ambiguidade (admin escolheu o corretor correto)
+    for (const row of preview.linhas) {
+      const resolucaoId = resolucoes[row.linha];
+      if (resolucaoId && (!row.corretor_encontrado || row.ambiguous)) {
+        // Verifica se o corretor existe no tenant
+        const corretor = await db('GamUsuario')
+          .where({ id: resolucaoId, empresa_id, perfil: 'CORRETOR' })
+          .first();
+        if (corretor) {
+          row.corretor_encontrado = true;
+          row.ambiguous = false;
+          row.corretor_id = corretor.id;
+          row.corretor_nome_sistema = corretor.nome;
+          row.corretor_email_sistema = corretor.email;
+          row.candidatos = [];
+        }
+      }
+    }
+
+    // Recalcular inconsistências após resolucões
+    const inconsistenciasRestantes = preview.linhas.filter(r => !r.corretor_encontrado).length;
+    if (inconsistenciasRestantes > 0) {
+      throw new Error(`Existem ${inconsistenciasRestantes} corretores não localizados ou com nomes ambíguos no sistema. Cadastre-os ou resolva-os antes de efetuar a importação definitiva.`);
     }
 
     const resultadoProcessado = await db.transaction(async (trx) => {

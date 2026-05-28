@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>V-TALENTOS | Importação — Etapa 1: Upload</title>
+    <meta name="description" content="Motor de importação avançado — Etapa 1: Carregue sua planilha e configure o perfil de mapeamento">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <style>
+        /* ═══════════════════════ STEPPER ═══════════════════════ */
+        .import-stepper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0;
+            margin-bottom: 35px;
+            padding: 20px;
+            border-radius: var(--radius-md);
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--glass-border);
+        }
+        .stepper-step {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
+            cursor: default;
+        }
+        .stepper-step.active {
+            background: linear-gradient(135deg, rgba(212,175,55,0.15), rgba(212,175,55,0.05));
+            color: var(--accent-primary);
+            box-shadow: 0 0 20px rgba(212,175,55,0.1);
+        }
+        .stepper-step.completed {
+            color: var(--success);
+        }
+        .stepper-num {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+            border: 2px solid var(--glass-border);
+            transition: all 0.3s ease;
+        }
+        .stepper-step.active .stepper-num {
+            border-color: var(--accent-primary);
+            background: var(--accent-primary);
+            color: #111;
+        }
+        .stepper-step.completed .stepper-num {
+            border-color: var(--success);
+            background: var(--success);
+            color: #fff;
+        }
+        .stepper-line {
+            width: 40px;
+            height: 2px;
+            background: var(--glass-border);
+            margin: 0 5px;
+        }
+
+        /* ═══════════════════════ LAYOUT ═══════════════════════ */
+        .page-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 30px;
+        }
+        @media(min-width: 1024px) {
+            .page-grid { grid-template-columns: 380px 1fr; }
+        }
+
+        /* ═══════════════════════ UPLOAD AREA ═══════════════════════ */
+        .upload-area {
+            border: 2px dashed var(--glass-border);
+            border-radius: var(--radius-md);
+            padding: 45px 20px;
+            text-align: center;
+            background: rgba(255,255,255,0.01);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+        .upload-area:hover, .upload-area.dragover {
+            border-color: var(--accent-primary);
+            background: rgba(212,175,55,0.03);
+            transform: translateY(-2px);
+        }
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: var(--accent-primary);
+            animation: float 3s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+        .upload-area.has-file {
+            border-color: var(--success);
+            background: rgba(46,204,113,0.03);
+        }
+        .upload-area.has-file .upload-icon { color: var(--success); animation: none; }
+
+        /* ═══════════════════════ FORM HELPERS ═══════════════════════ */
+        .form-mini-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        .section-divider {
+            border-top: 1px solid var(--glass-border);
+            padding-top: 18px;
+            margin-top: 15px;
+        }
+        .campos-extras-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .campo-extra-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 36px;
+            gap: 8px;
+            align-items: end;
+        }
+        .campo-extra-row input { font-size: 0.82rem; padding: 8px 10px; }
+        .campo-extra-row .btn-remove-extra {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            border: 1px solid rgba(231,76,60,0.2);
+            background: rgba(231,76,60,0.08);
+            color: var(--error);
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+        .campo-extra-row .btn-remove-extra:hover {
+            background: rgba(231,76,60,0.2);
+        }
+
+        /* ═══════════════════════ FILE INFO ═══════════════════════ */
+        .file-info-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            background: rgba(46,204,113,0.06);
+            border: 1px solid rgba(46,204,113,0.15);
+            margin-top: 15px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--success);
+        }
+
+        /* ═══════════════════════ ACTIONS ═══════════════════════ */
+        .actions-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid var(--glass-border);
+        }
+        .btn-advance {
+            padding: 14px 36px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            border-radius: var(--radius-sm);
+            border: none;
+            background: linear-gradient(135deg, var(--accent-primary), #c49b30);
+            color: #111;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(212,175,55,0.25);
+            letter-spacing: 0.5px;
+        }
+        .btn-advance:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(212,175,55,0.35);
+        }
+        .btn-advance:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        /* ═══════════════════════ PROFILE MODAL ═══════════════════════ */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal-content {
+            background: var(--bg-card);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-md);
+            padding: 30px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            animation: modalIn 0.3s ease;
+        }
+        @keyframes modalIn {
+            from { opacity: 0; transform: translateY(-20px) scale(0.97); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .modal-header h2 {
+            font-size: 1.2rem;
+            color: var(--accent-primary);
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .modal-close:hover { color: var(--error); }
+
+        /* ═══════════════════════ SUGGESTION BAR ═══════════════════════ */
+        .suggestion-bar {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+            padding: 15px;
+            border-radius: var(--radius-sm);
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--glass-border);
+        }
+
+        /* Mobile stepper */
+        @media(max-width: 768px) {
+            .stepper-step span:not(.stepper-num) { display: none; }
+            .stepper-line { width: 25px; }
+            .import-stepper { padding: 12px; }
+        }
+    </style>
+</head>
+<body data-theme="dark">
+    <div class="app-layout">
+        <aside class="sidebar">
+            <div class="logo">V-<span>TALENTOS</span></div>
+            <nav id="navLinks" style="display: flex; flex-direction: column; gap: 15px;">
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="header" id="appHeader"></header>
+
+            <!-- ═══ STEPPER ═══ -->
+            <div class="import-stepper">
+                <div class="stepper-step active">
+                    <span class="stepper-num">1</span>
+                    <span>Upload & Perfil</span>
+                </div>
+                <div class="stepper-line"></div>
+                <div class="stepper-step">
+                    <span class="stepper-num">2</span>
+                    <span>Preview Analítico</span>
+                </div>
+                <div class="stepper-line"></div>
+                <div class="stepper-step">
+                    <span class="stepper-num">3</span>
+                    <span>Confirmação</span>
+                </div>
+            </div>
+
+            <!-- ═══ GRID PRINCIPAL ═══ -->
+            <div class="page-grid">
+                <!-- COLUNA ESQUERDA: Seleção de Perfil -->
+                <div style="display: flex; flex-direction: column; gap: 25px;">
+                    <section class="form-card glass">
+                        <h2 style="font-size: 1.15rem; margin-bottom: 18px; color: var(--accent-primary);">📋 Perfil de Mapeamento</h2>
+                        
+                        <div class="form-group" style="margin-bottom: 15px;">
+                            <label for="perfilSelect">Selecionar Perfil</label>
+                            <select id="perfilSelect">
+                                <option value="" disabled selected>Carregando perfis...</option>
+                            </select>
+                        </div>
+
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                            <button type="button" class="btn" id="btnNovoPerfil" style="flex: 1; background: rgba(46,204,113,0.1); color: var(--success); border: 1px solid rgba(46,204,113,0.2); padding: 10px;">+ NOVO</button>
+                            <button type="button" class="btn" id="btnEditarPerfil" style="flex: 1; background: rgba(255,255,255,0.05); color: var(--accent-primary); padding: 10px;">✏️ EDITAR</button>
+                            <button type="button" class="btn" id="btnExcluirPerfil" style="background: rgba(231,76,60,0.1); color: var(--error); padding: 10px 14px;">🗑️</button>
+                        </div>
+
+                        <!-- Detalhes do perfil selecionado -->
+                        <div id="perfilDetalhes" style="margin-top: 18px; display: none;">
+                            <div style="padding: 14px; border-radius: var(--radius-sm); background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border);">
+                                <p style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 8px; letter-spacing: 0.5px;">Resumo do Perfil</p>
+                                <div id="perfilResumoContent" style="font-size: 0.85rem; color: var(--text-primary); line-height: 1.6;"></div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- COLUNA DIREITA: Upload + Sugestão -->
+                <div style="display: flex; flex-direction: column; gap: 25px;">
+                    <section class="form-card glass">
+                        <h2 style="font-size: 1.15rem; margin-bottom: 18px; color: var(--accent-primary);">📤 Carregar Planilha</h2>
+                        
+                        <div class="upload-area" id="uploadArea">
+                            <input type="file" id="fileInput" accept=".xlsx, .xls, .csv" style="display: none;">
+                            <div class="upload-icon">📤</div>
+                            <h3 style="font-size: 1.1rem; margin-bottom: 5px;">Arraste e solte o arquivo aqui</h3>
+                            <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 15px;">Suporta arquivos Excel (.xlsx, .xls) ou CSV</p>
+                            <button type="button" class="btn" id="selectFileButton" style="background: rgba(255,255,255,0.05); color: var(--accent-primary); border: 1px solid var(--glass-border); padding: 10px 22px; font-size: 0.85rem;">SELECIONAR ARQUIVO</button>
+                        </div>
+
+                        <div id="fileInfoBar" class="file-info-bar" style="display: none;">
+                            <span>📄</span>
+                            <span id="fileInfoText"></span>
+                        </div>
+
+                        <!-- Suggestion bar -->
+                        <div class="suggestion-bar" style="margin-top: 20px;">
+                            <label style="display: flex; align-items: center; gap: 8px; color: var(--text-primary); font-size: 0.88rem; cursor: pointer;">
+                                <input type="checkbox" id="usaIaCheckbox" style="width: auto;"> Usar IA para sugerir mapeamento
+                            </label>
+                            <button type="button" class="btn" id="btnSugestaoMapeamento" disabled style="background: rgba(255,255,255,0.05); color: var(--accent-primary); font-size: 0.82rem; padding: 8px 16px;">SUGERIR MAPEAMENTO</button>
+                        </div>
+                    </section>
+
+                    <!-- BARRA DE AÇÕES -->
+                    <div class="actions-bar">
+                        <div></div>
+                        <button type="button" class="btn-advance" id="btnAvancar" disabled>
+                            AVANÇAR PARA PREVIEW →
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- ═══════════════ MODAL: Criar/Editar Perfil ═══════════════ -->
+    <div class="modal-overlay" id="perfilModal">
+        <div class="modal-content glass">
+            <div class="modal-header">
+                <h2 id="modalTitle">Novo Perfil de Mapeamento</h2>
+                <button class="modal-close" id="modalClose">&times;</button>
+            </div>
+            <form id="perfilForm">
+                <div class="form-group" style="margin-bottom: 14px;">
+                    <label for="nomePerfilInput">Nome do Perfil</label>
+                    <input type="text" id="nomePerfilInput" placeholder="Ex: Modelo Haja Imóveis" required>
+                </div>
+                <div class="form-mini-row">
+                    <div class="form-group">
+                        <label for="linhaCabecalhoInput">Linha do Cabeçalho</label>
+                        <input type="number" id="linhaCabecalhoInput" min="1" value="3" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="separadorInput">Separador de Balões</label>
+                        <input type="text" id="separadorInput" value="|" required>
+                    </div>
+                </div>
+
+                <div class="section-divider">
+                    <p style="font-size: 0.78rem; color: var(--accent-primary); font-weight: 700; margin-bottom: 14px; letter-spacing: 0.5px; text-transform: uppercase;">Mapeamento de Colunas</p>
+                    
+                    <div class="form-group" style="margin-bottom: 10px;">
+                        <label for="mapCorretor">Coluna Corretor (Nome)</label>
+                        <input type="text" id="mapCorretor" placeholder="Ex: Corretor Responsável" required>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 10px;">
+                        <label for="mapCreci">Coluna CRECI</label>
+                        <input type="text" id="mapCreci" placeholder="Ex: CRECI do Corretor">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 10px;">
+                        <label for="mapValorVenda">Coluna Valor Total da Venda</label>
+                        <input type="text" id="mapValorVenda" placeholder="Ex: Valor Total da Venda (R$)" required>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 10px;">
+                        <label for="mapValorPago">Coluna Valor Pago</label>
+                        <input type="text" id="mapValorPago" placeholder="Ex: Valor Pago Atual (R$)" required>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 10px;">
+                        <label for="mapEmpreendimento">Coluna Empreendimento</label>
+                        <input type="text" id="mapEmpreendimento" placeholder="Ex: Empreendimento" required>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 10px;">
+                        <label for="mapUnidade">Coluna Unidade</label>
+                        <input type="text" id="mapUnidade" placeholder="Ex: Unidade">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 10px;">
+                        <label for="mapCliente">Coluna Nome Cliente</label>
+                        <input type="text" id="mapCliente" placeholder="Ex: Nome do Cliente">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 10px;">
+                        <label for="mapBalaoValor">Coluna Valor do Balão</label>
+                        <input type="text" id="mapBalaoValor" placeholder="Ex: Valor do Balão/Reforço (R$)">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 10px;">
+                        <label for="mapBalaoDatas">Coluna Datas dos Balões</label>
+                        <input type="text" id="mapBalaoDatas" placeholder="Ex: Datas Previstas Balões">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 10px;">
+                        <label for="mapBalaoQtd">Coluna Qtd de Balões</label>
+                        <input type="text" id="mapBalaoQtd" placeholder="Ex: Qtd. Balões/Reforços">
+                    </div>
+                </div>
+
+                <!-- IDENTIFICADOR EXTRA -->
+                <div class="section-divider">
+                    <p style="font-size: 0.78rem; color: var(--accent-primary); font-weight: 700; margin-bottom: 14px; letter-spacing: 0.5px; text-transform: uppercase;">🆔 Identificador Extra (Opcional)</p>
+                    <div class="form-group" style="margin-bottom: 10px;">
+                        <label for="identificadorExtraInput">Coluna do Identificador Extra</label>
+                        <input type="text" id="identificadorExtraInput" placeholder="Ex: CPF, CRECI, Matrícula (nome da coluna na planilha)">
+                        <p style="font-size: 0.72rem; color: var(--text-secondary); margin-top: 4px;">Quando preenchido, a busca prioriza Nome + Identificador para evitar ambiguidades.</p>
+                    </div>
+                </div>
+
+                <!-- CAMPOS EXTRAS -->
+                <div class="section-divider">
+                    <p style="font-size: 0.78rem; color: var(--accent-primary); font-weight: 700; margin-bottom: 10px; letter-spacing: 0.5px; text-transform: uppercase;">📦 Campos Extras (Opcional)</p>
+                    <p style="font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 12px;">Adicione campos customizáveis que serão armazenados em cada registro importado.</p>
+                    
+                    <div class="campos-extras-list" id="camposExtrasList"></div>
+                    <button type="button" class="btn" id="btnAddCampoExtra" style="width: 100%; margin-top: 10px; background: rgba(255,255,255,0.03); color: var(--accent-primary); border: 1px solid rgba(255,255,255,0.08); font-size: 0.82rem; padding: 8px;">+ ADICIONAR CAMPO EXTRA</button>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button type="submit" id="btnSubmitPerfil" class="btn btn-primary" style="flex: 1;">SALVAR PERFIL</button>
+                    <button type="button" id="btnCancelModal" class="btn" style="background: rgba(255,255,255,0.05); color: var(--text-primary); padding: 12px 20px;">CANCELAR</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="assets/js/auth.js"></script>
+    <script>
+        // ═══════════════════════ AUTH CHECK ═══════════════════════
+        const token = localStorage.getItem('@VTalentos:token');
+        const userStr = localStorage.getItem('@VTalentos:user');
+        if (!token || !userStr) { window.location.href = 'login.html'; }
+        else {
+            const user = JSON.parse(userStr);
+            if (user.perfil !== 'ADMIN_EMPRESA' && user.perfil !== 'SUPER_ADMIN') {
+                showToast('Acesso restrito a administradores.', 'error');
+                setTimeout(() => window.location.href = 'dashboard.html', 2000);
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('@VTalentos:token');
+            localStorage.removeItem('@VTalentos:user');
+            window.location.href = 'login.html';
+        }
+
+        // ═══════════════════════ STATE ═══════════════════════
+        const API_BASE = window.__API_BASE__ || 'http://localhost:3001/api/admin/importacao';
+        let perfisCached = [];
+        let selectedFileBase64 = null;
+        let selectedFileName = '';
+        let editPerfilId = null;
+
+        // Restore state from sessionStorage if returning from Preview
+        (function restoreState() {
+            const saved = sessionStorage.getItem('@VTalentos:importState');
+            if (saved) {
+                try {
+                    const state = JSON.parse(saved);
+                    selectedFileBase64 = state.fileBase64 || null;
+                    selectedFileName = state.fileName || '';
+                    if (selectedFileBase64 && selectedFileName) {
+                        showFileInfo(selectedFileName);
+                    }
+                } catch(e) { console.warn('State restore failed', e); }
+            }
+        })();
+
+        // ═══════════════════════ DOM REFS ═══════════════════════
+        const perfilSelect = document.getElementById('perfilSelect');
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const selectFileButton = document.getElementById('selectFileButton');
+        const btnAvancar = document.getElementById('btnAvancar');
+        const btnSugestao = document.getElementById('btnSugestaoMapeamento');
+        const usaIaCheckbox = document.getElementById('usaIaCheckbox');
+        const perfilModal = document.getElementById('perfilModal');
+
+        // ═══════════════════════ PERFIS CRUD ═══════════════════════
+        async function loadPerfis() {
+            try {
+                const res = await fetch(`${API_BASE}/perfis`, { headers: { 'Authorization': `Bearer ${token}` } });
+                const data = await res.json();
+                perfisCached = data;
+                perfilSelect.innerHTML = '';
+
+                if (data.length === 0) {
+                    perfilSelect.innerHTML = '<option value="" disabled selected>Nenhum perfil cadastrado</option>';
+                    checkCanAdvance();
+                    return;
+                }
+
+                data.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.id;
+                    opt.textContent = p.nome_perfil;
+                    perfilSelect.appendChild(opt);
+                });
+
+                // Restore selected profile
+                const saved = sessionStorage.getItem('@VTalentos:importState');
+                if (saved) {
+                    try {
+                        const state = JSON.parse(saved);
+                        if (state.perfilId && data.find(p => p.id === state.perfilId)) {
+                            perfilSelect.value = state.perfilId;
+                        }
+                    } catch(e) {}
+                }
+
+                perfilSelect.selectedIndex = perfilSelect.selectedIndex >= 0 ? perfilSelect.selectedIndex : 0;
+                showPerfilDetails();
+                checkCanAdvance();
+            } catch (err) {
+                console.error('Erro ao carregar perfis:', err);
+            }
+        }
+
+        perfilSelect.addEventListener('change', () => {
+            showPerfilDetails();
+            checkCanAdvance();
+        });
+
+        function showPerfilDetails() {
+            const id = perfilSelect.value;
+            const perfil = perfisCached.find(p => p.id === id);
+            const detDiv = document.getElementById('perfilDetalhes');
+            const contentDiv = document.getElementById('perfilResumoContent');
+
+            if (!perfil) { detDiv.style.display = 'none'; return; }
+
+            let mapJson = perfil.mapeamento_json;
+            if (typeof mapJson === 'string') { try { mapJson = JSON.parse(mapJson); } catch(e) {} }
+            let camposExtras = perfil.campos_extras;
+            if (typeof camposExtras === 'string') { try { camposExtras = JSON.parse(camposExtras); } catch(e) { camposExtras = null; } }
+
+            let html = `<strong>Cabeçalho:</strong> Linha ${perfil.linha_cabecalho} | <strong>Separador:</strong> "${perfil.separador_multiplo}"<br>`;
+            html += `<strong>Corretor:</strong> ${mapJson?.corretor_identificador || '—'}<br>`;
+            html += `<strong>Valor Venda:</strong> ${mapJson?.valor_venda || '—'} | <strong>Valor Pago:</strong> ${mapJson?.valor_pago || '—'}`;
+
+            if (perfil.identificador_extra_coluna) {
+                html += `<br><span style="color: var(--accent-primary);">🆔 Identificador Extra:</span> ${perfil.identificador_extra_coluna}`;
+            }
+            if (camposExtras && camposExtras.length > 0) {
+                html += `<br><span style="color: var(--accent-primary);">📦 Campos Extras:</span> ${camposExtras.map(c => c.label).join(', ')}`;
+            }
+
+            contentDiv.innerHTML = html;
+            detDiv.style.display = 'block';
+        }
+
+        // ═══════════ Modal Open/Close ═══════════
+        function openModal(mode, perfilData) {
+            editPerfilId = mode === 'edit' ? perfilData?.id : null;
+            document.getElementById('modalTitle').textContent = mode === 'edit' ? `Editar Perfil: ${perfilData.nome_perfil}` : 'Novo Perfil de Mapeamento';
+            document.getElementById('btnSubmitPerfil').textContent = mode === 'edit' ? 'ATUALIZAR PERFIL' : 'SALVAR PERFIL';
+
+            // Reset form
+            document.getElementById('perfilForm').reset();
+            document.getElementById('linhaCabecalhoInput').value = '3';
+            document.getElementById('separadorInput').value = '|';
+            document.getElementById('camposExtrasList').innerHTML = '';
+
+            if (mode === 'edit' && perfilData) {
+                let mapJson = perfilData.mapeamento_json;
+                if (typeof mapJson === 'string') { try { mapJson = JSON.parse(mapJson); } catch(e) { mapJson = {}; } }
+                let camposExtras = perfilData.campos_extras;
+                if (typeof camposExtras === 'string') { try { camposExtras = JSON.parse(camposExtras); } catch(e) { camposExtras = null; } }
+
+                document.getElementById('nomePerfilInput').value = perfilData.nome_perfil || '';
+                document.getElementById('linhaCabecalhoInput').value = perfilData.linha_cabecalho || 3;
+                document.getElementById('separadorInput').value = perfilData.separador_multiplo || '|';
+                document.getElementById('mapCorretor').value = mapJson?.corretor_identificador || '';
+                document.getElementById('mapCreci').value = mapJson?.corretor_creci || '';
+                document.getElementById('mapValorVenda').value = mapJson?.valor_venda || '';
+                document.getElementById('mapValorPago').value = mapJson?.valor_pago || '';
+                document.getElementById('mapEmpreendimento').value = mapJson?.empreendimento || '';
+                document.getElementById('mapUnidade').value = mapJson?.unidade || '';
+                document.getElementById('mapCliente').value = mapJson?.cliente_nome || '';
+                document.getElementById('mapBalaoValor').value = mapJson?.balao_valor || '';
+                document.getElementById('mapBalaoDatas').value = mapJson?.balao_datas || '';
+                document.getElementById('mapBalaoQtd').value = mapJson?.balao_qtd || '';
+                document.getElementById('identificadorExtraInput').value = perfilData.identificador_extra_coluna || '';
+
+                if (camposExtras && Array.isArray(camposExtras)) {
+                    camposExtras.forEach(c => addCampoExtraRow(c.label, c.coluna));
+                }
+            }
+
+            perfilModal.classList.add('active');
+        }
+
+        function closeModal() {
+            perfilModal.classList.remove('active');
+            editPerfilId = null;
+        }
+
+        document.getElementById('btnNovoPerfil').addEventListener('click', () => openModal('new'));
+        document.getElementById('btnEditarPerfil').addEventListener('click', () => {
+            const id = perfilSelect.value;
+            if (!id) { showToast('Selecione um perfil primeiro.', 'error'); return; }
+            const perfil = perfisCached.find(p => p.id === id);
+            if (perfil) openModal('edit', perfil);
+        });
+        document.getElementById('modalClose').addEventListener('click', closeModal);
+        document.getElementById('btnCancelModal').addEventListener('click', closeModal);
+        perfilModal.addEventListener('click', (e) => { if (e.target === perfilModal) closeModal(); });
+
+        // ═══════════ Campos Extras Dinâmicos ═══════════
+        function addCampoExtraRow(label = '', coluna = '') {
+            const list = document.getElementById('camposExtrasList');
+            const row = document.createElement('div');
+            row.className = 'campo-extra-row';
+            row.innerHTML = `
+                <div class="form-group" style="margin-bottom:0;"><label style="font-size:0.72rem;">Label</label><input type="text" class="extra-label" placeholder="Ex: Região" value="${label}"></div>
+                <div class="form-group" style="margin-bottom:0;"><label style="font-size:0.72rem;">Coluna</label><input type="text" class="extra-coluna" placeholder="Ex: Região de Venda" value="${coluna}"></div>
+                <button type="button" class="btn-remove-extra" title="Remover">✕</button>
+            `;
+            row.querySelector('.btn-remove-extra').addEventListener('click', () => row.remove());
+            list.appendChild(row);
+        }
+
+        document.getElementById('btnAddCampoExtra').addEventListener('click', () => addCampoExtraRow());
+
+        // ═══════════ Perfil Submit ═══════════
+        document.getElementById('perfilForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const nome_perfil = document.getElementById('nomePerfilInput').value;
+            const linha_cabecalho = parseInt(document.getElementById('linhaCabecalhoInput').value, 10);
+            const separador_multiplo = document.getElementById('separadorInput').value;
+            const identificador_extra_coluna = document.getElementById('identificadorExtraInput').value.trim() || null;
+
+            const mapeamento_json = {
+                corretor_identificador: document.getElementById('mapCorretor').value,
+                corretor_creci: document.getElementById('mapCreci').value,
+                valor_venda: document.getElementById('mapValorVenda').value,
+                valor_pago: document.getElementById('mapValorPago').value,
+                empreendimento: document.getElementById('mapEmpreendimento').value,
+                unidade: document.getElementById('mapUnidade').value,
+                cliente_nome: document.getElementById('mapCliente').value,
+                balao_valor: document.getElementById('mapBalaoValor').value,
+                balao_datas: document.getElementById('mapBalaoDatas').value,
+                balao_qtd: document.getElementById('mapBalaoQtd').value
+            };
+
+            // Coleta campos extras
+            const camposExtrasEls = document.querySelectorAll('#camposExtrasList .campo-extra-row');
+            const campos_extras = [];
+            camposExtrasEls.forEach(row => {
+                const l = row.querySelector('.extra-label').value.trim();
+                const c = row.querySelector('.extra-coluna').value.trim();
+                if (l && c) campos_extras.push({ label: l, coluna: c });
+            });
+
+            const isEdit = !!editPerfilId;
+            const endpoint = isEdit ? `${API_BASE}/perfis/${editPerfilId}` : `${API_BASE}/perfis`;
+            const method = isEdit ? 'PUT' : 'POST';
+
+            try {
+                const res = await fetch(endpoint, {
+                    method,
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ nome_perfil, linha_cabecalho, separador_multiplo, mapeamento_json, identificador_extra_coluna, campos_extras: campos_extras.length > 0 ? campos_extras : null })
+                });
+                if (!res.ok) { const err = await res.json(); throw new Error(err.error || 'Erro ao salvar perfil'); }
+
+                showToast(`Perfil ${isEdit ? 'atualizado' : 'cadastrado'} com sucesso!`, 'success');
+                closeModal();
+                await loadPerfis();
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        });
+
+        // ═══════════ Delete Profile ═══════════
+        document.getElementById('btnExcluirPerfil').addEventListener('click', async () => {
+            const id = perfilSelect.value;
+            if (!id) return;
+            if (!confirm('Deseja realmente excluir este perfil de mapeamento?')) return;
+
+            try {
+                const res = await fetch(`${API_BASE}/perfis/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+                if (!res.ok) { const err = await res.json(); throw new Error(err.error || 'Falha ao excluir'); }
+                showToast('Perfil excluído com sucesso!', 'success');
+                await loadPerfis();
+            } catch (err) { showToast(err.message, 'error'); }
+        });
+
+        // ═══════════════════════ FILE UPLOAD ═══════════════════════
+        uploadArea.addEventListener('click', (e) => {
+            if (e.target === fileInput || e.target === selectFileButton) return;
+            fileInput.value = '';
+            fileInput.click();
+        });
+        selectFileButton.addEventListener('click', (e) => {
+            e.stopPropagation(); e.preventDefault();
+            fileInput.value = '';
+            fileInput.click();
+        });
+        fileInput.addEventListener('click', (e) => e.stopPropagation());
+
+        uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('dragover'); });
+        uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault(); uploadArea.classList.remove('dragover');
+            if (e.dataTransfer.files.length > 0) handleFile(e.dataTransfer.files[0]);
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) handleFile(e.target.files[0]);
+        });
+
+        function handleFile(file) {
+            selectedFileName = `${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+            showFileInfo(selectedFileName);
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                selectedFileBase64 = event.target.result;
+                uploadArea.classList.add('has-file');
+                checkCanAdvance();
+                btnSugestao.disabled = false;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function showFileInfo(text) {
+            const bar = document.getElementById('fileInfoBar');
+            document.getElementById('fileInfoText').textContent = text;
+            bar.style.display = 'flex';
+            uploadArea.classList.add('has-file');
+        }
+
+        function checkCanAdvance() {
+            btnAvancar.disabled = !(selectedFileBase64 && perfilSelect.value);
+        }
+
+        // ═══════════════════════ SUGERIR MAPEAMENTO ═══════════════════════
+        btnSugestao.addEventListener('click', async () => {
+            if (!selectedFileBase64) { showToast('Carregue um arquivo primeiro.', 'error'); return; }
+
+            const linhaCabecalho = parseInt(document.getElementById('linhaCabecalhoInput').value, 10) || 3;
+            const usa_ia = usaIaCheckbox.checked;
+
+            try {
+                btnSugestao.disabled = true;
+                btnSugestao.textContent = 'ANALISANDO...';
+
+                const res = await fetch(`${API_BASE}/sugerir-mapeamento`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ fileBase64: selectedFileBase64, linha_cabecalho: linhaCabecalho, usa_ia })
+                });
+                const contentType = res.headers.get('content-type') || '';
+                let data;
+                if (contentType.includes('application/json')) { data = await res.json(); }
+                else { throw new Error(await res.text()); }
+                if (!res.ok) throw new Error(data.error || 'Erro na sugestão');
+
+                const s = data.sugestoes_mapeamento || {};
+                // Se o modal está aberto, aplica lá
+                if (perfilModal.classList.contains('active')) {
+                    document.getElementById('mapCorretor').value = s.corretor_identificador || '';
+                    document.getElementById('mapCreci').value = s.corretor_creci || '';
+                    document.getElementById('mapValorVenda').value = s.valor_venda || '';
+                    document.getElementById('mapValorPago').value = s.valor_pago || '';
+                    document.getElementById('mapEmpreendimento').value = s.empreendimento || '';
+                    document.getElementById('mapUnidade').value = s.unidade || '';
+                    document.getElementById('mapCliente').value = s.cliente_nome || '';
+                    document.getElementById('mapBalaoValor').value = s.balao_valor || '';
+                    document.getElementById('mapBalaoDatas').value = s.balao_datas || '';
+                    document.getElementById('mapBalaoQtd').value = s.balao_qtd || '';
+                    showToast('Sugestão aplicada no modal. Revise e salve.', 'success');
+                } else {
+                    showToast('Abra o modal de perfil (Novo ou Editar) para aplicar a sugestão.', 'info');
+                }
+            } catch (err) { showToast(err.message, 'error'); }
+            finally {
+                btnSugestao.disabled = false;
+                btnSugestao.textContent = 'SUGERIR MAPEAMENTO';
+            }
+        });
+
+        // ═══════════════════════ AVANÇAR ═══════════════════════
+        btnAvancar.addEventListener('click', () => {
+            if (!selectedFileBase64 || !perfilSelect.value) {
+                showToast('Selecione um perfil e carregue um arquivo para avançar.', 'error');
+                return;
+            }
+
+            // Salva estado completo no sessionStorage
+            const state = {
+                fileBase64: selectedFileBase64,
+                fileName: selectedFileName,
+                perfilId: perfilSelect.value,
+                perfilNome: perfilSelect.options[perfilSelect.selectedIndex]?.text || ''
+            };
+            sessionStorage.setItem('@VTalentos:importState', JSON.stringify(state));
+
+            window.location.href = 'admin-importacao-preview.html';
+        });
+
+        // ═══════════════════════ INIT ═══════════════════════
+        window.addEventListener('DOMContentLoaded', () => {
+            renderHeader("Motor de Importação", "Etapa 1 — Configuração de perfil e carregamento de planilha");
+            loadPerfis();
+        });
+    </script>
+</body>
+</html>
