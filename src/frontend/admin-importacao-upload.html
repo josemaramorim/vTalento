@@ -199,55 +199,76 @@
             cursor: not-allowed;
         }
 
-        /* ═══════════════════════ PROFILE MODAL ═══════════════════════ */
+        /* ═══════════════════════ PROFILE SIDE-DRAWER ═══════════════════════ */
         .modal-overlay {
             display: none;
             position: fixed;
             top: 0; left: 0;
             width: 100vw; height: 100vh;
-            background: rgba(0,0,0,0.5);
-            backdrop-filter: blur(6px);
-            -webkit-backdrop-filter: blur(6px);
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             z-index: 2000;
-            align-items: center;
-            justify-content: center;
         }
-        .modal-overlay.active { display: flex; }
+        .modal-overlay.active { display: block; }
         .modal-content {
+            position: absolute;
+            right: 0; top: 0;
+            height: 100vh;
+            width: 100%;
+            max-width: 550px;
             background: var(--bg-card);
-            border: 1px solid var(--glass-border);
-            border-radius: var(--radius-md);
-            padding: 30px;
-            width: 90%;
-            max-width: 600px;
-            max-height: 85vh;
-            overflow-y: auto;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
-            animation: modalIn 0.3s ease;
+            border-left: 1px solid var(--glass-border);
+            display: flex;
+            flex-direction: column;
+            box-shadow: -10px 0 40px rgba(0,0,0,0.5);
+            animation: slideInRight 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
         }
-        @keyframes modalIn {
-            from { opacity: 0; transform: translateY(-20px) scale(0.97); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
+        @keyframes slideInRight {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
         }
         .modal-header {
+            padding: 25px 30px;
+            border-bottom: 1px solid var(--glass-border);
+            background: rgba(255,255,255,0.02);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
         }
         .modal-header h2 {
-            font-size: 1.2rem;
+            font-size: 1.25rem;
             color: var(--accent-primary);
+            margin: 0;
         }
         .modal-close {
             background: none;
             border: none;
-            font-size: 1.5rem;
+            font-size: 1.8rem;
             color: var(--text-secondary);
             cursor: pointer;
             transition: color 0.2s;
+            line-height: 1;
         }
         .modal-close:hover { color: var(--error); }
+        .modal-body {
+            padding: 30px;
+            overflow-y: auto;
+            flex: 1;
+        }
+        .modal-footer {
+            padding: 20px 30px;
+            border-top: 1px solid var(--glass-border);
+            background: rgba(255,255,255,0.02);
+            display: flex;
+            gap: 15px;
+        }
+        .map-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .map-grid .form-group { margin-bottom: 0; }
 
         /* ═══════════════════════ SUGGESTION BAR ═══════════════════════ */
         .suggestion-bar {
@@ -345,14 +366,6 @@
                             <span>📄</span>
                             <span id="fileInfoText"></span>
                         </div>
-
-                        <!-- Suggestion bar -->
-                        <div class="suggestion-bar" style="margin-top: 20px;">
-                            <label style="display: flex; align-items: center; gap: 8px; color: var(--text-primary); font-size: 0.88rem; cursor: pointer;">
-                                <input type="checkbox" id="usaIaCheckbox" style="width: auto;"> Usar IA para sugerir mapeamento
-                            </label>
-                            <button type="button" class="btn" id="btnSugestaoMapeamento" disabled style="background: rgba(255,255,255,0.05); color: var(--accent-primary); font-size: 0.82rem; padding: 8px 16px;">SUGERIR MAPEAMENTO</button>
-                        </div>
                     </section>
 
                     <!-- BARRA DE AÇÕES -->
@@ -374,66 +387,77 @@
                 <h2 id="modalTitle">Novo Perfil de Mapeamento</h2>
                 <button class="modal-close" id="modalClose">&times;</button>
             </div>
-            <form id="perfilForm">
-                <div class="form-group" style="margin-bottom: 14px;">
-                    <label for="nomePerfilInput">Nome do Perfil</label>
-                    <input type="text" id="nomePerfilInput" placeholder="Ex: Modelo Haja Imóveis" required>
-                </div>
-                <div class="form-mini-row">
-                    <div class="form-group">
-                        <label for="linhaCabecalhoInput">Linha do Cabeçalho</label>
-                        <input type="number" id="linhaCabecalhoInput" min="1" value="3" required>
+            <form id="perfilForm" style="display: flex; flex-direction: column; height: calc(100vh - 80px);">
+                <div class="modal-body">
+                    <div class="form-group" style="margin-bottom: 14px;">
+                        <label for="nomePerfilInput">Nome do Perfil</label>
+                        <input type="text" id="nomePerfilInput" placeholder="Ex: Modelo Haja Imóveis" required>
                     </div>
-                    <div class="form-group">
-                        <label for="separadorInput">Separador de Balões</label>
-                        <input type="text" id="separadorInput" value="|" required>
+                    <div class="form-mini-row">
+                        <div class="form-group">
+                            <label for="linhaCabecalhoInput">Linha do Cabeçalho</label>
+                            <input type="number" id="linhaCabecalhoInput" min="1" value="3" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="separadorInput">Separador de Balões</label>
+                            <input type="text" id="separadorInput" value="|" required>
+                        </div>
                     </div>
-                </div>
 
-                <div class="section-divider">
-                    <p style="font-size: 0.78rem; color: var(--accent-primary); font-weight: 700; margin-bottom: 14px; letter-spacing: 0.5px; text-transform: uppercase;">Mapeamento de Colunas</p>
-                    
-                    <div class="form-group" style="margin-bottom: 10px;">
-                        <label for="mapCorretor">Coluna Corretor (Nome)</label>
-                        <input type="text" id="mapCorretor" placeholder="Ex: Corretor Responsável" required>
+                    <div class="section-divider">
+                        <p style="font-size: 0.78rem; color: var(--accent-primary); font-weight: 700; margin-bottom: 14px; letter-spacing: 0.5px; text-transform: uppercase;">Mapeamento de Colunas</p>
+                        
+                        <!-- Suggestion bar -->
+                        <div class="suggestion-bar" style="margin-bottom: 20px; background: rgba(212,175,55,0.05); border-color: rgba(212,175,55,0.2);">
+                            <label style="display: flex; align-items: center; gap: 8px; color: var(--accent-primary); font-size: 0.88rem; cursor: pointer; flex: 1;">
+                                <input type="checkbox" id="usaIaCheckbox" style="width: auto;"> <strong style="font-weight: 600;">Usar IA</strong> para sugerir mapeamento
+                            </label>
+                            <button type="button" class="btn" id="btnSugestaoMapeamento" style="background: rgba(212,175,55,0.15); color: var(--accent-primary); font-size: 0.82rem; padding: 8px 16px; border: 1px solid rgba(212,175,55,0.3); font-weight: 700;">SUGERIR</button>
+                        </div>
+
+                        <div class="map-grid">
+                            <div class="form-group">
+                                <label for="mapCorretor">Corretor (Nome) *</label>
+                                <input type="text" id="mapCorretor" placeholder="Ex: Corretor" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="mapCreci">CRECI</label>
+                                <input type="text" id="mapCreci" placeholder="Ex: CRECI">
+                            </div>
+                            <div class="form-group">
+                                <label for="mapValorVenda">Valor da Venda *</label>
+                                <input type="text" id="mapValorVenda" placeholder="Ex: VGV (R$)" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="mapValorPago">Valor Pago *</label>
+                                <input type="text" id="mapValorPago" placeholder="Ex: Pago (R$)" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="mapEmpreendimento">Empreendimento *</label>
+                                <input type="text" id="mapEmpreendimento" placeholder="Ex: Obra" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="mapUnidade">Unidade</label>
+                                <input type="text" id="mapUnidade" placeholder="Ex: Apto">
+                            </div>
+                            <div class="form-group">
+                                <label for="mapCliente">Nome do Cliente</label>
+                                <input type="text" id="mapCliente" placeholder="Ex: Cliente">
+                            </div>
+                            <div class="form-group">
+                                <label for="mapBalaoValor">Valor Balões</label>
+                                <input type="text" id="mapBalaoValor" placeholder="Ex: Val. Reforço">
+                            </div>
+                            <div class="form-group">
+                                <label for="mapBalaoDatas">Datas Balões</label>
+                                <input type="text" id="mapBalaoDatas" placeholder="Ex: Datas">
+                            </div>
+                            <div class="form-group">
+                                <label for="mapBalaoQtd">Qtd Balões</label>
+                                <input type="text" id="mapBalaoQtd" placeholder="Ex: Parcelas">
+                            </div>
+                        </div>
                     </div>
-                    <div class="form-group" style="margin-bottom: 10px;">
-                        <label for="mapCreci">Coluna CRECI</label>
-                        <input type="text" id="mapCreci" placeholder="Ex: CRECI do Corretor">
-                    </div>
-                    <div class="form-group" style="margin-bottom: 10px;">
-                        <label for="mapValorVenda">Coluna Valor Total da Venda</label>
-                        <input type="text" id="mapValorVenda" placeholder="Ex: Valor Total da Venda (R$)" required>
-                    </div>
-                    <div class="form-group" style="margin-bottom: 10px;">
-                        <label for="mapValorPago">Coluna Valor Pago</label>
-                        <input type="text" id="mapValorPago" placeholder="Ex: Valor Pago Atual (R$)" required>
-                    </div>
-                    <div class="form-group" style="margin-bottom: 10px;">
-                        <label for="mapEmpreendimento">Coluna Empreendimento</label>
-                        <input type="text" id="mapEmpreendimento" placeholder="Ex: Empreendimento" required>
-                    </div>
-                    <div class="form-group" style="margin-bottom: 10px;">
-                        <label for="mapUnidade">Coluna Unidade</label>
-                        <input type="text" id="mapUnidade" placeholder="Ex: Unidade">
-                    </div>
-                    <div class="form-group" style="margin-bottom: 10px;">
-                        <label for="mapCliente">Coluna Nome Cliente</label>
-                        <input type="text" id="mapCliente" placeholder="Ex: Nome do Cliente">
-                    </div>
-                    <div class="form-group" style="margin-bottom: 10px;">
-                        <label for="mapBalaoValor">Coluna Valor do Balão</label>
-                        <input type="text" id="mapBalaoValor" placeholder="Ex: Valor do Balão/Reforço (R$)">
-                    </div>
-                    <div class="form-group" style="margin-bottom: 10px;">
-                        <label for="mapBalaoDatas">Coluna Datas dos Balões</label>
-                        <input type="text" id="mapBalaoDatas" placeholder="Ex: Datas Previstas Balões">
-                    </div>
-                    <div class="form-group" style="margin-bottom: 10px;">
-                        <label for="mapBalaoQtd">Coluna Qtd de Balões</label>
-                        <input type="text" id="mapBalaoQtd" placeholder="Ex: Qtd. Balões/Reforços">
-                    </div>
-                </div>
 
                 <!-- IDENTIFICADOR EXTRA -->
                 <div class="section-divider">
@@ -445,18 +469,19 @@
                     </div>
                 </div>
 
-                <!-- CAMPOS EXTRAS -->
-                <div class="section-divider">
-                    <p style="font-size: 0.78rem; color: var(--accent-primary); font-weight: 700; margin-bottom: 10px; letter-spacing: 0.5px; text-transform: uppercase;">📦 Campos Extras (Opcional)</p>
-                    <p style="font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 12px;">Adicione campos customizáveis que serão armazenados em cada registro importado.</p>
-                    
-                    <div class="campos-extras-list" id="camposExtrasList"></div>
-                    <button type="button" class="btn" id="btnAddCampoExtra" style="width: 100%; margin-top: 10px; background: rgba(255,255,255,0.03); color: var(--accent-primary); border: 1px solid rgba(255,255,255,0.08); font-size: 0.82rem; padding: 8px;">+ ADICIONAR CAMPO EXTRA</button>
+                    <!-- CAMPOS EXTRAS -->
+                    <div class="section-divider">
+                        <p style="font-size: 0.78rem; color: var(--accent-primary); font-weight: 700; margin-bottom: 10px; letter-spacing: 0.5px; text-transform: uppercase;">📦 Campos Extras (Opcional)</p>
+                        <p style="font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 12px;">Adicione campos customizáveis que serão armazenados em cada registro importado.</p>
+                        
+                        <div class="campos-extras-list" id="camposExtrasList"></div>
+                        <button type="button" class="btn" id="btnAddCampoExtra" style="width: 100%; margin-top: 10px; background: rgba(255,255,255,0.03); color: var(--accent-primary); border: 1px dashed rgba(255,255,255,0.15); font-size: 0.82rem; padding: 10px;">+ ADICIONAR CAMPO EXTRA</button>
+                    </div>
                 </div>
 
-                <div style="display: flex; gap: 10px; margin-top: 20px;">
-                    <button type="submit" id="btnSubmitPerfil" class="btn btn-primary" style="flex: 1;">SALVAR PERFIL</button>
-                    <button type="button" id="btnCancelModal" class="btn" style="background: rgba(255,255,255,0.05); color: var(--text-primary); padding: 12px 20px;">CANCELAR</button>
+                <div class="modal-footer">
+                    <button type="button" id="btnCancelModal" class="btn" style="flex: 1; background: rgba(255,255,255,0.05); color: var(--text-primary); padding: 12px;">CANCELAR</button>
+                    <button type="submit" id="btnSubmitPerfil" class="btn btn-primary" style="flex: 2; padding: 12px;">SALVAR PERFIL</button>
                 </div>
             </form>
         </div>
@@ -776,7 +801,7 @@
 
         // ═══════════════════════ SUGERIR MAPEAMENTO ═══════════════════════
         btnSugestao.addEventListener('click', async () => {
-            if (!selectedFileBase64) { showToast('Carregue um arquivo primeiro.', 'error'); return; }
+            if (!selectedFileBase64) { showToast('Carregue a planilha na tela principal primeiro.', 'error'); return; }
 
             const linhaCabecalho = parseInt(document.getElementById('linhaCabecalhoInput').value, 10) || 3;
             const usa_ia = usaIaCheckbox.checked;
@@ -816,7 +841,7 @@
             } catch (err) { showToast(err.message, 'error'); }
             finally {
                 btnSugestao.disabled = false;
-                btnSugestao.textContent = 'SUGERIR MAPEAMENTO';
+                btnSugestao.textContent = 'SUGERIR';
             }
         });
 
