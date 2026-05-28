@@ -24,6 +24,7 @@ Entidade master que isola todos os dados do sistema.
 - `email`: String (Unique)
 - `senha_hash`: String
 - `cpf`: String (Opcional)
+- `identificador_extra`: String (Opcional - Ex: CRECI, Matrícula, OAB. Permite busca em importações de qualquer nicho)
 - `perfil`: Enum (`CORRETOR`, `ADMIN_EMPRESA`, `SUPER_ADMIN`)
 - `saldo_disponivel`: Decimal (Total pronto para resgate)
 - `saldo_a_receber`: Decimal (Total de vendas não pagas)

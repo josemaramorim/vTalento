@@ -193,10 +193,11 @@ class ImportacaoService {
       const candidatos = await db('GamUsuario')
         .where({ empresa_id, perfil: 'CORRETOR' })
         .where(function() {
-          // Busca exata pelo identificador no CPF, Email ou no próprio Nome
+          // Busca exata pelo identificador no CPF, Email, Nome ou no campo Identificador Extra
           this.whereRaw('UPPER(cpf) = ?', [idVal])
               .orWhereRaw('UPPER(email) = ?', [idVal])
-              .orWhereRaw('UPPER(nome) = ?', [idVal]);
+              .orWhereRaw('UPPER(nome) = ?', [idVal])
+              .orWhereRaw('UPPER(identificador_extra) = ?', [idVal]);
 
           if (idValLimpo && idValLimpo.length === 11) {
             this.orWhere(db.raw("REPLACE(REPLACE(cpf, '.', ''), '-', '') = ?", [idValLimpo]));
@@ -221,7 +222,8 @@ class ImportacaoService {
         .where({ empresa_id, perfil: 'CORRETOR' })
         .where(function() {
           this.whereRaw('UPPER(cpf) = ?', [c])
-              .orWhereRaw('UPPER(nome) = ?', [c]);
+              .orWhereRaw('UPPER(nome) = ?', [c])
+              .orWhereRaw('UPPER(identificador_extra) = ?', [c]);
         })
         .first();
       if (corretor) return corretor;
