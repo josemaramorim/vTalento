@@ -381,7 +381,7 @@ window.renderSidebar = function() {
             html += `
                 <p style="color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; margin-top: 15px; margin-bottom: 10px;">ADMINISTRAÇÃO</p>
                 <a href="admin-lancamento.html" class="${isPageActive('admin-lancamento.html') ? 'active' : ''}" style="${isPageActive('admin-lancamento.html') ? 'color: var(--accent-primary) !important; font-weight: 600;' : ''}">💎 Lançamento Manual</a>
-                <a href="admin-importacao.html" class="${isPageActive('admin-importacao.html') ? 'active' : ''}" style="${isPageActive('admin-importacao.html') ? 'color: var(--accent-primary) !important; font-weight: 600;' : ''}">📤 Importação Excel</a>
+                <a href="admin-importacao-upload.html" class="${activePage.startsWith('admin-importacao') ? 'active' : ''}" style="${activePage.startsWith('admin-importacao') ? 'color: var(--accent-primary) !important; font-weight: 600;' : ''}">📤 Importação Excel</a>
                 <a href="admin-premios.html" class="${isPageActive('admin-premios.html') ? 'active' : ''}" style="${isPageActive('admin-premios.html') ? 'color: var(--accent-primary) !important; font-weight: 600;' : ''}">⚙️ Gerenciar Prêmios</a>
                 <a href="admin-usuarios.html" class="${isPageActive('admin-usuarios.html') ? 'active' : ''}" style="${isPageActive('admin-usuarios.html') ? 'color: var(--accent-primary) !important; font-weight: 600;' : ''}">👥 Gestão de Corretores</a>
                 <a href="admin-movimentacoes.html" class="${isPageActive('admin-movimentacoes.html') ? 'active' : ''}" style="${isPageActive('admin-movimentacoes.html') ? 'color: var(--accent-primary) !important; font-weight: 600;' : ''}">📈 Movimentações</a>

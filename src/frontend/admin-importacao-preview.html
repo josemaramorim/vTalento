@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>V-TALENTOS | Importação — Etapa 2: Preview</title>
+    <meta name="description" content="Motor de importação avançado — Etapa 2: Preview analítico com resolução de ambiguidades">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <style>
+        /* ═══════════════════════ STEPPER ═══════════════════════ */
+        .import-stepper {
+            display: flex; justify-content: center; align-items: center; gap: 0;
+            margin-bottom: 30px; padding: 20px; border-radius: var(--radius-md);
+            background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border);
+        }
+        .stepper-step {
+            display: flex; align-items: center; gap: 10px; padding: 10px 20px;
+            border-radius: 30px; font-size: 0.85rem; font-weight: 600;
+            color: var(--text-secondary); transition: all 0.3s ease; cursor: default;
+        }
+        .stepper-step.active { background: linear-gradient(135deg, rgba(212,175,55,0.15), rgba(212,175,55,0.05)); color: var(--accent-primary); box-shadow: 0 0 20px rgba(212,175,55,0.1); }
+        .stepper-step.completed { color: var(--success); }
+        .stepper-num {
+            width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 0.9rem; border: 2px solid var(--glass-border); transition: all 0.3s ease;
+        }
+        .stepper-step.active .stepper-num { border-color: var(--accent-primary); background: var(--accent-primary); color: #111; }
+        .stepper-step.completed .stepper-num { border-color: var(--success); background: var(--success); color: #fff; }
+        .stepper-line { width: 40px; height: 2px; background: var(--glass-border); margin: 0 5px; }
+
+        /* ═══════════════════════ STATS ═══════════════════════ */
+        .stats-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 18px; margin-bottom: 25px;
+        }
+        .stat-card {
+            padding: 20px; border-radius: var(--radius-sm); text-align: center;
+            transition: transform 0.3s ease;
+        }
+        .stat-card:hover { transform: translateY(-3px); }
+        .stat-label { font-size: 0.72rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-val { font-size: 1.7rem; font-weight: 700; font-family: var(--font-heading); margin-top: 5px; }
+
+        /* ═══════════════════════ BADGES ═══════════════════════ */
+        .badge-found { background: rgba(46,204,113,0.15); color: var(--success); padding: 3px 10px; border-radius: 12px; font-size: 0.72rem; font-weight: 600; }
+        .badge-missing { background: rgba(231,76,60,0.15); color: var(--error); padding: 3px 10px; border-radius: 12px; font-size: 0.72rem; font-weight: 600; animation: pulse 1.5s infinite; }
+        .badge-ambiguous { background: rgba(243,156,18,0.15); color: var(--warning); padding: 3px 10px; border-radius: 12px; font-size: 0.72rem; font-weight: 600; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+
+        /* ═══════════════════════ ALERT ═══════════════════════ */
+        .alert-card {
+            border-radius: var(--radius-sm); padding: 15px 20px; display: flex; align-items: center;
+            gap: 15px; margin-bottom: 20px; animation: fadeIn 0.4s ease;
+        }
+        .alert-card.alert-error { background: rgba(231,76,60,0.08); border: 1px solid rgba(231,76,60,0.2); }
+        .alert-card.alert-warning { background: rgba(243,156,18,0.08); border: 1px solid rgba(243,156,18,0.2); }
+        .alert-card.alert-success { background: rgba(46,204,113,0.06); border: 1px solid rgba(46,204,113,0.15); }
+        .alert-icon { font-size: 1.5rem; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ═══════════════════════ AMBIGUITY SELECT ═══════════════════════ */
+        .ambiguity-select {
+            width: 100%; padding: 6px 10px; border-radius: 8px; font-size: 0.8rem;
+            background: rgba(243,156,18,0.08); border: 1px solid rgba(243,156,18,0.25);
+            color: var(--text-primary); margin-top: 6px; cursor: pointer;
+        }
+        .ambiguity-select:focus { border-color: var(--accent-primary); outline: none; }
+
+        /* ═══════════════════════ BALAO TAG ═══════════════════════ */
+        .balao-tag {
+            background: rgba(212,175,55,0.1); border: 1px solid rgba(212,175,55,0.2);
+            color: var(--accent-primary); padding: 2px 6px; border-radius: 4px;
+            font-size: 0.72rem; display: inline-block; margin-right: 4px; margin-top: 3px;
+        }
+
+        /* ═══════════════════════ ACTIONS ═══════════════════════ */
+        .actions-bar {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-top: 25px; padding-top: 20px; border-top: 1px solid var(--glass-border);
+        }
+        .btn-advance {
+            padding: 14px 36px; font-size: 0.95rem; font-weight: 700; border-radius: var(--radius-sm);
+            border: none; background: linear-gradient(135deg, var(--accent-primary), #c49b30);
+            color: #111; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 20px rgba(212,175,55,0.25);
+        }
+        .btn-advance:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(212,175,55,0.35); }
+        .btn-advance:disabled { opacity: 0.4; cursor: not-allowed; }
+        .btn-back {
+            padding: 12px 28px; font-size: 0.88rem; font-weight: 600; border-radius: var(--radius-sm);
+            border: 1px solid var(--glass-border); background: rgba(255,255,255,0.04); color: var(--text-primary);
+            cursor: pointer; transition: all 0.3s ease;
+        }
+        .btn-back:hover { background: rgba(255,255,255,0.08); }
+
+        /* ═══════════════════════ LOADING ═══════════════════════ */
+        .loading-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.5); backdrop-filter: blur(6px); z-index: 3000;
+            align-items: center; justify-content: center; flex-direction: column; gap: 20px;
+        }
+        .loading-overlay.active { display: flex; }
+        .loading-spinner {
+            width: 48px; height: 48px; border: 3px solid var(--glass-border);
+            border-top-color: var(--accent-primary); border-radius: 50%; animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        @media(max-width: 768px) {
+            .stepper-step span:not(.stepper-num) { display: none; }
+            .stepper-line { width: 25px; }
+            .import-stepper { padding: 12px; }
+        }
+    </style>
+</head>
+<body data-theme="dark">
+    <div class="app-layout">
+        <aside class="sidebar">
+            <div class="logo">V-<span>TALENTOS</span></div>
+            <nav id="navLinks" style="display: flex; flex-direction: column; gap: 15px;"></nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="header" id="appHeader"></header>
+
+            <!-- ═══ STEPPER ═══ -->
+            <div class="import-stepper">
+                <div class="stepper-step completed">
+                    <span class="stepper-num">✓</span>
+                    <span>Upload & Perfil</span>
+                </div>
+                <div class="stepper-line"></div>
+                <div class="stepper-step active">
+                    <span class="stepper-num">2</span>
+                    <span>Preview Analítico</span>
+                </div>
+                <div class="stepper-line"></div>
+                <div class="stepper-step">
+                    <span class="stepper-num">3</span>
+                    <span>Confirmação</span>
+                </div>
+            </div>
+
+            <!-- ═══ INFO BAR ═══ -->
+            <div id="infoBar" class="alert-card alert-success" style="margin-bottom: 20px;">
+                <span class="alert-icon">📄</span>
+                <div>
+                    <strong id="infoPerfilNome">—</strong>
+                    <p id="infoFileName" style="font-size: 0.82rem; color: var(--text-secondary); margin-top: 2px;">—</p>
+                </div>
+            </div>
+
+            <!-- ═══ STATS ═══ -->
+            <div class="stats-grid" id="statsGrid" style="display: none;">
+                <div class="glass stat-card">
+                    <p class="stat-label">Total de Registros</p>
+                    <div class="stat-val" id="statTotal" style="color: var(--accent-primary);">0</div>
+                </div>
+                <div class="glass stat-card">
+                    <p class="stat-label">Corretores Resolvidos</p>
+                    <div class="stat-val" id="statResolvidos" style="color: var(--success);">0</div>
+                </div>
+                <div class="glass stat-card">
+                    <p class="stat-label">Ambíguos</p>
+                    <div class="stat-val" id="statAmbiguos" style="color: var(--warning);">0</div>
+                </div>
+                <div class="glass stat-card">
+                    <p class="stat-label">Não Localizados</p>
+                    <div class="stat-val" id="statNaoLocalizados" style="color: var(--error);">0</div>
+                </div>
+            </div>
+
+            <!-- ═══ ALERTS ═══ -->
+            <div id="alertContainer"></div>
+
+            <!-- ═══ TABELA DE PREVIEW ═══ -->
+            <section class="form-card glass" id="previewSection" style="display: none;">
+                <h3 style="font-size: 1.1rem; color: var(--text-primary); margin-bottom: 15px;">📊 Detalhamento do Lote</h3>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr id="previewThead">
+                                <th>Linha</th>
+                                <th>Empreendimento / Unidade</th>
+                                <th>Cliente</th>
+                                <th>Corretor (Planilha)</th>
+                                <th>Status / Mapeamento</th>
+                                <th>Talentos</th>
+                                <th>Balões</th>
+                            </tr>
+                        </thead>
+                        <tbody id="previewTableBody"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- ═══ ACTIONS ═══ -->
+            <div class="actions-bar" id="actionsBar" style="display: none;">
+                <button type="button" class="btn-back" id="btnVoltar">← VOLTAR PARA UPLOAD</button>
+                <button type="button" class="btn-advance" id="btnAvancar" disabled>AVANÇAR PARA CONFIRMAÇÃO →</button>
+            </div>
+        </main>
+    </div>
+
+    <!-- ═══ LOADING OVERLAY ═══ -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+        <p style="color: var(--accent-primary); font-weight: 600; font-size: 1rem;">Analisando planilha...</p>
+    </div>
+
+    <script src="assets/js/auth.js"></script>
+    <script>
+        // ═══════════════════════ AUTH ═══════════════════════
+        const token = localStorage.getItem('@VTalentos:token');
+        const userStr = localStorage.getItem('@VTalentos:user');
+        if (!token || !userStr) { window.location.href = 'login.html'; }
+        else {
+            const user = JSON.parse(userStr);
+            if (user.perfil !== 'ADMIN_EMPRESA' && user.perfil !== 'SUPER_ADMIN') {
+                showToast('Acesso restrito.', 'error');
+                setTimeout(() => window.location.href = 'dashboard.html', 2000);
+            }
+        }
+        function logout() { localStorage.removeItem('@VTalentos:token'); localStorage.removeItem('@VTalentos:user'); window.location.href = 'login.html'; }
+
+        // ═══════════════════════ STATE ═══════════════════════
+        const API_BASE = window.__API_BASE__ || 'http://localhost:3001/api/admin/importacao';
+        let importState = null;
+        let previewData = null;
+        let resolucoes = {}; // { linhaIndex: corretor_id }
+
+        (function loadState() {
+            const saved = sessionStorage.getItem('@VTalentos:importState');
+            if (!saved) {
+                showToast('Nenhum arquivo carregado. Retornando...', 'error');
+                setTimeout(() => window.location.href = 'admin-importacao-upload.html', 1500);
+                return;
+            }
+            try {
+                importState = JSON.parse(saved);
+                if (!importState.fileBase64 || !importState.perfilId) throw new Error('missing');
+            } catch(e) {
+                showToast('Estado inválido. Retornando...', 'error');
+                setTimeout(() => window.location.href = 'admin-importacao-upload.html', 1500);
+                return;
+            }
+
+            document.getElementById('infoPerfilNome').textContent = `Perfil: ${importState.perfilNome || importState.perfilId}`;
+            document.getElementById('infoFileName').textContent = `📄 ${importState.fileName || 'Arquivo carregado'}`;
+        })();
+
+        // ═══════════════════════ PREVIEW API ═══════════════════════
+        async function fetchPreview() {
+            if (!importState) return;
+
+            const loading = document.getElementById('loadingOverlay');
+            loading.classList.add('active');
+
+            try {
+                const res = await fetch(`${API_BASE}/preview`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ fileBase64: importState.fileBase64, perfil_id: importState.perfilId })
+                });
+
+                const contentType = res.headers.get('content-type') || '';
+                let data;
+                if (contentType.includes('application/json')) { data = await res.json(); }
+                else { throw new Error(await res.text()); }
+                if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+
+                previewData = data;
+                renderPreview(data);
+            } catch (err) {
+                showToast(err.message, 'error');
+                document.getElementById('alertContainer').innerHTML = `
+                    <div class="alert-card alert-error">
+                        <span class="alert-icon">❌</span>
+                        <div><h4 style="font-size:0.95rem;">Falha ao gerar preview</h4><p style="font-size:0.82rem; color:var(--text-secondary);">${err.message}</p></div>
+                    </div>`;
+            } finally {
+                loading.classList.remove('active');
+            }
+        }
+
+        // ═══════════════════════ RENDER ═══════════════════════
+        function renderPreview(data) {
+            const resolvidos = data.linhas.filter(r => r.corretor_encontrado && !r.ambiguous).length;
+            const ambiguos = data.linhas.filter(r => r.ambiguous).length;
+            const naoLocalizados = data.linhas.filter(r => !r.corretor_encontrado && !r.ambiguous).length;
+
+            document.getElementById('statTotal').textContent = data.total_linhas;
+            document.getElementById('statResolvidos').textContent = resolvidos;
+            document.getElementById('statAmbiguos').textContent = ambiguos;
+            document.getElementById('statNaoLocalizados').textContent = naoLocalizados;
+            document.getElementById('statsGrid').style.display = 'grid';
+
+            // Alerts
+            const alertContainer = document.getElementById('alertContainer');
+            alertContainer.innerHTML = '';
+
+            if (naoLocalizados > 0) {
+                alertContainer.innerHTML += `
+                    <div class="alert-card alert-error">
+                        <span class="alert-icon">⚠️</span>
+                        <div><h4 style="font-size:0.95rem;">Corretores não localizados (${naoLocalizados})</h4>
+                        <p style="font-size:0.82rem; color:var(--text-secondary);">Cadastre-os no sistema ou corrija o mapeamento antes de prosseguir.</p></div>
+                    </div>`;
+            }
+            if (ambiguos > 0) {
+                alertContainer.innerHTML += `
+                    <div class="alert-card alert-warning">
+                        <span class="alert-icon">🔀</span>
+                        <div><h4 style="font-size:0.95rem;">Corretores ambíguos (${ambiguos})</h4>
+                        <p style="font-size:0.82rem; color:var(--text-secondary);">Há nomes duplicados sem identificador extra. Selecione o corretor correto em cada registro abaixo.</p></div>
+                    </div>`;
+            }
+            if (naoLocalizados === 0 && ambiguos === 0) {
+                alertContainer.innerHTML += `
+                    <div class="alert-card alert-success">
+                        <span class="alert-icon">✅</span>
+                        <div><h4 style="font-size:0.95rem;">Tudo certo!</h4>
+                        <p style="font-size:0.82rem; color:var(--text-secondary);">Todos os ${resolvidos} corretores foram resolvidos com sucesso.</p></div>
+                    </div>`;
+            }
+
+            // Check for dados_extras columns
+            const hasExtras = data.linhas.some(r => r.dados_extras && Object.keys(r.dados_extras).length > 0);
+            let extraHeaders = [];
+            if (hasExtras) {
+                const allKeys = new Set();
+                data.linhas.forEach(r => { if (r.dados_extras) Object.keys(r.dados_extras).forEach(k => allKeys.add(k)); });
+                extraHeaders = [...allKeys];
+            }
+
+            // Build thead
+            const thead = document.getElementById('previewThead');
+            let thHtml = '<th>Linha</th><th>Empreendimento / Unidade</th><th>Cliente</th><th>Corretor (Planilha)</th><th>Status / Mapeamento</th><th>Talentos</th><th>Balões</th>';
+            extraHeaders.forEach(h => { thHtml += `<th style="color:var(--accent-primary);">${h}</th>`; });
+            thead.innerHTML = thHtml;
+
+            // Build tbody
+            const tbody = document.getElementById('previewTableBody');
+            tbody.innerHTML = '';
+
+            data.linhas.forEach(row => {
+                const tr = document.createElement('tr');
+                let statusHtml = '';
+
+                if (row.ambiguous) {
+                    statusHtml = `<span class="badge-ambiguous">🔀 AMBÍGUO</span><br>`;
+                    statusHtml += `<select class="ambiguity-select" data-linha="${row.linha}" onchange="handleResolucao(this)">`;
+                    statusHtml += `<option value="">— Selecione o corretor —</option>`;
+                    row.candidatos.forEach(c => {
+                        const sel = resolucoes[row.linha] === c.id ? 'selected' : '';
+                        statusHtml += `<option value="${c.id}" ${sel}>${c.nome} (${c.email || c.cpf || '—'})</option>`;
+                    });
+                    statusHtml += `</select>`;
+                } else if (row.corretor_encontrado) {
+                    statusHtml = `<span class="badge-found">✔️ LOCALIZADO</span><br><strong>${row.corretor_nome_sistema}</strong><br><span style="font-size:0.72rem; color:var(--text-secondary);">${row.corretor_email_sistema || ''}</span>`;
+                } else {
+                    statusHtml = `<span class="badge-missing">❌ NÃO LOCALIZADO</span><br><span style="color:var(--error); font-size:0.82rem;">Nenhum correspondente</span>`;
+                }
+
+                // Talentos
+                const v = row.valores;
+                const talentosHtml = `
+                    <span style="font-size:0.82rem;">Venda: <strong>${v.total_talentos} T</strong></span><br>
+                    <span style="font-size:0.82rem; color:var(--success);">Pago: <strong>${v.talentos_disponiveis} T</strong></span><br>
+                    <span style="font-size:0.82rem; color:var(--warning);">A Receber: <strong>${v.talentos_a_receber} T</strong></span>`;
+
+                // Balões
+                let baloesHtml = '';
+                if (row.baloes && row.baloes.length > 0) {
+                    row.baloes.forEach(b => {
+                        const d = b.data_vencimento ? new Date(b.data_vencimento).toLocaleDateString('pt-BR') : 'Sem data';
+                        baloesHtml += `<span class="balao-tag">${d}: <strong>${b.valor_talentos} T</strong></span>`;
+                    });
+                } else {
+                    baloesHtml = '<span style="color:var(--text-secondary); font-size:0.78rem;">Sem balões</span>';
+                }
+
+                let tdHtml = `
+                    <td><strong>#${row.linha}</strong></td>
+                    <td><strong>${row.empreendimento}</strong><br><span style="font-size:0.78rem; color:var(--text-secondary);">Un: ${row.unidade}</span></td>
+                    <td>${row.cliente_nome}</td>
+                    <td>${row.corretor_nome_planilha}<br><span style="font-size:0.72rem; color:var(--text-secondary);">${row.corretor_creci_planilha || ''}</span></td>
+                    <td>${statusHtml}</td>
+                    <td>${talentosHtml}</td>
+                    <td>${baloesHtml}</td>`;
+
+                // Extras
+                extraHeaders.forEach(h => {
+                    const val = (row.dados_extras && row.dados_extras[h] !== undefined) ? row.dados_extras[h] : '—';
+                    tdHtml += `<td style="font-size:0.82rem;">${val}</td>`;
+                });
+
+                tr.innerHTML = tdHtml;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('previewSection').style.display = 'block';
+            document.getElementById('actionsBar').style.display = 'flex';
+            checkCanAdvance();
+        }
+
+        // ═══════════════════════ RESOLUÇÃO DE AMBIGUIDADE ═══════════════════════
+        window.handleResolucao = function(selectEl) {
+            const linha = parseInt(selectEl.dataset.linha, 10);
+            const corretorId = selectEl.value;
+            if (corretorId) {
+                resolucoes[linha] = corretorId;
+            } else {
+                delete resolucoes[linha];
+            }
+            checkCanAdvance();
+        };
+
+        function checkCanAdvance() {
+            if (!previewData) { document.getElementById('btnAvancar').disabled = true; return; }
+
+            const naoLocalizados = previewData.linhas.filter(r => !r.corretor_encontrado && !r.ambiguous).length;
+            const ambiguosSemResolver = previewData.linhas.filter(r => r.ambiguous && !resolucoes[r.linha]).length;
+
+            document.getElementById('btnAvancar').disabled = (naoLocalizados > 0 || ambiguosSemResolver > 0);
+        }
+
+        // ═══════════════════════ NAV ═══════════════════════
+        document.getElementById('btnVoltar').addEventListener('click', () => {
+            window.location.href = 'admin-importacao-upload.html';
+        });
+
+        document.getElementById('btnAvancar').addEventListener('click', () => {
+            if (!previewData || !importState) return;
+
+            // Salva resolucoes e preview no state
+            const state = { ...importState, resolucoes, previewSummary: {
+                total: previewData.total_linhas,
+                resolvidos: previewData.linhas.filter(r => r.corretor_encontrado || resolucoes[r.linha]).length,
+                inconsistencias: previewData.linhas.filter(r => !r.corretor_encontrado && !resolucoes[r.linha]).length
+            }};
+            sessionStorage.setItem('@VTalentos:importState', JSON.stringify(state));
+
+            window.location.href = 'admin-importacao-confirm.html';
+        });
+
+        // ═══════════════════════ INIT ═══════════════════════
+        window.addEventListener('DOMContentLoaded', () => {
+            renderHeader("Motor de Importação", "Etapa 2 — Análise detalhada e resolução de ambiguidades");
+            if (importState) fetchPreview();
+        });
+    </script>
+</body>
+</html>

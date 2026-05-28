@@ -54,8 +54,8 @@ A plataforma SaaS precisa suportar importação de planilhas para múltiplos seg
     - Testes para todos os cenários (com/sem campo extra, campos customizados, navegação entre etapas).
 
 ### 4.3. Implementação
-- [ ] Criar branch específica para cada macro-feature (ex: `feature/import-campos-extras`, `feature/import-ui-redesign`).
-- [ ] Implementar backend e frontend conforme tasks aprovadas.
+- [/] Criar branch específica para cada macro-feature (ex: `feature/import-campos-extras`, `feature/import-ui-redesign`).
+- [/] Implementar backend e frontend conforme tasks aprovadas.
 - [ ] Garantir cobertura de testes e documentação.
 
 ---

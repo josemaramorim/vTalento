@@ -116,7 +116,7 @@ class ImportacaoController {
 
   async confirmarImportacao(req, res) {
     try {
-      const { fileBase64, perfil_id } = req.body;
+      const { fileBase64, perfil_id, resolucoes } = req.body;
       const empresa_id = req.empresa_id;
       const admin_id = req.usuario_id; // Injetado pelo TenantMiddleware / Autenticação
 
@@ -124,7 +124,7 @@ class ImportacaoController {
         return res.status(400).json({ error: 'Os campos fileBase64 e perfil_id são obrigatórios' });
       }
 
-      const result = await ImportacaoService.confirmarImportacao(empresa_id, admin_id, fileBase64, perfil_id);
+      const result = await ImportacaoService.confirmarImportacao(empresa_id, admin_id, fileBase64, perfil_id, resolucoes || {});
       return res.json(result);
     } catch (err) {
       return res.status(400).json({ error: err.message });
