@@ -90,6 +90,26 @@ class ImportacaoController {
     }
   }
 
+  async sugerirMapeamento(req, res) {
+    try {
+      const { fileBase64, linha_cabecalho, usa_ia } = req.body;
+      const empresa_id = req.empresa_id;
+
+      if (!fileBase64) {
+        return res.status(400).json({ error: 'O campo fileBase64 é obrigatório' });
+      }
+
+      const result = await ImportacaoService.sugerirMapeamento(empresa_id, fileBase64, {
+        linha_cabecalho,
+        usa_ia: !!usa_ia
+      });
+
+      return res.json(result);
+    } catch (err) {
+      return res.status(400).json({ error: err.message });
+    }
+  }
+
   async confirmarImportacao(req, res) {
     try {
       const { fileBase64, perfil_id } = req.body;

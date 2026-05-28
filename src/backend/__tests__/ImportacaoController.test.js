@@ -27,6 +27,7 @@ jest.mock('../core/services/ImportacaoService', () => {
     criarPerfil: jest.fn(),
     deletarPerfil: jest.fn(),
     previewImportacao: jest.fn(),
+    sugerirMapeamento: jest.fn(),
     confirmarImportacao: jest.fn()
   };
 });
@@ -118,6 +119,43 @@ describe('ImportacaoController (Integração)', () => {
     expect(response.status).toBe(200);
     expect(response.body).toEqual(mockPreviewResult);
     expect(ImportacaoService.previewImportacao).toHaveBeenCalledWith('empresa-456', 'fake-base64-data', 'perfil-123');
+  });
+
+  it('POST /api/admin/importacao/sugerir-mapeamento - deve sugerir o mapeamento com sucesso', async () => {
+    const token = getAdminToken();
+    const mockSuggestion = {
+      colunas_detectadas: ['Corretor', 'CRECI', 'Valor Venda', 'Valor Pago', 'Empreendimento'],
+      sugestoes_mapeamento: {
+        corretor_identificador: 'Corretor',
+        corretor_creci: 'CRECI',
+        valor_venda: 'Valor Venda',
+        valor_pago: 'Valor Pago',
+        empreendimento: 'Empreendimento',
+        unidade: '',
+        cliente_nome: '',
+        balao_valor: '',
+        balao_datas: '',
+        balao_qtd: ''
+      },
+      linha_cabecalho: 1,
+      usa_ia: false,
+      metodo: 'heuristica'
+    };
+
+    ImportacaoService.sugerirMapeamento.mockResolvedValue(mockSuggestion);
+
+    const response = await request(app)
+      .post('/api/admin/importacao/sugerir-mapeamento')
+      .set('Authorization', `Bearer ${token}`)
+      .send({
+        fileBase64: 'fake-base64-data',
+        linha_cabecalho: 1,
+        usa_ia: false
+      });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual(mockSuggestion);
+    expect(ImportacaoService.sugerirMapeamento).toHaveBeenCalledWith('empresa-456', 'fake-base64-data', { linha_cabecalho: 1, usa_ia: false });
   });
 
   it('POST /api/admin/importacao/confirm - deve processar importacao definitiva com sucesso', async () => {

@@ -46,6 +46,7 @@ routes.delete('/importacao/perfis/:id', ImportacaoController.deletarPerfil);
 
 // Endpoints do motor de importação
 routes.post('/importacao/preview', ImportacaoController.previewImportacao);
+routes.post('/importacao/sugerir-mapeamento', ImportacaoController.sugerirMapeamento);
 routes.post('/importacao/confirm', ImportacaoController.confirmarImportacao);
 
 // Endpoints da Vitrine de Prêmios (CRUD Admin)

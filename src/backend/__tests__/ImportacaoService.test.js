@@ -183,6 +183,26 @@ describe('ImportacaoService', () => {
       expect(linha.baloes[0].valor_talentos).toBe(150); // 30k total / 2 = 15k cada -> 15k * 0.01 = 150 talentos
       expect(linha.baloes[0].data_vencimento).toBeInstanceOf(Date);
     });
+
+    it('deve sugerir o mapeamento de colunas a partir do cabeçalho da planilha', async () => {
+      const mockSheetData = [
+        ['Corretor', 'CRECI', 'Valor Venda', 'Valor Pago', 'Empreendimento', 'Unidade', 'Cliente', 'Balão Valor', 'Balão Datas', 'Balão Qtd']
+      ];
+
+      xlsx.read.mockReturnValue({ SheetNames: ['Sheet1'], Sheets: { 'Sheet1': {} } });
+      xlsx.utils.sheet_to_json.mockReturnValue(mockSheetData);
+
+      const suggestion = await ImportacaoService.sugerirMapeamento('empresa-123', 'fake-base64', { linha_cabecalho: 1, usa_ia: false });
+
+      expect(suggestion.colunas_detectadas).toEqual(mockSheetData[0]);
+      expect(suggestion.sugestoes_mapeamento.corretor_identificador).toBe('Corretor');
+      expect(suggestion.sugestoes_mapeamento.corretor_creci).toBe('CRECI');
+      expect(suggestion.sugestoes_mapeamento.valor_venda).toBe('Valor Venda');
+      expect(suggestion.sugestoes_mapeamento.valor_pago).toBe('Valor Pago');
+      expect(suggestion.sugestoes_mapeamento.empreendimento).toBe('Empreendimento');
+      expect(suggestion.usa_ia).toBe(false);
+      expect(suggestion.metodo).toBe('heuristica');
+    });
   });
 
   describe('Confirmar Importação', () => {

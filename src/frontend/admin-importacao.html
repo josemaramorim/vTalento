@@ -170,43 +170,43 @@
                                 <p style="font-size: 0.75rem; color: var(--accent-primary); margin-top: 10px; margin-bottom: 10px; font-weight: 600;">MAPEAMENTO DE COLUNAS (NOME EXATO)</p>
                                 
                                 <div class="form-group" style="margin-bottom: 10px;">
-                                    <label for="mapCorretor">Coluna Corretor (Nome/CPF)</label>
+                                    <label for="mapCorretor" title="Nome ou CPF do corretor responsável pela venda">Coluna Corretor (Nome/CPF) <span style="cursor: help; color: var(--accent-primary);">?</span></label>
                                     <input type="text" id="mapCorretor" placeholder="Ex: Corretor Responsável" required>
                                 </div>
                                 <div class="form-group" style="margin-bottom: 10px;">
-                                    <label for="mapCreci">Coluna CRECI Corretor</label>
+                                    <label for="mapCreci" title="Número de registro profissional do corretor">Coluna CRECI Corretor <span style="cursor: help; color: var(--accent-primary);">?</span></label>
                                     <input type="text" id="mapCreci" placeholder="Ex: CRECI do Corretor" required>
                                 </div>
                                 <div class="form-group" style="margin-bottom: 10px;">
-                                    <label for="mapValorVenda">Coluna Valor Total da Venda</label>
+                                    <label for="mapValorVenda" title="Valor total da venda realizada (será convertido em Talentos)">Coluna Valor Total da Venda <span style="cursor: help; color: var(--accent-primary);">?</span></label>
                                     <input type="text" id="mapValorVenda" placeholder="Ex: Valor Total da Venda (R$)" required>
                                 </div>
                                 <div class="form-group" style="margin-bottom: 10px;">
-                                    <label for="mapValorPago">Coluna Valor Pago Atual</label>
+                                    <label for="mapValorPago" title="Valor já pago pelo cliente na data da importação">Coluna Valor Pago Atual <span style="cursor: help; color: var(--accent-primary);">?</span></label>
                                     <input type="text" id="mapValorPago" placeholder="Ex: Valor Pago Atual (R$)" required>
                                 </div>
                                 <div class="form-group" style="margin-bottom: 10px;">
-                                    <label for="mapEmpreendimento">Coluna Empreendimento</label>
+                                    <label for="mapEmpreendimento" title="Nome do empreendimento/imóvel da transação">Coluna Empreendimento <span style="cursor: help; color: var(--accent-primary);">?</span></label>
                                     <input type="text" id="mapEmpreendimento" placeholder="Ex: Empreendimento" required>
                                 </div>
                                 <div class="form-group" style="margin-bottom: 10px;">
-                                    <label for="mapUnidade">Coluna Unidade</label>
+                                    <label for="mapUnidade" title="Unidade específica do empreendimento (apto, lote, sala)">Coluna Unidade <span style="cursor: help; color: var(--accent-primary);">?</span></label>
                                     <input type="text" id="mapUnidade" placeholder="Ex: Unidade">
                                 </div>
                                 <div class="form-group" style="margin-bottom: 10px;">
-                                    <label for="mapCliente">Coluna Nome Cliente</label>
+                                    <label for="mapCliente" title="Nome completo do cliente/comprador">Coluna Nome Cliente <span style="cursor: help; color: var(--accent-primary);">?</span></label>
                                     <input type="text" id="mapCliente" placeholder="Ex: Nome do Cliente">
                                 </div>
                                 <div class="form-group" style="margin-bottom: 10px;">
-                                    <label for="mapBalaoValor">Coluna Valor do Balão</label>
+                                    <label for="mapBalaoValor" title="Valor dos reforços/balões (parcelas futuras em Reais)">Coluna Valor do Balão <span style="cursor: help; color: var(--accent-primary);">?</span></label>
                                     <input type="text" id="mapBalaoValor" placeholder="Ex: Valor do Balão/Reforço (R$)">
                                 </div>
                                 <div class="form-group" style="margin-bottom: 10px;">
-                                    <label for="mapBalaoDatas">Coluna Datas dos Balões</label>
+                                    <label for="mapBalaoDatas" title="Datas previstas para vencimento dos balões (separadas por |)">Coluna Datas dos Balões <span style="cursor: help; color: var(--accent-primary);">?</span></label>
                                     <input type="text" id="mapBalaoDatas" placeholder="Ex: Datas Previstas Balões/Reforços">
                                 </div>
                                 <div class="form-group" style="margin-bottom: 15px;">
-                                    <label for="mapBalaoQtd">Coluna Qtd de Balões</label>
+                                    <label for="mapBalaoQtd" title="Quantidade de balões/reforços previstos">Coluna Qtd de Balões <span style="cursor: help; color: var(--accent-primary);">?</span></label>
                                     <input type="text" id="mapBalaoQtd" placeholder="Ex: Qtd. Balões/Reforços">
                                 </div>
 
@@ -214,6 +214,7 @@
                                     <button type="submit" id="btnSubmitPerfil" class="btn btn-primary" style="flex: 1;">SALVAR NOVO PERFIL</button>
                                     <button type="button" id="btnCancelarEdicao" class="btn" style="display: none; background: rgba(255,255,255,0.05); color: var(--text-primary); padding: 12px 20px;">CANCELAR</button>
                                 </div>
+                                <button type="button" id="btnNovoPerfilRapido" class="btn" style="width: 100%; margin-top: 10px; background: rgba(255,255,255,0.03); color: var(--accent-primary); border: 1px solid rgba(255,255,255,0.1);">+ ADICIONAR NOVO PERFIL</button>
                             </form>
                         </div>
                     </section>
@@ -229,12 +230,19 @@
                             <div class="upload-icon">📤</div>
                             <h3 style="font-size: 1.1rem; margin-bottom: 5px;">Arraste e solte o arquivo aqui</h3>
                             <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 15px;">Suporta arquivos Excel (.xlsx, .xls) ou CSV</p>
-                            <span class="btn" style="background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); padding: 8px 16px; font-size: 0.8rem;">SELECIONAR ARQUIVO</span>
+                            <button type="button" class="btn" id="selectFileButton" style="background: rgba(255,255,255,0.05); color: var(--accent-primary); border: 1px solid var(--glass-border); padding: 8px 16px; font-size: 0.8rem;">SELECIONAR ARQUIVO</button>
                             <div id="fileInfo" style="margin-top: 15px; font-weight: 600; font-size: 0.9rem; color: var(--accent-primary); display: none;"></div>
                         </div>
 
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 20px;">
+                            <label style="display: flex; align-items: center; gap: 8px; color: var(--text-primary);">
+                                <input type="checkbox" id="usaIaCheckbox" style="width: auto;"> Usar IA para sugerir mapeamento
+                            </label>
+                            <button type="button" class="btn" id="btnSugestaoMapeamento" disabled style="background: rgba(255,255,255,0.05); color: var(--accent-primary);">SUGERIR MAPEAMENTO AUTOMÁTICO</button>
+                        </div>
+
                         <div style="text-align: right; margin-top: 20px;">
-                            <button class="btn btn-primary" id="btnPreview" disabled>GERAR PREVIEW DA IMPORTAÇÃO</button>
+                            <button type="button" class="btn btn-primary" id="btnPreview">GERAR PREVIEW DA IMPORTAÇÃO</button>
                         </div>
                     </section>
 
@@ -325,6 +333,10 @@
         let perfisCached = [];
         let selectedFileBase64 = null;
         let editPerfilId = null;
+        const btnSugestaoMapeamento = document.getElementById('btnSugestaoMapeamento');
+        const btnPreview = document.getElementById('btnPreview');
+        const perfilSelect = document.getElementById('perfilSelect');
+        const usaIaCheckbox = document.getElementById('usaIaCheckbox');
 
         function resetFormState() {
             document.getElementById('perfilForm').reset();
@@ -408,6 +420,12 @@
         // Cancel Edit
         document.getElementById('btnCancelarEdicao').addEventListener('click', () => {
             resetFormState();
+        });
+
+        // Quick add new profile
+        document.getElementById('btnNovoPerfilRapido').addEventListener('click', () => {
+            resetFormState();
+            document.getElementById('nomePerfilInput').focus();
         });
 
         // Delete selected profile
@@ -495,9 +513,23 @@
         // Drag and drop / select files
         const uploadArea = document.getElementById('uploadArea');
         const fileInput = document.getElementById('fileInput');
+        const selectFileButton = document.getElementById('selectFileButton');
         const fileInfo = document.getElementById('fileInfo');
 
-        uploadArea.addEventListener('click', () => fileInput.click());
+        uploadArea.addEventListener('click', (e) => {
+            // Previne loop duplo se o clique já for no input ou no botão (pois eles já fazem o trigger e o botão para a propagação)
+            if (e.target === fileInput || e.target === selectFileButton) return;
+            fileInput.value = '';
+            fileInput.click();
+        });
+        selectFileButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            fileInput.value = '';
+            fileInput.click();
+        });
+        // Stop bubbling from fileInput so it doesn't trigger uploadArea again
+        fileInput.addEventListener('click', (e) => e.stopPropagation());
 
         uploadArea.addEventListener('dragover', (e) => {
             e.preventDefault();
@@ -517,6 +549,8 @@
             }
         });
 
+        perfilSelect.addEventListener('change', checkCanPreview);
+
         fileInput.addEventListener('change', (e) => {
             if (e.target.files.length > 0) {
                 handleFile(e.target.files[0]);
@@ -531,25 +565,105 @@
             reader.onload = (event) => {
                 selectedFileBase64 = event.target.result;
                 checkCanPreview();
+                checkCanSuggest();
             };
             reader.readAsDataURL(file);
         }
 
         function checkCanPreview() {
-            const perfil_id = document.getElementById('perfilSelect').value;
-            const btn = document.getElementById('btnPreview');
-            
-            if (perfil_id && selectedFileBase64) {
-                btn.disabled = false;
+            // Preview button is always enabled to show validation error messages
+            // Validations happen in the click handler
+        }
+
+        function checkCanSuggest() {
+            if (!btnSugestaoMapeamento) return;
+            btnSugestaoMapeamento.disabled = !selectedFileBase64;
+        }
+
+        async function parseApiResponse(response) {
+            const contentType = response.headers.get('content-type') || '';
+            let payload;
+
+            if (contentType.includes('application/json')) {
+                payload = await response.json();
             } else {
-                btn.disabled = true;
+                payload = await response.text();
             }
+
+            if (!response.ok) {
+                const message = typeof payload === 'string'
+                    ? payload.trim()
+                    : payload?.error || response.statusText;
+                throw new Error(message || `Erro HTTP ${response.status}`);
+            }
+
+            return payload;
         }
 
         // Generate Preview
+        btnSugestaoMapeamento.addEventListener('click', async () => {
+            if (!selectedFileBase64) {
+                showToast('Carregue um arquivo antes de sugerir o mapeamento.', 'error');
+                return;
+            }
+
+            const btn = btnSugestaoMapeamento;
+            const linhaCabecalho = parseInt(document.getElementById('linhaCabecalhoInput').value, 10);
+            const usa_ia = usaIaCheckbox.checked;
+
+            try {
+                btn.disabled = true;
+                btn.textContent = 'SUGERINDO MAPEAMENTO...';
+
+                const response = await fetch(`${API_BASE}/sugerir-mapeamento`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        fileBase64: selectedFileBase64,
+                        linha_cabecalho: linhaCabecalho,
+                        usa_ia
+                    })
+                });
+
+                const data = await parseApiResponse(response);
+
+                const sugestoes = data.sugestoes_mapeamento || {};
+                document.getElementById('mapCorretor').value = sugestoes.corretor_identificador || '';
+                document.getElementById('mapCreci').value = sugestoes.corretor_creci || '';
+                document.getElementById('mapValorVenda').value = sugestoes.valor_venda || '';
+                document.getElementById('mapValorPago').value = sugestoes.valor_pago || '';
+                document.getElementById('mapEmpreendimento').value = sugestoes.empreendimento || '';
+                document.getElementById('mapUnidade').value = sugestoes.unidade || '';
+                document.getElementById('mapCliente').value = sugestoes.cliente_nome || '';
+                document.getElementById('mapBalaoValor').value = sugestoes.balao_valor || '';
+                document.getElementById('mapBalaoDatas').value = sugestoes.balao_datas || '';
+                document.getElementById('mapBalaoQtd').value = sugestoes.balao_qtd || '';
+
+                showToast('Sugestão de mapeamento aplicada. Revise antes de salvar o perfil.', 'success');
+            } catch (err) {
+                showToast(err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'SUGERIR MAPEAMENTO AUTOMÁTICO';
+            }
+        });
+
         document.getElementById('btnPreview').addEventListener('click', async () => {
             const perfil_id = document.getElementById('perfilSelect').value;
             const btn = document.getElementById('btnPreview');
+
+            if (!perfil_id) {
+                showToast('Selecione um perfil de mapeamento antes de gerar o preview.', 'error');
+                return;
+            }
+
+            if (!selectedFileBase64) {
+                showToast('Carregue um arquivo antes de gerar o preview.', 'error');
+                return;
+            }
 
             try {
                 btn.disabled = true;
@@ -567,11 +681,7 @@
                     })
                 });
 
-                const data = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(data.error || 'Falha ao processar planilha para preview');
-                }
+                const data = await parseApiResponse(response);
 
                 // Render statistics
                 document.getElementById('statVendas').textContent = data.total_linhas;
@@ -675,11 +785,7 @@
                     })
                 });
 
-                const data = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(data.error || 'Erro ao processar importação definitiva');
-                }
+                const data = await parseApiResponse(response);
 
                 showToast(`Importação concluída com sucesso!\n- ${data.total_vendas_processadas} Vendas Processadas\n- ${data.transacoes_criadas} Novas Transações Criadas\n- ${data.corretores_atualizados} Corretores Atualizados com seus respectivos saldos.`, 'success');
                 

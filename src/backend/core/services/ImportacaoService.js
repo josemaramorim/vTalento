@@ -1,4 +1,4 @@
-const db = require('../../infra/db');
+﻿const db = require('../../infra/db');
 const crypto = require('crypto');
 const xlsx = require('xlsx');
 
@@ -22,7 +22,7 @@ class ImportacaoService {
 
   async criarPerfil(empresa_id, { nome_perfil, mapeamento_json, separador_multiplo = '|', linha_cabecalho = 3 }) {
     if (!nome_perfil || !mapeamento_json) {
-      throw new Error('Nome do perfil e mapeamento são obrigatórios');
+      throw new Error('Nome do perfil e mapeamento sÃ£o obrigatÃ³rios');
     }
 
     const id = crypto.randomUUID();
@@ -44,7 +44,7 @@ class ImportacaoService {
 
   async atualizarPerfil(empresa_id, id, { nome_perfil, mapeamento_json, separador_multiplo = '|', linha_cabecalho = 3 }) {
     if (!nome_perfil || !mapeamento_json) {
-      throw new Error('Nome do perfil e mapeamento são obrigatórios');
+      throw new Error('Nome do perfil e mapeamento sÃ£o obrigatÃ³rios');
     }
 
     const mapeamentoStr = typeof mapeamento_json === 'string' ? mapeamento_json : JSON.stringify(mapeamento_json);
@@ -60,7 +60,7 @@ class ImportacaoService {
       });
 
     if (!updated) {
-      throw new Error('Perfil não encontrado para atualização');
+      throw new Error('Perfil nÃ£o encontrado para atualizaÃ§Ã£o');
     }
 
     return { id, nome_perfil };
@@ -72,7 +72,7 @@ class ImportacaoService {
       .del();
 
     if (!deleted) {
-      throw new Error('Perfil não encontrado para exclusão');
+      throw new Error('Perfil nÃ£o encontrado para exclusÃ£o');
     }
     return { success: true };
   }
@@ -91,7 +91,83 @@ class ImportacaoService {
     }
   }
 
-  // Função auxiliar para limpar CPF para busca
+  _normalizeText(value) {
+    if (value === undefined || value === null) return '';
+    return String(value)
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-zA-Z0-9]+/g, ' ')
+      .trim()
+      .toLowerCase();
+  }
+
+  _matchHeader(headers, patterns) {
+    for (const pattern of patterns) {
+      const normalizedPattern = this._normalizeText(pattern);
+      for (const header of headers) {
+        const normalizedHeader = this._normalizeText(header);
+        if (normalizedHeader === normalizedPattern || normalizedHeader.includes(normalizedPattern)) {
+          return header;
+        }
+      }
+    }
+    return '';
+  }
+
+  _guessMapeamento(headers) {
+    const patterns = {
+      corretor_identificador: ['corretor', 'nome corretor', 'cpf', 'corretor responsavel', 'corretor identificador', 'corretor responsÃ¡vel'],
+      corretor_creci: ['creci', 'registro profissional', 'creci corretor'],
+      valor_venda: ['valor venda', 'valor total', 'total venda', 'venda r$', 'valor da venda'],
+      valor_pago: ['valor pago', 'pago atual', 'valor pago atual', 'valor recebido', 'valor recebido r$'],
+      empreendimento: ['empreendimento', 'empreendimento unidade', 'empreendimento / unidade'],
+      unidade: ['unidade', 'imovel', 'imÃ³vel'],
+      cliente_nome: ['cliente', 'nome cliente', 'nome do cliente', 'comprador'],
+      balao_valor: ['balao valor', 'balÃ£o valor', 'valor balao', 'valor balÃ£o', 'valor reforco', 'valor reforÃ§o'],
+      balao_datas: ['balao datas', 'balÃ£o datas', 'datas balao', 'datas balÃ£o', 'datas reforco', 'datas reforÃ§o'],
+      balao_qtd: ['balao qtd', 'balÃ£o qtd', 'qtde balao', 'qtde balÃ£o', 'quantidade baloes', 'quantidade balÃµes', 'qtd reforco', 'qtd reforÃ§o']
+    };
+
+    const sugestoes = {};
+    const availableHeaders = headers.map(h => (h === null || h === undefined ? '' : String(h).trim()));
+
+    for (const key of Object.keys(patterns)) {
+      sugestoes[key] = this._matchHeader(availableHeaders, patterns[key]);
+    }
+
+    return sugestoes;
+  }
+
+  async sugerirMapeamento(empresa_id, fileBase64, { linha_cabecalho = 1, usa_ia = false } = {}) {
+    if (!fileBase64) {
+      throw new Error('O campo fileBase64 Ã© obrigatÃ³rio');
+    }
+
+    const rawRows = this._lerPlanilhaBase64(fileBase64);
+    const cabecalho0Based = Math.max(0, parseInt(linha_cabecalho, 10) - 1 || 0);
+
+    if (rawRows.length <= cabecalho0Based) {
+      throw new Error('A planilha estÃ¡ vazia ou a linha do cabeÃ§alho estÃ¡ fora dos limites');
+    }
+
+    const headers = rawRows[cabecalho0Based];
+    if (!headers || !Array.isArray(headers)) {
+      throw new Error('CabeÃ§alho da planilha nÃ£o localizado na linha configurada');
+    }
+
+    const colunasDetectadas = headers.map(h => (h === null || h === undefined ? '' : String(h).trim()));
+    const sugestoesMapeamento = this._guessMapeamento(colunasDetectadas);
+
+    return {
+      colunas_detectadas: colunasDetectadas,
+      sugestoes_mapeamento: sugestoesMapeamento,
+      linha_cabecalho: cabecalho0Based + 1,
+      usa_ia: !!usa_ia,
+      metodo: 'heuristica'
+    };
+  }
+
+  // FunÃ§Ã£o auxiliar para limpar CPF para busca
   _limparCPF(cpf) {
     if (!cpf) return '';
     return String(cpf).replace(/\D/g, '');
@@ -135,23 +211,23 @@ class ImportacaoService {
     return null;
   }
 
-  // Parser de valores numéricos
+  // Parser de valores numÃ©ricos
   _parseMoeda(valor) {
     if (valor === undefined || valor === null) return 0;
     if (typeof valor === 'number') return valor;
     
-    // Se for string, limpa pontuação de moeda brasileira/americana
+    // Se for string, limpa pontuaÃ§Ã£o de moeda brasileira/americana
     let str = String(valor).trim();
     if (!str) return 0;
     
-    // Remove "R$", espaços, etc.
+    // Remove "R$", espaÃ§os, etc.
     str = str.replace(/R\$\s*/g, '');
     
-    // Se contiver vírgula e ponto, ex: 1.000,50 -> 1000.50
+    // Se contiver vÃ­rgula e ponto, ex: 1.000,50 -> 1000.50
     if (str.includes('.') && str.includes(',')) {
       str = str.replace(/\./g, '').replace(',', '.');
     } else if (str.includes(',')) {
-      // Se contiver apenas vírgula, ex: 1000,50 -> 1000.50
+      // Se contiver apenas vÃ­rgula, ex: 1000,50 -> 1000.50
       str = str.replace(',', '.');
     }
     
@@ -159,7 +235,7 @@ class ImportacaoService {
     return isNaN(num) ? 0 : num;
   }
 
-  // Processa as datas e valores de balões futuros
+  // Processa as datas e valores de balÃµes futuros
   _parseBaloes(rowValores, separador) {
     const { balao_datas_raw, balao_valor_raw, balao_qtd_raw } = rowValores;
     
@@ -176,7 +252,7 @@ class ImportacaoService {
     const qtdBaloes = parseInt(balao_qtd_raw, 10) || datas.length;
     
     const valorUnitarioRs = valorTotalBalao / qtdBaloes;
-    const valorUnitarioTalentos = Math.floor(valorUnitarioRs * 0.01); // Regra padrão: R$ 1000 = 10 Talentos -> R$ 1 = 0.01 Talentos
+    const valorUnitarioTalentos = Math.floor(valorUnitarioRs * 0.01); // Regra padrÃ£o: R$ 1000 = 10 Talentos -> R$ 1 = 0.01 Talentos
     
     return datas.map(dataStr => {
       // Tentar converter dataStr ("10/02/2027") em formato Date
@@ -186,7 +262,7 @@ class ImportacaoService {
         // dia/mes/ano -> Date(ano, mes-1, dia)
         dataVencimento = new Date(parseInt(partes[2], 10), parseInt(partes[1], 10) - 1, parseInt(partes[0], 10));
       } else {
-        // Fallback para conversão direta
+        // Fallback para conversÃ£o direta
         const parsed = Date.parse(dataStr);
         if (!isNaN(parsed)) dataVencimento = new Date(parsed);
       }
@@ -202,19 +278,19 @@ class ImportacaoService {
   async previewImportacao(empresa_id, fileBase64, perfil_id) {
     const perfil = await this.obterPerfil(empresa_id, perfil_id);
     if (!perfil) {
-      throw new Error('Perfil de importação não encontrado');
+      throw new Error('Perfil de importaÃ§Ã£o nÃ£o encontrado');
     }
 
     const rawRows = this._lerPlanilhaBase64(fileBase64);
     const cabecalho0Based = Math.max(0, perfil.linha_cabecalho - 1);
     
     if (rawRows.length <= cabecalho0Based) {
-      throw new Error('A planilha está vazia ou a linha do cabeçalho está fora dos limites');
+      throw new Error('A planilha estÃ¡ vazia ou a linha do cabeÃ§alho estÃ¡ fora dos limites');
     }
 
     const headers = rawRows[cabecalho0Based];
     if (!headers || !Array.isArray(headers)) {
-      throw new Error('Cabeçalho da planilha não localizado na linha configurada');
+      throw new Error('CabeÃ§alho da planilha nÃ£o localizado na linha configurada');
     }
 
     const headerIndices = {};
@@ -224,7 +300,7 @@ class ImportacaoService {
 
     const mapeamento = perfil.mapeamento_json;
     
-    // Mapeia chaves para facilitar a extração
+    // Mapeia chaves para facilitar a extraÃ§Ã£o
     const fieldsToExtract = {
       corretor_identificador: String(mapeamento.corretor_identificador || '').trim().toUpperCase(),
       corretor_creci: String(mapeamento.corretor_creci || '').trim().toUpperCase(),
@@ -243,10 +319,10 @@ class ImportacaoService {
     colunasObrigatorias.forEach(col => {
       const colNameInFile = mapeamento[col];
       if (!colNameInFile) {
-        throw new Error(`Coluna obrigatória de mapeamento '${col}' não foi configurada no perfil.`);
+        throw new Error(`Coluna obrigatÃ³ria de mapeamento '${col}' nÃ£o foi configurada no perfil.`);
       }
       if (headerIndices[colNameInFile.trim().toUpperCase()] === undefined) {
-        throw new Error(`A coluna configurada '${colNameInFile}' não existe no cabeçalho da planilha.`);
+        throw new Error(`A coluna configurada '${colNameInFile}' nÃ£o existe no cabeÃ§alho da planilha.`);
       }
     });
 
@@ -287,7 +363,7 @@ class ImportacaoService {
       const talentosDisponiveis = Math.floor(valorPagoRs * 0.01);
       const talentosAReceber = totalTalentos - talentosDisponiveis;
 
-      // Balões
+      // BalÃµes
       const baloesValores = {
         balao_datas_raw: getVal('balao_datas'),
         balao_valor_raw: getVal('balao_valor'),
@@ -302,7 +378,7 @@ class ImportacaoService {
         corretor_creci_planilha: rawCreci,
         empreendimento: rawEmpreendimento || 'Desconhecido',
         unidade: rawUnidade || 'Geral',
-        cliente_nome: rawCliente || 'Não Informado',
+        cliente_nome: rawCliente || 'NÃ£o Informado',
         valores: {
           valor_venda_rs: valorVendaRs,
           valor_pago_rs: valorPagoRs,
@@ -330,7 +406,7 @@ class ImportacaoService {
     const preview = await this.previewImportacao(empresa_id, fileBase64, perfil_id);
     
     if (preview.inconsistencias > 0) {
-      throw new Error(`Existem ${preview.inconsistencias} corretores não localizados no sistema. Cadastre-os antes de efetuar a importação definitiva.`);
+      throw new Error(`Existem ${preview.inconsistencias} corretores nÃ£o localizados no sistema. Cadastre-os antes de efetuar a importaÃ§Ã£o definitiva.`);
     }
 
     const resultadoProcessado = await db.transaction(async (trx) => {
@@ -342,9 +418,9 @@ class ImportacaoService {
         corretoresAfetados.add(corretorId);
 
         const transacaoId = crypto.randomUUID();
-        const justificativaBase = `Importação - ${row.empreendimento} ${row.unidade} - Cliente: ${row.cliente_nome}`;
+        const justificativaBase = `ImportaÃ§Ã£o - ${row.empreendimento} ${row.unidade} - Cliente: ${row.cliente_nome}`;
 
-        // 1. Criar transação COMPENSADA para os Talentos já pagos (disponíveis)
+        // 1. Criar transaÃ§Ã£o COMPENSADA para os Talentos jÃ¡ pagos (disponÃ­veis)
         if (row.valores.talentos_disponiveis > 0) {
           await trx('GamTransacao').insert({
             id: transacaoId,
@@ -368,7 +444,7 @@ class ImportacaoService {
           transacoesCriadas++;
         }
 
-        // 2. Criar transações PENDENTES para os Balões Futuros
+        // 2. Criar transaÃ§Ãµes PENDENTES para os BalÃµes Futuros
         let totalBaloesTalentos = 0;
         for (let idxB = 0; idxB < row.baloes.length; idxB++) {
           const bal = row.baloes[idxB];
@@ -383,7 +459,7 @@ class ImportacaoService {
             valor: bal.valor_talentos,
             tipo: 'CREDITO',
             origem: 'IMPORTACAO',
-            justificativa: `${justificativaBase} (Balão ${idxB + 1}/${row.baloes.length})`,
+            justificativa: `${justificativaBase} (BalÃ£o ${idxB + 1}/${row.baloes.length})`,
             valor_original_rs: bal.valor_rs,
             status: 'PENDENTE',
             data_vencimento: bal.data_vencimento ? bal.data_vencimento.toISOString() : null,
@@ -397,7 +473,7 @@ class ImportacaoService {
           transacoesCriadas++;
         }
 
-        // 3. Criar transação PENDENTE genérica para o saldo remanescente a receber (ex: parcelas mensais futuras)
+        // 3. Criar transaÃ§Ã£o PENDENTE genÃ©rica para o saldo remanescente a receber (ex: parcelas mensais futuras)
         const saldoRemanescenteAReceber = row.valores.talentos_a_receber - totalBaloesTalentos;
         if (saldoRemanescenteAReceber > 0) {
           const remTransacaoId = crypto.randomUUID();
@@ -426,7 +502,7 @@ class ImportacaoService {
 
       // 4. Recalcular e atualizar saldos de todos os corretores afetados no banco de dados
       for (const corretorId of corretoresAfetados) {
-        // Soma todas as transações COMPENSADAS de crédito, subtrai débitos manuais
+        // Soma todas as transaÃ§Ãµes COMPENSADAS de crÃ©dito, subtrai dÃ©bitos manuais
         const transacoesDoCorretor = await trx('GamTransacao')
           .where({ usuario_id: corretorId });
 
@@ -467,3 +543,4 @@ class ImportacaoService {
 }
 
 module.exports = new ImportacaoService();
+

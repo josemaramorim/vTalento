@@ -33,6 +33,31 @@ O Administrador cria um perfil vinculando os campos obrigatórios do sistema às
 - **Corretor não encontrado:** O sistema deve alertar o Admin e permitir o "vínculo manual" ou criação do corretor.
 - **Valores negativos:** Se o saldo devedor aumentar (ex: renegociação), o sistema gera um alerta para revisão manual.
 
+### 2.3. Auto-Mapeamento de Colunas
+O Motor de Importação deve oferecer uma forma de sugerir automaticamente o mapeamento das colunas da planilha para os campos obrigatórios do sistema. Essa sugestão deve ser apresentada antes da validação final da importação, garantindo que o usuário revise e confirme o perfil.
+
+- **Modo heurístico local:** deve analisar os cabeçalhos da planilha aplicando normalização de texto (remoção de acentos, minúsculas, espaços e caracteres especiais) e comparar com padrões esperados, como:
+  - `corretor`, `nome`, `cpf`, `creci`
+  - `valor venda`, `total venda`, `venda`
+  - `valor pago`, `pago`
+  - `empreendimento`
+  - `unidade`
+  - `cliente`, `nome cliente`
+  - `balao`, `balões`, `reforço`, `parcelas`
+  - `data`, `datas`, `vencimento`
+  - `qtd`, `quantidade`
+
+- **Modo opcional com IA:** se o parâmetro `usa_ia` for ativado, a IA poderá receber os cabeçalhos e exemplos do arquivo para sugerir qual coluna corresponde a cada campo do perfil. A IA deve ser usada apenas para sugerir, não para decidir automaticamente sem revisão do usuário.
+
+- **Resultado:** o sistema deve preencher como sugestão os campos do perfil de mapeamento para revisão manual. O usuário deve poder ajustar os campos antes de salvar o perfil ou prosseguir com o preview.
+
+### 2.4. Significado da etapa "Carregar Planilha"
+O passo de "Carregar Planilha" faz o upload do arquivo e prepara os dados para análise de preview. Ele **não importa os dados definitivamente** e **não salva um novo perfil de mapeamento** por si só.
+
+- O arquivo é lido e enviado para o backend apenas para validar o perfil existente ou a sugestão de mapeamento.
+- O propósito dessa etapa é verificar colunas, detectar inconsistências e mostrar um preview antes da importação final.
+- A importação definitiva só ocorre quando o usuário confirma explicitamente o processamento do lote imobiliário.
+
 ## 3. Frequência de Atualização
 - Manual (Upload via Painel Admin).
 - O sistema deve guardar o histórico de cada arquivo importado (Log de Importação).
