@@ -152,41 +152,7 @@
             border-radius: 4px;
             transition: width 0.5s ease;
         }
-        .table-responsive {
-            overflow-x: auto;
-            width: 100%;
-            border-radius: var(--radius-md);
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            box-shadow: var(--shadow-md);
-            margin-top: 20px;
-        }
-        .premium-table {
-            width: 100%;
-            border-collapse: collapse;
-            text-align: left;
-        }
-        .premium-table th {
-            padding: 18px 24px;
-            background: rgba(255, 255, 255, 0.02);
-            color: var(--text-secondary);
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            border-bottom: 1px solid var(--glass-border);
-        }
-        .premium-table td {
-            padding: 18px 24px;
-            border-bottom: 1px solid var(--glass-border);
-            font-size: 0.9rem;
-            color: var(--text-primary);
-        }
-        .premium-table tr:last-child td {
-            border-bottom: none;
-        }
-        .premium-table tr:hover {
-            background: rgba(255, 255, 255, 0.01);
-        }
+        /* Tabela migrada para PremiumGrid no style.css global */
         .badge {
             display: inline-flex;
             align-items: center;
@@ -396,30 +362,10 @@
                 </div>
             </div>
 
-            <!-- Tabela de Faturas -->
-            <div class="animate-fade" style="animation-delay: 0.1s;">
-                <h2 style="font-size: 1.2rem; font-weight: 600; margin-bottom: 15px;">📋 Histórico de Faturamento</h2>
-                <div class="table-responsive">
-                    <table class="premium-table">
-                        <thead>
-                            <tr>
-                                <th>Código</th>
-                                <th>Valor</th>
-                                <th title="Prazo para efetuar o pagamento">Prazo de Pgto.</th>
-                                <th title="Período de licença que será ativado após o pagamento">Período Coberto</th>
-                                <th>Método / Gateway</th>
-                                <th>Status</th>
-                                <th style="text-align: right;">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="faturasTableBody">
-                            <tr>
-                                <td colspan="6" style="text-align: center; color: var(--text-secondary);">Carregando faturas...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+            <!-- Tabela de Faturas com PremiumGrid -->
+            <section class="glass" style="padding: 25px; margin-top: 30px;">
+                <div id="gridFaturas"></div>
+            </section>
         </main>
     </div>
 
@@ -468,6 +414,7 @@
     </div>
 
     <script src="assets/js/auth.js"></script>
+    <script src="assets/js/premium-grid.js"></script>
     <script>
         const token = localStorage.getItem('@VTalentos:token');
         const userStr = localStorage.getItem('@VTalentos:user');
@@ -631,61 +578,119 @@
             }
         }
 
+        let faturasGrid = null;
         async function loadFaturas() {
-            try {
-                const resFaturas = await fetch('http://localhost:3001/api/admin/billing/faturas', {
-                    headers: { 'Authorization': `Bearer ${token}` }
+            if (!faturasGrid) {
+                faturasGrid = new PremiumGrid({
+                    containerId: 'gridFaturas',
+                    title: 'Histórico de Faturamento',
+                    pagination: { enabled: true, defaultPageSize: 10, pageSizeOptions: [10, 50, 100] },
+                    filters: [
+                        { id: 'status', label: 'Status', type: 'select', options: [
+                            { value: 'PAGA', label: 'Paga' },
+                            { value: 'PENDENTE', label: 'Pendente' },
+                            { value: 'VENCIDA', label: 'Vencida' },
+                            { value: 'CANCELADA', label: 'Cancelada' }
+                        ]},
+                        { id: 'metodo', label: 'Método / Gateway', type: 'select', options: [
+                            { value: 'CARTAO', label: 'Cartão de Crédito' },
+                            { value: 'PIX', label: 'Pix ⚡' },
+                            { value: 'BOLETO', label: 'Boleto 📄' }
+                        ]}
+                    ],
+                    columns: [
+                        { key: 'codigo', label: 'Código', sortable: true },
+                        { key: 'valor', label: 'Valor', sortable: true },
+                        { key: 'prazo', label: 'Prazo de Pgto.', sortable: true },
+                        { key: 'periodo', label: 'Período Coberto', sortable: false },
+                        { key: 'metodo', label: 'Método / Gateway', sortable: true },
+                        { key: 'status', label: 'Status', align: 'center', sortable: true },
+                        { key: 'acoes', label: 'Ações', align: 'right', sortable: false }
+                    ],
+                    cellRenderer: (row, col) => {
+                        if (col.key === 'codigo') return `<code style="font-family: monospace; font-size: 0.8rem; color:var(--text-secondary);">${row.id.substring(0, 8)}...</code>`;
+                        if (col.key === 'valor') return `<strong>${parseFloat(row.valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</strong>`;
+                        if (col.key === 'prazo') return `<span style="font-size:0.82rem;">${new Date(row.data_vencimento).toLocaleDateString('pt-BR')}</span>`;
+                        if (col.key === 'periodo') {
+                            if (row.status === 'PAGA' && row.data_pagamento) {
+                                const inicio = new Date(row.data_pagamento);
+                                const fim = new Date(inicio);
+                                fim.setDate(fim.getDate() + 30);
+                                return `${inicio.toLocaleDateString('pt-BR')} &rarr; ${fim.toLocaleDateString('pt-BR')}`;
+                            } else if (row.status === 'PENDENTE') {
+                                return `<span style="color:var(--warning); font-size:0.75rem;">A ativar após pagamento (+30 dias)</span>`;
+                            }
+                            return '-';
+                        }
+                        if (col.key === 'metodo') return `<span style="font-size:0.75rem; font-weight:600; text-transform:uppercase; color:var(--text-secondary);">${row.metodo_pagamento || '-'} (${row.provedor || 'PLATAFORMA'})</span>`;
+                        if (col.key === 'status') return `<span class="badge badge-${row.status.toLowerCase()}">${row.status}</span>`;
+                        if (col.key === 'acoes') {
+                            if (row.status !== 'PAGA' && row.status !== 'CANCELADA') {
+                                return `
+                                    <div style="display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap;">
+                                        <button class="btn btn-primary" onclick="openCheckoutModal('${row.id}', ${row.valor})" style="padding: 6px 12px; font-size: 0.75rem; font-weight:600; border-radius:4px;">💳 PAGAR</button>
+                                        <button onclick="cancelarFatura('${row.id}')" style="padding: 6px 12px; font-size: 0.75rem; font-weight:600; border-radius:4px; background:rgba(231,76,60,0.12); border:1px solid rgba(231,76,60,0.3); color:var(--error); cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='rgba(231,76,60,0.25)'" onmouseout="this.style.background='rgba(231,76,60,0.12)'">🗑️ EXCLUIR</button>
+                                    </div>`;
+                            } else {
+                                return `<span style="color:var(--text-secondary); font-size:0.8rem; font-weight:500;">Sem ações</span>`;
+                            }
+                        }
+                        return row[col.key];
+                    },
+                    fetchFn: async (params) => {
+                        try {
+                            const resFaturas = await fetch('http://localhost:3001/api/admin/billing/faturas', {
+                                headers: { 'Authorization': `Bearer ${token}` }
+                            });
+                            const dataFaturas = await resFaturas.json();
+                            
+                            if (!dataFaturas.success) throw new Error('Erro ao carregar faturas');
+
+                            let rows = dataFaturas.data || [];
+                            
+                            // Client-side status filter
+                            if (params.filters.status) {
+                                rows = rows.filter(r => r.status === params.filters.status);
+                            }
+
+                            // Client-side method filter
+                            if (params.filters.metodo) {
+                                rows = rows.filter(r => String(r.metodo_pagamento).toUpperCase() === params.filters.metodo);
+                            }
+                            
+                            if (params.sortBy) {
+                                rows.sort((a, b) => {
+                                    let valA = a[params.sortBy];
+                                    let valB = b[params.sortBy];
+                                    
+                                    if (params.sortBy === 'prazo') { valA = new Date(a.data_vencimento).getTime(); valB = new Date(b.data_vencimento).getTime(); }
+                                    else if (params.sortBy === 'codigo') { valA = a.id; valB = b.id; }
+                                    else if (params.sortBy === 'metodo') { valA = a.metodo_pagamento; valB = b.metodo_pagamento; }
+
+                                    if (valA < valB) return params.sortDir === 'asc' ? -1 : 1;
+                                    if (valA > valB) return params.sortDir === 'asc' ? 1 : -1;
+                                    return 0;
+                                });
+                            }
+
+                            const total = rows.length;
+                            if (params.limit) {
+                                const start = (params.page - 1) * params.limit;
+                                const end = start + params.limit;
+                                rows = rows.slice(start, end);
+                            }
+
+                            return { rows, total };
+                        } catch(err) {
+                            console.error(err);
+                            showToast('Erro ao carregar histórico de faturamento.', 'error');
+                            return { rows: [], total: 0 };
+                        }
+                    }
                 });
-                const dataFaturas = await resFaturas.json();
-
-                const tbody = document.getElementById('faturasTableBody');
-                tbody.innerHTML = '';
-
-                if (dataFaturas.success && dataFaturas.data.length > 0) {
-                    dataFaturas.data.forEach(fat => {
-                        const tr = document.createElement('tr');
-                        const prazoVenc = new Date(fat.data_vencimento).toLocaleDateString('pt-BR');
-                        const statusClass = `badge-${fat.status.toLowerCase()}`;
-
-                        // Período coberto: se paga, usa data de pagamento; se pendente, calcula a partir de hoje
-                        let periodoStr = '-';
-                        if (fat.status === 'PAGA' && fat.data_pagamento) {
-                            const inicio = new Date(fat.data_pagamento);
-                            const fim = new Date(inicio);
-                            fim.setDate(fim.getDate() + 30);
-                            periodoStr = `${inicio.toLocaleDateString('pt-BR')} &rarr; ${fim.toLocaleDateString('pt-BR')}`;
-                        } else if (fat.status === 'PENDENTE') {
-                            periodoStr = `<span style="color:var(--warning); font-size:0.75rem;">A ativar após pagamento (+30 dias)</span>`;
-                        }
-
-                        let actionBtns = '';
-                        if (fat.status !== 'PAGA' && fat.status !== 'CANCELADA') {
-                            actionBtns = `
-                                <div style="display:flex; gap:8px; justify-content:flex-end; flex-wrap:wrap;">
-                                    <button class="btn btn-primary" onclick="openCheckoutModal('${fat.id}', ${fat.valor})" style="padding: 6px 12px; font-size: 0.75rem; font-weight:600; border-radius:4px;">💳 PAGAR</button>
-                                    <button onclick="cancelarFatura('${fat.id}')" style="padding: 6px 12px; font-size: 0.75rem; font-weight:600; border-radius:4px; background:rgba(231,76,60,0.12); border:1px solid rgba(231,76,60,0.3); color:var(--error); cursor:pointer; transition:all 0.2s;" onmouseover="this.style.background='rgba(231,76,60,0.25)'" onmouseout="this.style.background='rgba(231,76,60,0.12)'">🗑️ EXCLUIR</button>
-                                </div>`;
-                        } else {
-                            actionBtns = `<span style="color:var(--text-secondary); font-size:0.8rem; font-weight:500;">Sem ações</span>`;
-                        }
-
-                        tr.innerHTML = `
-                            <td><code style="font-family: monospace; font-size: 0.8rem; color:var(--text-secondary);">${fat.id.substring(0, 8)}...</code></td>
-                            <td><strong>${parseFloat(fat.valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</strong></td>
-                            <td><span style="font-size:0.82rem;">${prazoVenc}</span></td>
-                            <td style="font-size:0.82rem;">${periodoStr}</td>
-                            <td><span style="font-size:0.75rem; font-weight:600; text-transform:uppercase; color:var(--text-secondary);">${fat.metodo_pagamento || '-'} (${fat.provedor || 'PLATAFORMA'})</span></td>
-                            <td><span class="badge ${statusClass}">${fat.status}</span></td>
-                            <td style="text-align: right;">${actionBtns}</td>
-                        `;
-                        tbody.appendChild(tr);
-                    });
-                } else {
-                    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-secondary);">Nenhuma fatura encontrada.</td></tr>`;
-                }
-            } catch (err) {
-                console.error(err);
-                showToast('Erro ao carregar histórico de faturamento.', 'error');
+                await faturasGrid.init();
+            } else {
+                await faturasGrid.refresh();
             }
         }
 

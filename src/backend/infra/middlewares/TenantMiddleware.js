@@ -22,6 +22,17 @@ const tenantMiddleware = async (req, res, next) => {
   req.usuario_id = decoded.id;
   req.usuario_perfil = decoded.perfil;
 
+  try {
+    if (process.env.NODE_ENV !== 'test') {
+      const usuario = await db('GamUsuario').where({ id: decoded.id }).select('ativo').first();
+      if (usuario && (usuario.ativo === false || usuario.ativo === 0)) {
+        return res.status(401).json({ error: 'USER_INACTIVE', message: 'Usuário inativo. Contate o administrador.' });
+      }
+    }
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+
   // Se for SUPER_ADMIN, pular todas as validações de empresa!
   if (decoded.perfil === 'SUPER_ADMIN') {
     return next();

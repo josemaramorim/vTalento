@@ -14,78 +14,7 @@
             padding: 4px 8px;
             font-size: 0.75rem;
         }
-        .filtros-barra {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 20px;
-            align-items: center;
-        }
-        .filtros-barra input {
-            flex: 1;
-            padding: 9px 12px;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid var(--glass-border);
-            border-radius: var(--radius-sm);
-            color: var(--text-primary);
-            font-family: var(--font-main);
-            font-size: 0.85rem;
-        }
-        .filtros-barra input:focus {
-            outline: none;
-            border-color: var(--accent-primary);
-        }
-        .paginacao-bar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 12px;
-            margin-top: 20px;
-            padding-top: 16px;
-            border-top: 1px solid var(--glass-border);
-        }
-        .paginacao-info {
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-        }
-        .paginacao-controles {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .paginacao-controles select {
-            padding: 6px 10px;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid var(--glass-border);
-            border-radius: var(--radius-sm);
-            color: var(--text-primary);
-            font-family: var(--font-main);
-            font-size: 0.85rem;
-            cursor: pointer;
-        }
-        .paginacao-controles select option {
-            background: var(--bg-card);
-        }
-        .btn-pag {
-            padding: 7px 16px;
-            border-radius: var(--radius-sm);
-            border: 1px solid var(--glass-border);
-            background: rgba(255,255,255,0.05);
-            color: var(--text-primary);
-            cursor: pointer;
-            font-family: var(--font-main);
-            font-size: 0.85rem;
-            transition: all 0.2s;
-        }
-        .btn-pag:hover:not(:disabled) {
-            background: var(--accent-primary);
-            color: #fff;
-            border-color: var(--accent-primary);
-        }
-        .btn-pag:disabled {
-            opacity: 0.35;
-            cursor: not-allowed;
-        }
+        /* Estilos de Grid e Paginação migrados para PremiumGrid no style.css */
         .badge-admin { background: rgba(212, 175, 55, 0.1); color: var(--accent-primary); border: 1px solid rgba(212, 175, 55, 0.2); }
         .badge-corretor { background: rgba(52, 152, 219, 0.1); color: #3498db; border: 1px solid rgba(52, 152, 219, 0.2); }
     </style>
@@ -153,52 +82,9 @@
                 </form>
             </section>
 
-            <!-- Listagem de Corretores -->
-            <section class="history-card glass" style="margin-top: 30px; padding: 25px;">
-                <h2 style="font-size: 1.2rem; margin-bottom: 15px; color: var(--text-primary);">Lista de Corretores da Equipe</h2>
-                
-                <!-- Barra de Busca -->
-                <div class="filtros-barra">
-                    <input type="text" id="buscaInput" placeholder="🔍 Pesquisar por Nome, E-mail ou CPF..." oninput="onBuscaInput()">
-                    <button class="btn btn-primary" onclick="buscarUsuarios()" style="padding: 9px 20px;">Pesquisar</button>
-                </div>
-
-                <div class="table-responsive">
-                    <table class="premium-table">
-                        <thead>
-                            <tr>
-                                <th>Nome</th>
-                                <th>E-mail</th>
-                                <th style="text-align: center;">CPF</th>
-                                <th style="text-align: center;">Perfil</th>
-                                <th style="text-align: right;">Saldo Disponível</th>
-                                <th style="text-align: right;">Saldo a Receber</th>
-                                <th style="text-align: center;">Status</th>
-                                <th style="text-align: center;">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="usuariosTableBody">
-                            <tr>
-                                <td colspan="8" style="text-align: center; color: var(--text-secondary);">Carregando equipe...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Paginação -->
-                <div class="premium-pagination-bar">
-                    <div class="premium-pagination-info" id="paginacaoInfo">—</div>
-                    <div class="premium-pagination-controls">
-                        <label style="font-size: 0.8rem; color: var(--text-secondary);">Registros por página:</label>
-                        <select id="limitSelect" onchange="onLimitChange()">
-                            <option value="10" selected>10</option>
-                            <option value="50">50</option>
-                            <option value="100">100</option>
-                        </select>
-                        <button class="premium-pagination-btn" id="btnPagAnterior" onclick="mudarPagina(-1)" disabled>← Anterior</button>
-                        <button class="premium-pagination-btn" id="btnPagProximo" onclick="mudarPagina(1)">Próximo →</button>
-                    </div>
-                </div>
+            <!-- Listagem de Corretores com PremiumGrid -->
+            <section class="glass" style="padding: 25px; margin-top: 30px; margin-bottom: 25px;">
+                <div id="gridUsuarios"></div>
             </section>
         </main>
     </div>
@@ -221,6 +107,7 @@
     </div>
 
     <script src="assets/js/auth.js"></script>
+    <script src="assets/js/premium-grid.js"></script>
     <script>
         // Check Admin Auth
         const token = localStorage.getItem('@VTalentos:token');
@@ -247,113 +134,110 @@
 
         const API_BASE = 'http://localhost:3001/api/admin';
         let stateUsuarios = [];
-        let pageAtual = 1;
-        let limitAtual = 10;
-        let totalPages = 1;
-        let buscaTimeout = null;
+        let globalGrid = null;
 
-        async function fetchUsuarios(pagina = 1) {
-            pageAtual = pagina;
-            limitAtual = parseInt(document.getElementById('limitSelect').value, 10) || 10;
-            const busca = document.getElementById('buscaInput').value;
+        async function setupGrid() {
+            globalGrid = new PremiumGrid({
+                containerId: 'gridUsuarios',
+                title: 'Lista de Corretores da Equipe',
+                totalCountId: 'usuariosTotalCount',
+                columns: [
+                    { key: 'nome', label: 'Nome', bold: true, sortable: true },
+                    { key: 'email', label: 'E-mail', sortable: true },
+                    { key: 'cpf', label: 'CPF', align: 'center' },
+                    { key: 'perfil', label: 'Perfil', align: 'center', sortable: true },
+                    { key: 'saldo_disponivel', label: 'Saldo Disponível', align: 'right', highlight: true, sortable: true },
+                    { key: 'saldo_a_receber', label: 'Saldo a Receber', align: 'right', sortable: true },
+                    { key: 'status', label: 'Status', align: 'center' },
+                    { key: 'acoes', label: 'Ações', align: 'center' }
+                ],
+                filters: [
+                    { id: 'busca', label: 'Pesquisar', type: 'text' },
+                    { id: 'perfil', label: 'Perfil', type: 'select', options: [
+                        { value: 'CORRETOR', label: 'Corretor' },
+                        { value: 'ADMIN_EMPRESA', label: 'Admin' }
+                    ]},
+                    { id: 'ativo', label: 'Status', type: 'select', options: [
+                        { value: 'true', label: 'Ativo' },
+                        { value: 'false', label: 'Inativo' }
+                    ]}
+                ],
+                pagination: { enabled: true, defaultPageSize: 10, pageSizeOptions: [10, 50, 100] },
+                cellRenderer: (row, col) => {
+                    if (col.key === 'cpf') return row.cpf || '—';
+                    if (col.key === 'perfil') {
+                        const badgeClass = row.perfil === 'ADMIN_EMPRESA' ? 'badge-admin' : 'badge-corretor';
+                        const roleLabel = row.perfil === 'ADMIN_EMPRESA' ? 'Admin' : 'Corretor';
+                        return `<span class="badge ${badgeClass}">${roleLabel}</span>`;
+                    }
+                    if (col.key === 'saldo_disponivel') return `<strong style="color: var(--accent-primary)">${parseFloat(row.saldo_disponivel).toFixed(2)} T$</strong>`;
+                    if (col.key === 'saldo_a_receber') return `<span style="color: var(--text-secondary);">${parseFloat(row.saldo_a_receber).toFixed(2)} T$</span>`;
+                    if (col.key === 'status') {
+                        const isAtivo = String(row.ativo) === 'true' || row.ativo === 1 || row.ativo === true;
+                        const statusText = isAtivo ? 'Ativo' : 'Inativo';
+                        const statusColor = isAtivo ? 'var(--success)' : 'var(--error)';
+                        return `<span class="badge" style="background: rgba(255,255,255,0.05); color: ${statusColor}; font-size: 0.72rem; padding: 4px 8px; border-radius: 4px; font-weight: 600;">${statusText}</span>`;
+                    }
+                    if (col.key === 'acoes') {
+                        const isAtivo = String(row.ativo) === 'true' || row.ativo === 1 || row.ativo === true;
+                        const toggleLabel = isAtivo ? 'Inativar' : 'Ativar';
+                        const toggleStyle = isAtivo 
+                            ? 'background: rgba(235, 77, 75, 0.15); color: var(--error); border: 1px solid rgba(235, 77, 75, 0.3);' 
+                            : 'background: rgba(46, 213, 115, 0.15); color: var(--success); border: 1px solid rgba(46, 213, 115, 0.3);';
 
-            const params = new URLSearchParams({
-                page: pageAtual,
-                limit: limitAtual,
-                ...(busca && { busca })
+                        return `
+                            <div class="actions-btn" style="justify-content: center; gap: 6px; display: flex;">
+                                <button type="button" class="btn btn-sm" onclick="editUsuario('${row.id}')" style="background: rgba(255,255,255,0.1); color: var(--text-primary); padding: 4px 8px; font-size: 0.75rem;">Editar</button>
+                                <button type="button" class="btn btn-sm" onclick="toggleStatus('${row.id}', ${isAtivo})" style="${toggleStyle} padding: 4px 8px; font-size: 0.75rem;">${toggleLabel}</button>
+                                <button type="button" class="btn btn-sm" onclick="window.location.href='admin-movimentacoes.html?usuario_id=${row.id}'" style="background: rgba(212,175,55,0.15); color: var(--accent-primary); border: 1px solid rgba(212,175,55,0.3); padding: 4px 8px; font-size: 0.75rem;">Extrato</button>
+                                <button type="button" class="btn btn-sm" onclick="confirmExcluir('${row.id}', '${row.nome}')" style="background: rgba(235, 77, 75, 0.2); color: var(--error); border: 1px solid rgba(235, 77, 75, 0.4); padding: 4px 8px; font-size: 0.75rem;">Excluir</button>
+                            </div>
+                        `;
+                    }
+                    return row[col.key];
+                },
+                fetchFn: async (params) => {
+                    const queryParams = new URLSearchParams({
+                        page: params.page,
+                        limit: params.limit,
+                        ...(params.filters.busca && { busca: params.filters.busca }),
+                        ...(params.filters.perfil && { perfil: params.filters.perfil }),
+                        ...(params.filters.ativo && { ativo: params.filters.ativo })
+                    });
+                    
+                    if (params.sortBy) {
+                        queryParams.append('sort_by', params.sortBy);
+                        queryParams.append('sort_dir', params.sortDir);
+                    }
+
+                    const response = await fetch(`${API_BASE}/usuarios?${queryParams}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+
+                    if (response.status === 401) { logout(); return; }
+
+                    const resData = await response.json();
+                    if (!resData.success) throw new Error(resData.error || 'Erro ao carregar corretores');
+
+                    // Armazenar para edição local
+                    stateUsuarios = resData.data;
+
+                    return {
+                        rows: resData.data,
+                        total: resData.meta.total
+                    };
+                }
             });
 
-            try {
-                const response = await fetch(`${API_BASE}/usuarios?${params}`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                
-                if (response.status === 401) {
-                    logout();
-                    return;
-                }
+            await globalGrid.init();
+        }
 
-                const resData = await response.json();
-                const tbody = document.getElementById('usuariosTableBody');
-                tbody.innerHTML = '';
-
-                if (!resData.success) {
-                    throw new Error(resData.error || 'Erro ao carregar corretores');
-                }
-
-                stateUsuarios = resData.data;
-                totalPages = resData.meta.totalPages;
-
-                document.getElementById('paginacaoInfo').textContent = 
-                    `Página ${resData.meta.page} de ${resData.meta.totalPages} — Total: ${resData.meta.total} corretor${resData.meta.total !== 1 ? 'es' : ''}`;
-
-                document.getElementById('btnPagAnterior').disabled = pageAtual <= 1;
-                document.getElementById('btnPagProximo').disabled = pageAtual >= totalPages;
-
-                if (stateUsuarios.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-secondary); padding: 30px 0;">Nenhum corretor encontrado.</td></tr>`;
-                    return;
-                }
-
-                stateUsuarios.forEach(u => {
-                    const isAtivo = String(u.ativo) === 'true' || u.ativo === 1 || u.ativo === true;
-                    const statusText = isAtivo ? 'Ativo' : 'Inativo';
-                    const statusColor = isAtivo ? 'var(--success)' : 'var(--error)';
-                    const toggleLabel = isAtivo ? 'Inativar' : 'Ativar';
-                    const toggleStyle = isAtivo 
-                        ? 'background: rgba(235, 77, 75, 0.15); color: var(--error); border: 1px solid rgba(235, 77, 75, 0.3);' 
-                        : 'background: rgba(46, 213, 115, 0.15); color: var(--success); border: 1px solid rgba(46, 213, 115, 0.3);';
-
-                    const badgeClass = u.perfil === 'ADMIN_EMPRESA' ? 'badge-admin' : 'badge-corretor';
-                    const roleLabel = u.perfil === 'ADMIN_EMPRESA' ? 'Admin' : 'Corretor';
-                    const roleBadge = `<span class="badge ${badgeClass}">${roleLabel}</span>`;
-
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td><strong>${u.nome}</strong></td>
-                        <td>${u.email}</td>
-                        <td style="text-align: center;">${u.cpf || '—'}</td>
-                        <td style="text-align: center;">${roleBadge}</td>
-                        <td style="text-align: right;"><strong style="color: var(--accent-primary)">${parseFloat(u.saldo_disponivel).toFixed(2)} T$</strong></td>
-                        <td style="text-align: right; color: var(--text-secondary);">${parseFloat(u.saldo_a_receber).toFixed(2)} T$</td>
-                        <td style="text-align: center;"><span class="badge" style="background: rgba(255,255,255,0.05); color: ${statusColor}; font-size: 0.72rem; padding: 4px 8px; border-radius: 4px; font-weight: 600;">${statusText}</span></td>
-                        <td style="text-align: center;">
-                            <div class="actions-btn" style="justify-content: center; gap: 6px;">
-                                <button class="btn btn-sm" onclick="editUsuario('${u.id}')" style="background: rgba(255,255,255,0.1); color: var(--text-primary);">Editar</button>
-                                <button class="btn btn-sm" onclick="toggleStatus('${u.id}', ${isAtivo})" style="${toggleStyle}">${toggleLabel}</button>
-                                <button class="btn btn-sm" onclick="window.location.href='admin-movimentacoes.html?usuario_id=${u.id}'" style="background: rgba(212,175,55,0.15); color: var(--accent-primary); border: 1px solid rgba(212,175,55,0.3);">Extrato</button>
-                                <button class="btn btn-sm" onclick="confirmExcluir('${u.id}', '${u.nome}')" style="background: rgba(235, 77, 75, 0.2); color: var(--error); border: 1px solid rgba(235, 77, 75, 0.4);">Excluir</button>
-                            </div>
-                        </td>
-                    `;
-                    tbody.appendChild(tr);
-                });
-            } catch (err) {
-                console.error('Erro ao buscar corretores:', err);
-                showToast(err.message, 'error');
+        // Wrapper function to keep compatibility with form actions calling fetchUsuarios
+        function fetchUsuarios(pagina = 1) {
+            if(globalGrid) {
+                globalGrid.state.page = pagina;
+                globalGrid.refresh();
             }
-        }
-
-        function onLimitChange() {
-            fetchUsuarios(1);
-        }
-
-        function mudarPagina(delta) {
-            const novaPagina = pageAtual + delta;
-            if (novaPagina >= 1 && novaPagina <= totalPages) {
-                fetchUsuarios(novaPagina);
-            }
-        }
-
-        function onBuscaInput() {
-            clearTimeout(buscaTimeout);
-            buscaTimeout = setTimeout(() => {
-                fetchUsuarios(1);
-            }, 300);
-        }
-
-        function buscarUsuarios() {
-            fetchUsuarios(1);
         }
 
         document.getElementById('usuarioForm').addEventListener('submit', async (e) => {
@@ -469,7 +353,7 @@
 
         window.addEventListener('DOMContentLoaded', () => {
             renderHeader("Gestão de Corretores", "Cadastre, visualize e edite os corretores vinculados à sua imobiliária");
-            fetchUsuarios(1);
+            setupGrid();
         });
 
 
@@ -496,7 +380,7 @@
 
                     showToast('Corretor excluído com sucesso!', 'success');
                     closeExcluirModal();
-                    fetchUsuarios(pageAtual);
+                    fetchUsuarios(globalGrid ? globalGrid.state.page : 1);
                 } catch (err) {
                     showToast(err.message, 'error');
                 } finally {
@@ -528,7 +412,7 @@
                 if (!data.success) throw new Error(data.error);
 
                 showToast(`Status do corretor atualizado para ${novoStatus ? 'Ativo' : 'Inativo'}`, 'success');
-                fetchUsuarios(pageAtual);
+                fetchUsuarios(globalGrid ? globalGrid.state.page : 1);
             } catch (err) {
                 showToast(err.message, 'error');
             }
