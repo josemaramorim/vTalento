@@ -36,7 +36,7 @@ routes.get('/meu-extrato', tenantMiddleware, async (req, res) => {
         'GamTransacao.data_vencimento',
         'GamTransacao.data_compensacao',
         'GamTransacao.created_at',
-        db.raw("COALESCE(Admin.nome, 'Sistema') as admin_nome")
+        db.raw("COALESCE(\"Admin\".\"nome\", 'Sistema') as admin_nome")
       );
 
     if (tipo) query = query.where('GamTransacao.tipo', tipo);

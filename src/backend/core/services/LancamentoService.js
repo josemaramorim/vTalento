@@ -97,7 +97,7 @@ class LancamentoService {
         'GamTransacao.justificativa',
         'GamTransacao.created_at',
         'Corretor.nome as corretor_nome',
-        db.raw("COALESCE(Admin.nome, 'Sistema') as admin_nome")
+        db.raw("COALESCE(\"Admin\".\"nome\", 'Sistema') as admin_nome")
       )
       .orderBy('GamTransacao.created_at', 'desc')
       .limit(20);
@@ -148,7 +148,7 @@ class LancamentoService {
         'GamTransacao.created_at',
         'Corretor.nome as corretor_nome',
         'Corretor.email as corretor_email',
-        db.raw("COALESCE(Admin.nome, 'Sistema') as admin_nome")
+        db.raw("COALESCE(\"Admin\".\"nome\", 'Sistema') as admin_nome")
       )
       .orderBy('GamTransacao.created_at', 'desc')
       .limit(limitSanitizado)

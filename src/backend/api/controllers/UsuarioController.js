@@ -160,7 +160,7 @@ class UsuarioController {
           'GamTransacao.unidade',
           'GamTransacao.data_vencimento',
           'GamTransacao.created_at',
-          db.raw("COALESCE(Admin.nome, 'Sistema') as admin_nome")
+          db.raw("COALESCE(\"Admin\".\"nome\", 'Sistema') as admin_nome")
         )
         .orderBy('GamTransacao.created_at', 'desc')
         .limit(50);
