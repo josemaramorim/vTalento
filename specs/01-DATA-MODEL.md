@@ -48,6 +48,7 @@ Registro detalhado de cada entrada e saída de talentos.
 - `contato_cliente`: String (Telefone/E-mail para apoio à cobrança)
 - `origem_id`: String (ID da Venda ou Boleto na planilha de origem)
 - `justificativa`: String / Text (Para lançamentos manuais)
+- `dados_extras`: JSON (Nullable, armazena campos adicionais configuráveis da importação)
 - `created_at`: DateTime
 - `data_compensacao`: DateTime (Preenchido quando o boleto é pago)
 
@@ -85,6 +86,8 @@ Registro detalhado de cada entrada e saída de talentos.
 - `mapeamento_json`: Text / JSON (Ex: `{"corretor_identificador": "Nome Corretor", "valor_pago": "Valor da Parcela"}`)
 - `separador_multiplo`: String (Ex: "|") - Usado para dividir datas de balões/reforços na mesma célula.
 - `linha_cabecalho`: Int (Linha onde estão os títulos das colunas)
+- `identificador_extra_coluna`: String (Nullable - Nome da coluna que representa CRECI, CPF, matrícula, etc.)
+- `campos_extras`: Text / JSON (Nullable - Lista/Mapeamento de campos adicionais configuráveis a extrair da planilha)
 - `created_at`: DateTime
 - `updated_at`: DateTime
 

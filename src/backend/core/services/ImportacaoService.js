@@ -1,4 +1,4 @@
-﻿const db = require('../../infra/db');
+const db = require('../../infra/db');
 const crypto = require('crypto');
 const xlsx = require('xlsx');
 
@@ -14,19 +14,25 @@ class ImportacaoService {
       .where({ id, empresa_id })
       .first();
 
-    if (perfil && typeof perfil.mapeamento_json === 'string') {
-      perfil.mapeamento_json = JSON.parse(perfil.mapeamento_json);
+    if (perfil) {
+      if (typeof perfil.mapeamento_json === 'string') {
+        perfil.mapeamento_json = JSON.parse(perfil.mapeamento_json);
+      }
+      if (typeof perfil.campos_extras === 'string') {
+        perfil.campos_extras = JSON.parse(perfil.campos_extras);
+      }
     }
     return perfil;
   }
 
-  async criarPerfil(empresa_id, { nome_perfil, mapeamento_json, separador_multiplo = '|', linha_cabecalho = 3 }) {
+  async criarPerfil(empresa_id, { nome_perfil, mapeamento_json, separador_multiplo = '|', linha_cabecalho = 3, identificador_extra_coluna = null, campos_extras = null }) {
     if (!nome_perfil || !mapeamento_json) {
-      throw new Error('Nome do perfil e mapeamento sÃ£o obrigatÃ³rios');
+      throw new Error('Nome do perfil e mapeamento são obrigatórios');
     }
 
     const id = crypto.randomUUID();
     const mapeamentoStr = typeof mapeamento_json === 'string' ? mapeamento_json : JSON.stringify(mapeamento_json);
+    const camposExtrasStr = campos_extras ? (typeof campos_extras === 'string' ? campos_extras : JSON.stringify(campos_extras)) : null;
 
     await db('GamConfigImportacao').insert({
       id,
@@ -35,6 +41,8 @@ class ImportacaoService {
       mapeamento_json: mapeamentoStr,
       separador_multiplo,
       linha_cabecalho,
+      identificador_extra_coluna,
+      campos_extras: camposExtrasStr,
       created_at: db.fn.now(),
       updated_at: db.fn.now()
     });
@@ -42,12 +50,13 @@ class ImportacaoService {
     return { id, nome_perfil };
   }
 
-  async atualizarPerfil(empresa_id, id, { nome_perfil, mapeamento_json, separador_multiplo = '|', linha_cabecalho = 3 }) {
+  async atualizarPerfil(empresa_id, id, { nome_perfil, mapeamento_json, separador_multiplo = '|', linha_cabecalho = 3, identificador_extra_coluna = null, campos_extras = null }) {
     if (!nome_perfil || !mapeamento_json) {
-      throw new Error('Nome do perfil e mapeamento sÃ£o obrigatÃ³rios');
+      throw new Error('Nome do perfil e mapeamento são obrigatórios');
     }
 
     const mapeamentoStr = typeof mapeamento_json === 'string' ? mapeamento_json : JSON.stringify(mapeamento_json);
+    const camposExtrasStr = campos_extras ? (typeof campos_extras === 'string' ? campos_extras : JSON.stringify(campos_extras)) : null;
 
     const updated = await db('GamConfigImportacao')
       .where({ id, empresa_id })
@@ -56,11 +65,13 @@ class ImportacaoService {
         mapeamento_json: mapeamentoStr,
         separador_multiplo,
         linha_cabecalho,
+        identificador_extra_coluna,
+        campos_extras: camposExtrasStr,
         updated_at: db.fn.now()
       });
 
     if (!updated) {
-      throw new Error('Perfil nÃ£o encontrado para atualizaÃ§Ã£o');
+      throw new Error('Perfil não encontrado para atualização');
     }
 
     return { id, nome_perfil };
@@ -167,15 +178,38 @@ class ImportacaoService {
     };
   }
 
-  // FunÃ§Ã£o auxiliar para limpar CPF para busca
-  _limparCPF(cpf) {
-    if (!cpf) return '';
-    return String(cpf).replace(/\D/g, '');
-  }
+  // Faz lookup do corretor por Nome ou campo Identificador Extra (prioridade)
+  async _buscarCorretor(empresa_id, nome, creci, identificadorExtraColunaVal = null) {
+    // 1. Se identificador extra estiver mapeado e tiver valor na linha, priorizar busca exata (Nome + Identificador)
+    if (identificadorExtraColunaVal) {
+      const idVal = String(identificadorExtraColunaVal).trim().toUpperCase();
+      const idValLimpo = this._limparCPF(idVal);
 
-  // Faz lookup do corretor por Nome ou CPF
-  async _buscarCorretor(empresa_id, nome, creci) {
-    // 1. Tentar buscar por CRECI se estiver presente
+      const candidatos = await db('GamUsuario')
+        .where({ empresa_id, perfil: 'CORRETOR' })
+        .where(function() {
+          // Busca exata pelo identificador no CPF, Email ou no próprio Nome
+          this.whereRaw('UPPER(cpf) = ?', [idVal])
+              .orWhereRaw('UPPER(email) = ?', [idVal])
+              .orWhereRaw('UPPER(nome) = ?', [idVal]);
+
+          if (idValLimpo && idValLimpo.length === 11) {
+            this.orWhere(db.raw("REPLACE(REPLACE(cpf, '.', ''), '-', '') = ?", [idValLimpo]));
+          }
+        });
+
+      if (candidatos.length > 0) {
+        // Se houver múltiplos candidatos com o identificador correspondente, filtra pelo nome se coincidir
+        if (nome) {
+          const nomeBusca = String(nome).trim().toUpperCase();
+          const matchExato = candidatos.find(c => String(c.nome).trim().toUpperCase() === nomeBusca);
+          if (matchExato) return matchExato;
+        }
+        return candidatos[0]; // Retorna o primeiro encontrado
+      }
+    }
+
+    // 2. Tentar buscar por CRECI se estiver presente (fallback legado de creci)
     if (creci) {
       const c = String(creci).trim().toUpperCase();
       const corretor = await db('GamUsuario')
@@ -188,7 +222,7 @@ class ImportacaoService {
       if (corretor) return corretor;
     }
 
-    // 2. Tentar por CPF (se o identificador se parecer com CPF)
+    // 3. Tentar por CPF (se o identificador se parecer com CPF)
     const cpfLimpo = this._limparCPF(nome);
     if (cpfLimpo.length === 11) {
       const corretor = await db('GamUsuario')
@@ -198,14 +232,24 @@ class ImportacaoService {
       if (corretor) return corretor;
     }
 
-    // 3. Tentar por Nome (Case-Insensitive)
+    // 4. Tentar por Nome (Case-Insensitive)
     if (nome) {
       const nomeBusca = String(nome).trim().toUpperCase();
-      const corretor = await db('GamUsuario')
+      
+      // Detecção de ambiguidade: verifica se há múltiplos corretores com o mesmo nome na mesma empresa
+      const corretoresComNome = await db('GamUsuario')
         .where({ empresa_id, perfil: 'CORRETOR' })
-        .andWhereRaw('UPPER(nome) = ?', [nomeBusca])
-        .first();
-      if (corretor) return corretor;
+        .andWhereRaw('UPPER(nome) = ?', [nomeBusca]);
+
+      if (corretoresComNome.length === 1) {
+        return corretoresComNome[0];
+      } else if (corretoresComNome.length > 1) {
+        // Ambiguidade! Retornamos uma marcação especial informando que há candidatos
+        return {
+          ambiguous: true,
+          candidatos: corretoresComNome.map(c => ({ id: c.id, nome: c.nome, email: c.email, cpf: c.cpf }))
+        };
+      }
     }
 
     return null;
@@ -354,7 +398,11 @@ class ImportacaoService {
         continue;
       }
 
-      const corretor = await this._buscarCorretor(empresa_id, rawCorretor, rawCreci);
+      const idCol = perfil.identificador_extra_coluna ? String(perfil.identificador_extra_coluna).trim().toUpperCase() : null;
+      const rawIdentificadorExtra = idCol && headerIndices[idCol] !== undefined ? row[headerIndices[idCol]] : null;
+
+      const corretor = await this._buscarCorretor(empresa_id, rawCorretor, rawCreci, rawIdentificadorExtra);
+      const isAmbiguous = corretor && corretor.ambiguous;
 
       const valorVendaRs = this._parseMoeda(rawValorVenda);
       const valorPagoRs = this._parseMoeda(rawValorPago);
@@ -363,7 +411,7 @@ class ImportacaoService {
       const talentosDisponiveis = Math.floor(valorPagoRs * 0.01);
       const talentosAReceber = totalTalentos - talentosDisponiveis;
 
-      // BalÃµes
+      // Balões
       const baloesValores = {
         balao_datas_raw: getVal('balao_datas'),
         balao_valor_raw: getVal('balao_valor'),
@@ -372,13 +420,28 @@ class ImportacaoService {
       const baloesCalculados = this._parseBaloes(baloesValores, perfil.separador_multiplo);
       const somaBaloesTalentos = baloesCalculados.reduce((acc, curr) => acc + curr.valor_talentos, 0);
 
+      // Extração de campos extras configurados no perfil
+      const dadosExtras = {};
+      if (perfil.campos_extras && Array.isArray(perfil.campos_extras)) {
+        perfil.campos_extras.forEach(extra => {
+          if (extra && extra.coluna) {
+            const extColName = String(extra.coluna).trim().toUpperCase();
+            if (headerIndices[extColName] !== undefined) {
+              const val = row[headerIndices[extColName]];
+              dadosExtras[extra.label || extra.coluna] = val !== undefined ? val : null;
+            }
+          }
+        });
+      }
+
       resultadoRows.push({
         linha: cabecalho0Based + 2 + i, // 1-based no arquivo original
         corretor_nome_planilha: rawCorretor,
         corretor_creci_planilha: rawCreci,
+        identificador_extra_planilha: rawIdentificadorExtra,
         empreendimento: rawEmpreendimento || 'Desconhecido',
         unidade: rawUnidade || 'Geral',
-        cliente_nome: rawCliente || 'NÃ£o Informado',
+        cliente_nome: rawCliente || 'Não Informado',
         valores: {
           valor_venda_rs: valorVendaRs,
           valor_pago_rs: valorPagoRs,
@@ -387,10 +450,13 @@ class ImportacaoService {
           talentos_a_receber: Math.max(0, talentosAReceber)
         },
         baloes: baloesCalculados,
-        corretor_encontrado: !!corretor,
-        corretor_id: corretor ? corretor.id : null,
-        corretor_nome_sistema: corretor ? corretor.nome : null,
-        corretor_email_sistema: corretor ? corretor.email : null
+        corretor_encontrado: !!corretor && !isAmbiguous,
+        corretor_id: (corretor && !isAmbiguous) ? corretor.id : null,
+        corretor_nome_sistema: (corretor && !isAmbiguous) ? corretor.nome : null,
+        corretor_email_sistema: (corretor && !isAmbiguous) ? corretor.email : null,
+        ambiguous: !!isAmbiguous,
+        candidatos: isAmbiguous ? corretor.candidatos : [],
+        dados_extras: Object.keys(dadosExtras).length > 0 ? dadosExtras : null
       });
     }
 
@@ -406,7 +472,7 @@ class ImportacaoService {
     const preview = await this.previewImportacao(empresa_id, fileBase64, perfil_id);
     
     if (preview.inconsistencias > 0) {
-      throw new Error(`Existem ${preview.inconsistencias} corretores nÃ£o localizados no sistema. Cadastre-os antes de efetuar a importaÃ§Ã£o definitiva.`);
+      throw new Error(`Existem ${preview.inconsistencias} corretores não localizados ou com nomes ambíguos no sistema. Cadastre-os ou resolva-os antes de efetuar a importação definitiva.`);
     }
 
     const resultadoProcessado = await db.transaction(async (trx) => {
@@ -418,9 +484,10 @@ class ImportacaoService {
         corretoresAfetados.add(corretorId);
 
         const transacaoId = crypto.randomUUID();
-        const justificativaBase = `ImportaÃ§Ã£o - ${row.empreendimento} ${row.unidade} - Cliente: ${row.cliente_nome}`;
+        const justificativaBase = `Importação - ${row.empreendimento} ${row.unidade} - Cliente: ${row.cliente_nome}`;
+        const dadosExtrasStr = row.dados_extras ? JSON.stringify(row.dados_extras) : null;
 
-        // 1. Criar transaÃ§Ã£o COMPENSADA para os Talentos jÃ¡ pagos (disponÃ­veis)
+        // 1. Criar transação COMPENSADA para os Talentos já pagos (disponíveis)
         if (row.valores.talentos_disponiveis > 0) {
           await trx('GamTransacao').insert({
             id: transacaoId,
@@ -438,13 +505,14 @@ class ImportacaoService {
             unidade: row.unidade,
             contato_cliente: row.cliente_nome,
             origem_id: `row-${row.linha}-compensado`,
+            dados_extras: dadosExtrasStr,
             data_compensacao: trx.fn.now(),
             created_at: trx.fn.now()
           });
           transacoesCriadas++;
         }
 
-        // 2. Criar transaÃ§Ãµes PENDENTES para os BalÃµes Futuros
+        // 2. Criar transações PENDENTES para os Balões Futuros
         let totalBaloesTalentos = 0;
         for (let idxB = 0; idxB < row.baloes.length; idxB++) {
           const bal = row.baloes[idxB];
@@ -459,7 +527,7 @@ class ImportacaoService {
             valor: bal.valor_talentos,
             tipo: 'CREDITO',
             origem: 'IMPORTACAO',
-            justificativa: `${justificativaBase} (BalÃ£o ${idxB + 1}/${row.baloes.length})`,
+            justificativa: `${justificativaBase} (Balão ${idxB + 1}/${row.baloes.length})`,
             valor_original_rs: bal.valor_rs,
             status: 'PENDENTE',
             data_vencimento: bal.data_vencimento ? bal.data_vencimento.toISOString() : null,
@@ -467,13 +535,14 @@ class ImportacaoService {
             unidade: row.unidade,
             contato_cliente: row.cliente_nome,
             origem_id: `row-${row.linha}-balao-${idxB + 1}`,
+            dados_extras: dadosExtrasStr,
             data_compensacao: null,
             created_at: trx.fn.now()
           });
           transacoesCriadas++;
         }
 
-        // 3. Criar transaÃ§Ã£o PENDENTE genÃ©rica para o saldo remanescente a receber (ex: parcelas mensais futuras)
+        // 3. Criar transação PENDENTE genérica para o saldo remanescente a receber (ex: parcelas mensais futuras)
         const saldoRemanescenteAReceber = row.valores.talentos_a_receber - totalBaloesTalentos;
         if (saldoRemanescenteAReceber > 0) {
           const remTransacaoId = crypto.randomUUID();
@@ -493,6 +562,7 @@ class ImportacaoService {
             unidade: row.unidade,
             contato_cliente: row.cliente_nome,
             origem_id: `row-${row.linha}-remanescente`,
+            dados_extras: dadosExtrasStr,
             data_compensacao: null,
             created_at: trx.fn.now()
           });

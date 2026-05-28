@@ -12,14 +12,16 @@ class ImportacaoController {
 
   async criarPerfil(req, res) {
     try {
-      const { nome_perfil, mapeamento_json, separador_multiplo, linha_cabecalho } = req.body;
+      const { nome_perfil, mapeamento_json, separador_multiplo, linha_cabecalho, identificador_extra_coluna, campos_extras } = req.body;
       const empresa_id = req.empresa_id;
 
       const result = await ImportacaoService.criarPerfil(empresa_id, {
         nome_perfil,
         mapeamento_json,
         separador_multiplo,
-        linha_cabecalho
+        linha_cabecalho,
+        identificador_extra_coluna,
+        campos_extras
       });
 
       return res.status(201).json(result);
@@ -46,14 +48,16 @@ class ImportacaoController {
   async atualizarPerfil(req, res) {
     try {
       const { id } = req.params;
-      const { nome_perfil, mapeamento_json, separador_multiplo, linha_cabecalho } = req.body;
+      const { nome_perfil, mapeamento_json, separador_multiplo, linha_cabecalho, identificador_extra_coluna, campos_extras } = req.body;
       const empresa_id = req.empresa_id;
 
       const result = await ImportacaoService.atualizarPerfil(empresa_id, id, {
         nome_perfil,
         mapeamento_json,
         separador_multiplo,
-        linha_cabecalho
+        linha_cabecalho,
+        identificador_extra_coluna,
+        campos_extras
       });
 
       return res.json(result);

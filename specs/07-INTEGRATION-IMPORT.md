@@ -61,3 +61,26 @@ O passo de "Carregar Planilha" faz o upload do arquivo e prepara os dados para a
 ## 3. Frequência de Atualização
 - Manual (Upload via Painel Admin).
 - O sistema deve guardar o histórico de cada arquivo importado (Log de Importação).
+
+## 4. Importação Avançada e Campos Customizados (Fase 5)
+
+### 4.1. Identificador Extra do Corretor
+- O perfil de importação pode conter a coluna opcional `identificador_extra_coluna` (CPF, CRECI, matrícula, etc.).
+- Quando ativado, a busca e resolução de usuários no banco de dados prioriza a correspondência exata de `Nome + Identificador Extra` (CPF/CRECI/Matrícula do corretor).
+- Se não for fornecido o Identificador Extra na linha ou no perfil, o motor faz fallback automático para busca somente por `Nome`.
+
+### 4.2. Campos Extras Customizáveis
+- O administrador da empresa pode configurar em cada perfil um conjunto de colunas dinâmicas (ex: `Gerente de Vendas`, `Canal de Captação`, `Percentual de Comissão`) como `campos_extras`.
+- Durante a importação de cada linha da planilha, os valores dessas colunas mapeadas são lidos e salvos dentro do campo JSON `dados_extras` na transação criada na tabela `GamTransacao`.
+- Exemplo de payload gravado em `GamTransacao.dados_extras`:
+```json
+{
+  "gerente_vendas": "Carlos Souza",
+  "canal_captacao": "Portal Web",
+  "comissao_percentual": "1.5%"
+}
+```
+
+### 4.3. Resolução de Ambiguidade de Nomes
+- Se houver múltiplos usuários com o mesmo nome na empresa, e o perfil de importação não utilizar ou não tiver o `identificador_extra_coluna` preenchido para aquela linha, a linha é marcada como **Inconsistente**.
+- O sistema deve sugerir no preview do frontend os candidatos com nomes correspondentes para que o administrador possa resolver a ambiguidade selecionando manualmente a qual corretor aquela transação pertence antes de concluir a importação definitiva.

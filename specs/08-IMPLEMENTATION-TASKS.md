@@ -182,32 +182,103 @@ Este documento é o guia de execução do projeto. Nenhuma tarefa deve ser inici
 
 ---
 
-### FASE 5: GESTÃO DE USUÁRIOS E PERFIL (Nome/Email/CPF/Senha/Tema)
-Esta fase implementa a capacidade dos administradores de gerenciarem os corretores do seu tenant e dos corretores gerenciarem seus próprios dados e preferências visuais de forma isolada e segura, aproveitando unicamente o modelo existente de `GamUsuario`.
+### FASE 5: Importação Avançada e Redesign (Campos Customizáveis, Identificador Extra e UI)
 
-#### Regras de Negócio e Segurança:
-- **Tenant Isolation:** Administradores só podem listar, criar ou editar usuários que pertençam à sua própria empresa (`empresa_id` extraído do JWT).
-- **Unicidade de E-mail:** A criação ou alteração de e-mails deve garantir a unicidade no banco de dados.
-- **Segurança de Perfil:** Corretores não podem atualizar perfil (`perfil`), saldos (`saldo_disponivel`, `saldo_a_receber`) ou `empresa_id`.
-- **Alteração de Senha:** A alteração de senha própria exige a verificação prévia e correta da senha atual.
+### História 12: Motor de Importação Flexível e Multissegmento
+*Como administrador (de imobiliárias, varejo, educação, saúde, etc.), quero um motor de importação que permita mapear campos fixos e customizáveis, definir um identificador adicional para evitar ambiguidade entre usuários e executar o fluxo de importação em etapas separadas para garantir usabilidade e auditabilidade.*
 
-#### Tarefas de Backend
+**Regras de Negócio e Comportamento Esperado:**
+- **Campos Fixos vs Campos Extras:** O motor mantém suporte a campos fixos essenciais (ex: `corretor(nome)`, `valor_venda`, `valor_pago`) e introduz `campos_extras` configuráveis por perfil. Os campos extras são armazenados em `dados_extras` (JSON) por registro importado.
+- **Identificador Extra:** Perfis podem declarar uma coluna `identificador_extra` (ex: `CRECI`, `CPF`, `matricula`). Quando mapeado, a resolução de usuário prioriza `nome + identificador`. Se o identificador estiver ausente/ vazio, ocorre fallback para `nome`.
+- **Ambiguidade e Inconsistências:** Em caso de múltiplos candidatos (ex.: dois usuários com mesmo nome e sem identificador), o registro será marcado como `inconsistente` e listado no preview com `candidatos` sugeridos para revisão manual.
+- **Retrocompatibilidade:** Perfis existentes continuam funcionando sem mudanças; novas opções são opcionais e retrocompatíveis.
+- **Multi-Tenant:** Todo lookup e persistência respeitam `empresa_id` do tenant atual.
+- **Persistência Temporária entre Etapas:** O fluxo em 3 páginas (Upload → Preview → Confirmar) deve preservar estado (arquivo, perfil, mapeamentos) para permitir navegação reversa sem perda de dados.
+- **Auditabilidade e Telemetria:** Cada importação produz um resumo com estatísticas (total linhas, resolvidos, inconsistências) e armazena `dados_extras` para futuras consultas/exportações.
 
-- [x] **Tarefa 12.1:** Implementar a rota `GET /api/admin/usuarios` (protegida por `tenantMiddleware` + `adminMiddleware`), retornando a lista de usuários do tenant de forma paginada e com filtros de busca textual (por nome, e-mail ou CPF).
-- [x] **Tarefa 12.2:** Implementar a rota `POST /api/admin/usuarios` (admin), permitindo cadastrar novos corretores no tenant, validando e-mail único globalmente.
-- [x] **Tarefa 12.3:** Implementar a rota `PUT /api/admin/usuarios/:id` (admin), permitindo editar `nome`, `email` e `cpf` de corretores do tenant, validando e-mail único.
-- [x] **Tarefa 12.4:** Implementar a rota `PUT /api/users/me` (corretor/admin próprio), permitindo editar seus próprios dados (`nome`, `email`, `cpf`). Se o campo `nova_senha` for fornecido, deve validar o campo `senha_atual` antes de atualizar o hash da senha.
-- [x] **Tarefa 12.5:** Escrever testes de integração (Supertest) validando todos os novos endpoints criados, incluindo as regras de segurança e isolamento multi-tenant.
-
-#### Tarefas de Frontend
-
-- [x] **Tarefa 12.6:** Criar a página de Gestão de Usuários do Admin (`admin-usuarios.html`), contendo listagem paginada dos corretores, barra de pesquisa, modal para adicionar corretor e modal para editar corretor.
-- [x] **Tarefa 12.7:** Criar a página de Meu Perfil para Corretores/Admin (`meu-perfil.html`), permitindo que os usuários atualizem seu Nome, E-mail, CPF, alterem sua senha de acesso e escolham o tema preferido (`light` ou `dark`).
-- [x] **Tarefa 12.8:** Atualizar o menu lateral dinâmico de navegação em todas as páginas para incluir os novos caminhos apropriados para cada perfil.
+**Critérios de Aceite (mínimos):**
+- Criar/editar perfis com `identificador_extra` e `campos_extras` via API e UI.
+- Importar planilha usando `identificador_extra` de forma a associar corretamente usuários quando dados válidos.
+- Registros ambíguos são sinalizados no preview com candidatos sugeridos.
+- Perfis antigos operam inalterados.
+- APIs e UI expõem `dados_extras` no preview e nos relatórios de importação.
 
 ---
 
-### FASE 6: UNIFICAÇÃO DE CABEÇALHO (DRY FRONTEND) E AJUSTES DE NAVEGAÇÃO
+#### Tarefas de Especificação (detalhadas)
+- [x] **Tarefa 12.1:** Atualizar `specs/07-INTEGRATION-IMPORT.md` com:
+  - Descrição do campo `identificador_extra` (nome, propósito, exemplos: `CRECI`, `CPF`, `matricula`).
+  - Definição de `campos_extras` como lista de pares {label, coluna_planilha} configuráveis por perfil.
+  - Exemplo de payload de perfil de importação e exemplos de mapeamento.
+  - Critério de Aceite: Documento contém exemplos e JSON de input/output, revisado e aprovado.
+- [x] **Tarefa 12.2:** Atualizar `specs/01-DATA-MODEL.md` com:
+  - Adição de campo `dados_extras JSON` na tabela de lançamentos/importações (`GamLancamento` ou equivalente).
+  - Novo campo opcional `identificador_extra_coluna` no modelo de `PerfilImportacao` (referência da coluna mapeada).
+  - Regras de negócio: priorização de busca por `nome + identificador` quando disponível; fallback para `nome` caso identificador não mapeado ou vazio.
+  - Critério de Aceite: Data model documentado e exemplos de queries para buscas.
+- [x] **Tarefa 12.3:** Atualizar `specs/04-UI-UX-DESIGN.md` com wireframes e comportamento:
+  - Wireframes para 3 páginas independentes: `upload.html`, `preview.html`, `confirm.html`.
+  - Modal de gerenciamento de perfis incluindo: nome do perfil, linha do cabeçalho, separador, `identificador_extra` (select de colunas) e lista de `campos_extras` (label + coluna mapeada).
+  - Critério de Aceite: Protótipos ou descrições aprovadas pelo produto.
+
+#### Tarefas de Backend (detalhadas)
+- [/] **Tarefa 12.4:** Model & Migration — `perfil_importacao` / `GamLancamento`
+  - Criar migration `20260528_add_import_extra_fields.js` que:
+    - Adiciona `identificador_extra_coluna` (string/nullable) ao `perfil_importacao`.
+    - Adiciona `dados_extras` (JSON nullable) à tabela de lançamentos/importações (`GamLancamento` ou tabela equivalente usada pelo motor).
+  - Critério de Aceite: Migration criada e executável localmente sem perda de dados.
+- [ ] **Tarefa 12.5:** API — Endpoints para gerenciar `campos_extras`
+  - Atualizar endpoints existentes `GET/POST/PUT /api/admin/importacao/perfis` para aceitar/retornar `identificador_extra_coluna` e `campos_extras` (array de {label, coluna}).
+  - Critério de Aceite: API aceita payloads novos e valida o formato.
+- [ ] **Tarefa 12.6:** Import Service — lógica de resolução de usuário e armazenamento
+  - Atualizar `ImportacaoService.sugerirMapeamento` e `ImportacaoService.confirm` (ou método equivalente) para:
+    - Quando `identificador_extra_coluna` estiver presente e não vazia, buscar usuário por `nome_corretor` + valor_do_identificador (ambos normalizados).
+    - Se encontrar múltiplos matches, marcar como inconsistência e registrar possíveis candidatos para revisão manual.
+    - Armazenar colunas configuradas como `campos_extras` no `dados_extras` JSON do registro importado.
+  - Critério de Aceite: Serviço passa testes unitários cobrindo busca com/sem identificador, e grava `dados_extras` corretamente.
+- [ ] **Tarefa 12.7:** Testes Backend
+  - Testes unitários para `ImportacaoService` (Jest): cenário feliz, ambiguidade (dois nomes iguais), identificador extra presente/ausente, fallback por nome.
+  - Testes de integração (Supertest) para endpoints de perfis e preview/confirm usando banco em memória.
+  - Critério de Aceite: Suites verdes em CI local.
+
+#### Tarefas de Frontend (detalhadas)
+- [ ] **Tarefa 12.8:** Arquitetura de páginas
+  - Criar as páginas `src/frontend/admin-importacao-upload.html`, `admin-importacao-preview.html`, `admin-importacao-confirm.html` (ou rotas SPA equivalentes).
+  - Cada página tem responsabilidades únicas e botões de navegação (Avançar/Voltar).
+  - Critério de Aceite: páginas navegáveis e load/restore do estado do upload.
+- [ ] **Tarefa 12.9:** UI de Perfis e Campos Extras
+  - Modal/rota para criar/editar `PerfilImportacao` com campos: `nome`, `linha_cabecalho`, `separador`, `identificador_extra_coluna` (select) e `campos_extras` (lista dinâmica de label+coluna).
+  - Critério de Aceite: perfil salvo via API e listado corretamente.
+- [ ] **Tarefa 12.10:** Persistência entre etapas
+  - Implementar persistência temporária (localStorage ou sessionStorage) para manter `selectedFileBase64`, `perfilSelecionado`, e mapeamentos entre páginas.
+  - Critério de Aceite: usuário pode navegar entre etapas sem perder dados.
+- [ ] **Tarefa 12.11:** Preview & Confirm UI
+  - Preview mostra primeiras N linhas, inconsistências, candidatos para correção manual (quando múltiplos matches), resumo de estatísticas.
+  - Confirm executa POST `/api/admin/importacao/confirm` e mostra resultado detalhado.
+  - Critério de Aceite: publicação do import resulta em registros persistidos com `dados_extras`.
+
+#### Tarefas de Testes e Usabilidade
+- [ ] **Tarefa 12.12:** Testes E2E (Cypress / Playwright)
+  - Fluxos: criar perfil com campo extra, fazer upload, revisar preview, confirmar importação, validar dados no backend.
+  - Critério de Aceite: cenários principais automáticos passando.
+- [ ] **Tarefa 12.13:** Testes de usabilidade
+  - Realizar teste com 2-3 usuários admins para validar clareza do fluxo, ajustes finos de labels e tooltips.
+
+#### Tarefas de Governança e Entrega
+- [ ] **Tarefa 12.14:** Branching e PR
+  - Criar branches curtas: `feature/import-campos-extras`, `feature/import-ui-redesign`.
+  - Cada branch deve ter PR com descrição, checklist de testes e referência às tasks na SPEC.
+- [ ] **Tarefa 12.15:** Pre-commit e CI
+  - Garantir que o `preCommitValidator` valide que as tasks relevantes estão atualizadas em `specs/08-IMPLEMENTATION-TASKS.md` antes de permitir commit.
+  - Critério de Aceite: hook ativo e testes unitários rodando no pipeline.
+
+---
+
+> Observação: Nenhuma alteração de código deve ser iniciada antes da atualização física das SPECs (itens 12.1, 12.2, 12.3) e aprovação do Product Owner.
+
+---
+
+## FASE 6: UNIFICAÇÃO DE CABEÇALHO (DRY FRONTEND) E AJUSTES DE NAVEGAÇÃO
 Esta fase visa eliminar a repetição de código no frontend unificando os cabeçalhos das páginas e adicionando o redirecionamento para o perfil ao clicar no bloco de informações do usuário.
 
 #### Regras de Negócio e UX:
