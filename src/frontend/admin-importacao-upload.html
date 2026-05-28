@@ -157,6 +157,7 @@
         .file-info-bar {
             display: flex;
             align-items: center;
+            justify-content: space-between;
             gap: 10px;
             padding: 12px 16px;
             border-radius: var(--radius-sm);
@@ -166,6 +167,24 @@
             font-size: 0.88rem;
             font-weight: 600;
             color: var(--success);
+        }
+        .btn-remove-file {
+            background: rgba(231,76,60,0.1);
+            color: var(--error);
+            border: 1px solid rgba(231,76,60,0.2);
+            border-radius: 4px;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+            font-size: 0.85rem;
+        }
+        .btn-remove-file:hover {
+            background: rgba(231,76,60,0.25);
         }
 
         /* ═══════════════════════ ACTIONS ═══════════════════════ */
@@ -363,8 +382,11 @@
                         </div>
 
                         <div id="fileInfoBar" class="file-info-bar" style="display: none;">
-                            <span>📄</span>
-                            <span id="fileInfoText"></span>
+                            <div style="display: flex; align-items: center; gap: 10px; overflow: hidden;">
+                                <span>📄</span>
+                                <span id="fileInfoText" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></span>
+                            </div>
+                            <button type="button" id="btnRemoveFile" class="btn-remove-file" title="Remover arquivo">✕</button>
                         </div>
                     </section>
 
@@ -794,6 +816,22 @@
             bar.style.display = 'flex';
             uploadArea.classList.add('has-file');
         }
+
+        // ═══════════════════════ REMOVER ARQUIVO ═══════════════════════
+        document.getElementById('btnRemoveFile').addEventListener('click', (e) => {
+            e.stopPropagation();
+            selectedFileBase64 = null;
+            selectedFileName = '';
+            fileInput.value = '';
+            document.getElementById('fileInfoBar').style.display = 'none';
+            uploadArea.classList.remove('has-file');
+            btnAvancar.disabled = true;
+            
+            // Clear session state
+            sessionStorage.removeItem('@VTalentos:importState');
+            showToast('Arquivo removido.', 'info');
+            checkCanAdvance();
+        });
 
         function checkCanAdvance() {
             btnAvancar.disabled = !(selectedFileBase64 && perfilSelect.value);
