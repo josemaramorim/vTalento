@@ -16,6 +16,18 @@ window.fetch = async function(input, init) {
     
     const response = await originalFetch(input, init);
     
+    if (response.status === 401) {
+        const data = await response.clone().json().catch(() => ({}));
+        if (data.error === 'USER_INACTIVE') {
+            localStorage.removeItem('@VTalentos:token');
+            localStorage.removeItem('@VTalentos:user');
+            if (!window.location.pathname.includes('login.html')) {
+                window.location.href = 'login.html?error=inactive';
+                return response;
+            }
+        }
+    }
+    
     if (response.status === 402) {
         const data = await response.clone().json().catch(() => ({}));
         if (data.error === 'SUBSCRIPTION_EXPIRED') {
@@ -334,48 +346,52 @@ window.renderSidebar = function() {
 
     const user = JSON.parse(userStr);
     
-    // Extrai o nome do arquivo atual (ex: dashboard.html)
-    let activePage = window.location.pathname.split('/').pop() || 'dashboard.html';
-    if (!activePage.endsWith('.html')) {
-        activePage = 'dashboard.html';
-    }
+    // Extrai o nome do arquivo atual sem extensão
+    const path = window.location.pathname.split('/').pop() || 'dashboard';
+    const activePage = path.replace('.html', '') || 'dashboard';
+
+    // Helper robusto para comparar link atual com ou sem extensão .html
+    const isPageActive = (href) => {
+        const linkPage = href.split('/').pop().replace('.html', '');
+        return activePage === linkPage;
+    };
 
     let html = '';
 
     if (user.perfil === 'SUPER_ADMIN') {
         html = `
             <p style="color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; margin-bottom: 10px;">SAAS PLATAFORMA</p>
-            <a href="super-dashboard.html" class="${activePage === 'super-dashboard.html' ? 'active' : ''}" style="${activePage === 'super-dashboard.html' ? 'color: var(--accent-primary) !important; font-weight: 600;' : ''}">📊 Plataforma Dashboard</a>
-            <a href="super-empresas.html" class="${activePage === 'super-empresas.html' ? 'active' : ''}" style="${activePage === 'super-empresas.html' ? 'color: var(--accent-primary) !important; font-weight: 600;' : ''}">🏢 Inquilinos (Empresas)</a>
-            <a href="super-usuarios.html" class="${activePage === 'super-usuarios.html' ? 'active' : ''}" style="${activePage === 'super-usuarios.html' ? 'color: var(--accent-primary) !important; font-weight: 600;' : ''}">👥 Usuários Isolados</a>
-            <a href="super-faturamento.html" class="${activePage === 'super-faturamento.html' ? 'active' : ''}" style="${activePage === 'super-faturamento.html' ? 'color: var(--accent-primary) !important; font-weight: 600;' : ''}">💰 Faturamento SaaS</a>
-            <a href="super-provedores.html" class="${activePage === 'super-provedores.html' ? 'active' : ''}" style="${activePage === 'super-provedores.html' ? 'color: var(--accent-primary) !important; font-weight: 600;' : ''}">💳 Provedores de Pgto.</a>
+            <a href="super-dashboard.html" class="${isPageActive('super-dashboard.html') ? 'active' : ''}" style="${isPageActive('super-dashboard.html') ? 'color: var(--accent-primary) !important; font-weight: 600;' : ''}">📊 Plataforma Dashboard</a>
+            <a href="super-empresas.html" class="${isPageActive('super-empresas.html') ? 'active' : ''}" style="${isPageActive('super-empresas.html') ? 'color: var(--accent-primary) !important; font-weight: 600;' : ''}">🏢 Inquilinos (Empresas)</a>
+            <a href="super-usuarios.html" class="${isPageActive('super-usuarios.html') ? 'active' : ''}" style="${isPageActive('super-usuarios.html') ? 'color: var(--accent-primary) !important; font-weight: 600;' : ''}">👥 Usuários Isolados</a>
+            <a href="super-faturamento.html" class="${isPageActive('super-faturamento.html') ? 'active' : ''}" style="${isPageActive('super-faturamento.html') ? 'color: var(--accent-primary) !important; font-weight: 600;' : ''}">💰 Faturamento SaaS</a>
+            <a href="super-provedores.html" class="${isPageActive('super-provedores.html') ? 'active' : ''}" style="${isPageActive('super-provedores.html') ? 'color: var(--accent-primary) !important; font-weight: 600;' : ''}">💳 Provedores de Pgto.</a>
             <p style="color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; margin-top: 20px; margin-bottom: 10px;">PERFIL</p>
-            <a href="meu-perfil.html" class="${activePage === 'meu-perfil.html' ? 'active' : ''}" style="${activePage === 'meu-perfil.html' ? 'color: var(--accent-primary) !important; font-weight: 600;' : ''}">👤 Meus Dados</a>
+            <a href="meu-perfil.html" class="${isPageActive('meu-perfil.html') ? 'active' : ''}" style="${isPageActive('meu-perfil.html') ? 'color: var(--accent-primary) !important; font-weight: 600;' : ''}">👤 Meus Dados</a>
         `;
     } else {
         html = `
             <p style="color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; margin-bottom: 10px;">MENU PRINCIPAL</p>
-            <a href="dashboard.html" class="${activePage === 'dashboard.html' ? 'active' : ''}" style="${activePage === 'dashboard.html' ? 'color: var(--accent-primary) !important; font-weight: 600;' : ''}">🏠 Dashboard</a>
-            <a href="vitrine.html" class="${activePage === 'vitrine.html' ? 'active' : ''}" style="${activePage === 'vitrine.html' ? 'color: var(--accent-primary) !important; font-weight: 600;' : ''}">🎁 Vitrine de Prêmios</a>
-            <a href="meu-extrato.html" class="${activePage === 'meu-extrato.html' ? 'active' : ''}" style="${activePage === 'meu-extrato.html' ? 'color: var(--accent-primary) !important; font-weight: 600;' : ''}">📊 Meu Extrato</a>
+            <a href="dashboard.html" class="${isPageActive('dashboard.html') ? 'active' : ''}" style="${isPageActive('dashboard.html') ? 'color: var(--accent-primary) !important; font-weight: 600;' : ''}">🏠 Dashboard</a>
+            <a href="vitrine.html" class="${isPageActive('vitrine.html') ? 'active' : ''}" style="${isPageActive('vitrine.html') ? 'color: var(--accent-primary) !important; font-weight: 600;' : ''}">🎁 Vitrine de Prêmios</a>
+            <a href="meu-extrato.html" class="${isPageActive('meu-extrato.html') ? 'active' : ''}" style="${isPageActive('meu-extrato.html') ? 'color: var(--accent-primary) !important; font-weight: 600;' : ''}">📊 Meu Extrato</a>
         `;
 
         if (user.perfil === 'ADMIN_EMPRESA') {
             html += `
                 <p style="color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; margin-top: 15px; margin-bottom: 10px;">ADMINISTRAÇÃO</p>
-                <a href="admin-lancamento.html" class="${activePage === 'admin-lancamento.html' ? 'active' : ''}" style="${activePage === 'admin-lancamento.html' ? 'color: var(--accent-primary) !important; font-weight: 600;' : ''}">💎 Lançamento Manual</a>
-                <a href="admin-importacao.html" class="${activePage === 'admin-importacao.html' ? 'active' : ''}" style="${activePage === 'admin-importacao.html' ? 'color: var(--accent-primary) !important; font-weight: 600;' : ''}">📤 Importação Excel</a>
-                <a href="admin-premios.html" class="${activePage === 'admin-premios.html' ? 'active' : ''}" style="${activePage === 'admin-premios.html' ? 'color: var(--accent-primary) !important; font-weight: 600;' : ''}">⚙️ Gerenciar Prêmios</a>
-                <a href="admin-usuarios.html" class="${activePage === 'admin-usuarios.html' ? 'active' : ''}" style="${activePage === 'admin-usuarios.html' ? 'color: var(--accent-primary) !important; font-weight: 600;' : ''}">👥 Gestão de Corretores</a>
-                <a href="admin-movimentacoes.html" class="${activePage === 'admin-movimentacoes.html' ? 'active' : ''}" style="${activePage === 'admin-movimentacoes.html' ? 'color: var(--accent-primary) !important; font-weight: 600;' : ''}">📈 Movimentações</a>
-                <a href="admin-faturamento.html" class="${activePage === 'admin-faturamento.html' ? 'active' : ''}" style="${activePage === 'admin-faturamento.html' ? 'color: var(--accent-primary) !important; font-weight: 600;' : ''}">💳 Faturamento SaaS</a>
+                <a href="admin-lancamento.html" class="${isPageActive('admin-lancamento.html') ? 'active' : ''}" style="${isPageActive('admin-lancamento.html') ? 'color: var(--accent-primary) !important; font-weight: 600;' : ''}">💎 Lançamento Manual</a>
+                <a href="admin-importacao.html" class="${isPageActive('admin-importacao.html') ? 'active' : ''}" style="${isPageActive('admin-importacao.html') ? 'color: var(--accent-primary) !important; font-weight: 600;' : ''}">📤 Importação Excel</a>
+                <a href="admin-premios.html" class="${isPageActive('admin-premios.html') ? 'active' : ''}" style="${isPageActive('admin-premios.html') ? 'color: var(--accent-primary) !important; font-weight: 600;' : ''}">⚙️ Gerenciar Prêmios</a>
+                <a href="admin-usuarios.html" class="${isPageActive('admin-usuarios.html') ? 'active' : ''}" style="${isPageActive('admin-usuarios.html') ? 'color: var(--accent-primary) !important; font-weight: 600;' : ''}">👥 Gestão de Corretores</a>
+                <a href="admin-movimentacoes.html" class="${isPageActive('admin-movimentacoes.html') ? 'active' : ''}" style="${isPageActive('admin-movimentacoes.html') ? 'color: var(--accent-primary) !important; font-weight: 600;' : ''}">📈 Movimentações</a>
+                <a href="admin-faturamento.html" class="${isPageActive('admin-faturamento.html') ? 'active' : ''}" style="${isPageActive('admin-faturamento.html') ? 'color: var(--accent-primary) !important; font-weight: 600;' : ''}">💳 Faturamento SaaS</a>
             `;
         }
 
         html += `
             <p style="color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; margin-top: 15px; margin-bottom: 10px;">PERFIL</p>
-            <a href="meu-perfil.html" class="${activePage === 'meu-perfil.html' ? 'active' : ''}" style="${activePage === 'meu-perfil.html' ? 'color: var(--accent-primary) !important; font-weight: 600;' : ''}">👤 Meus Dados</a>
+            <a href="meu-perfil.html" class="${isPageActive('meu-perfil.html') ? 'active' : ''}" style="${isPageActive('meu-perfil.html') ? 'color: var(--accent-primary) !important; font-weight: 600;' : ''}">👤 Meus Dados</a>
         `;
     }
 
@@ -405,6 +421,15 @@ window.addEventListener('DOMContentLoaded', async () => {
     // A tela de login é sempre forçada a manter o tema escuro premium
     if (window.location.pathname.includes('login.html') || window.location.pathname === '/' || window.location.pathname.endsWith('/')) {
         document.body.setAttribute('data-theme', 'dark');
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('error') === 'inactive') {
+            setTimeout(() => {
+                if (window.showToast) {
+                    window.showToast('Sua conta foi inativada. Entre em contato com o administrador.', 'error');
+                }
+            }, 200);
+        }
         return;
     }
 

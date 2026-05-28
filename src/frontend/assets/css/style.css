@@ -668,3 +668,90 @@ th {
 }
 
 
+/* =========================================
+   Premium Grid Component Tokens
+========================================= */
+
+/* Filter Bar */
+.pg-filter-bar {
+    border-radius: var(--radius-md);
+}
+.pg-filter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 15px;
+}
+.pg-filter-grid input, .pg-filter-grid select {
+    width: 100%;
+    padding: 9px 12px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-family: var(--font-main);
+    font-size: 0.85rem;
+    transition: all 0.2s ease;
+}
+.pg-filter-grid input:focus, .pg-filter-grid select:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+    background: rgba(255,255,255,0.08);
+}
+.pg-filter-grid select option {
+    background: var(--bg-card, #1a1a2e); /* Fallback */
+    color: var(--text-primary);
+}
+
+/* Sort Icons */
+.pg-sort-icon {
+    font-size: 0.7rem;
+    margin-left: 6px;
+    color: var(--text-secondary);
+    opacity: 0.4;
+    transition: all 0.2s ease;
+    display: inline-block;
+}
+.pg-sort-icon.active {
+    color: var(--accent-primary);
+    opacity: 1;
+}
+th.pg-sortable:hover .pg-sort-icon {
+    opacity: 0.8;
+}
+
+/* Footer Summary */
+.pg-tfoot {
+    background: rgba(0, 0, 0, 0.2);
+    border-top: 2px solid var(--accent-primary);
+}
+.pg-tfoot td {
+    padding: 15px 20px !important;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+}
+
+/* Badges */
+.badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+.badge-confirmado, .badge-sucesso, .badge-pago, .badge-aprovado {
+    background: rgba(46, 204, 113, 0.15) !important;
+    color: var(--success);
+    border: 1px solid rgba(46, 204, 113, 0.3);
+}
+.badge-pendente, .badge-analise {
+    background: rgba(240, 165, 0, 0.15) !important;
+    color: var(--accent-secondary);
+    border: 1px solid rgba(240, 165, 0, 0.3);
+}
+.badge-cancelado, .badge-erro, .badge-rejeitado {
+    background: rgba(231, 76, 60, 0.15) !important;
+    color: var(--error);
+    border: 1px solid rgba(231, 76, 60, 0.3);
+}

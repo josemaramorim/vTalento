@@ -56,37 +56,15 @@
                 </form>
             </section>
 
-            <!-- Histórico Recente -->
-            <section class="history-card glass">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                    <h2 style="font-size: 1.2rem; color: var(--text-primary);">📋 Histórico Recente de Lançamentos Manuais</h2>
-                    <span style="font-size:0.78rem; color:var(--text-secondary); font-style:italic;">Últimos 20 ajustes manuais desta empresa</span>
-                </div>
-                <div class="table-responsive">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Data / Hora</th>
-                                <th>Corretor</th>
-                                <th>Tipo</th>
-                                <th>Valor (T$)</th>
-                                <th>Status</th>
-                                <th>Realizado por</th>
-                                <th>Justificativa</th>
-                            </tr>
-                        </thead>
-                        <tbody id="historicoTableBody">
-                            <tr>
-                                <td colspan="7" style="text-align: center; color: var(--text-secondary);">Nenhum lançamento registrado.</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+            <!-- Histórico Recente com PremiumGrid -->
+            <section class="glass" style="padding: 25px; margin-top: 30px;">
+                <div id="gridHistoricoLancamentos"></div>
             </section>
         </main>
     </div>
 
     <script src="assets/js/auth.js"></script>
+    <script src="assets/js/premium-grid.js"></script>
     <script>
         // Check Admin Auth
         const token = localStorage.getItem('@VTalentos:token');
@@ -134,49 +112,25 @@
             }
         }
 
-        async function fetchHistorico() {
+        let grid = null;
+        let corretoresData = [];
+
+        async function fetchCorretores() {
             try {
-                const response = await fetch(`${API_BASE}/historico-recente`, {
+                const response = await fetch(`${API_BASE}/corretores`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
-                const data = await response.json();
+                corretoresData = await response.json();
                 
-                const tbody = document.getElementById('historicoTableBody');
-                tbody.innerHTML = '';
-
-                if (data.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-secondary); padding: 20px 0;">Nenhum ajuste manual registrado ainda. Use o formulário acima para criar o primeiro lançamento.</td></tr>`;
-                    return;
-                }
-
-                data.forEach(item => {
-                    const tr = document.createElement('tr');
-                    const dataFormatada = new Date(item.created_at).toLocaleString('pt-BR');
-                    
-                    const badgeClass = item.tipo.toLowerCase();
-                    const valorAbs = Math.abs(parseFloat(item.valor));
-                    const isCred = item.tipo === 'CREDITO';
-                    const isEstorno = item.tipo === 'ESTORNO';
-                    const corValor = isCred ? 'var(--success)' : isEstorno ? 'var(--warning)' : 'var(--error)';
-                    const sinal = isCred ? '+' : isEstorno ? '±' : '-';
-
-                    const statusBadge = item.status
-                        ? `<span class="badge badge-${item.status.toLowerCase()}" style="font-size:0.7rem;">${item.status}</span>`
-                        : `<span style="color:var(--text-secondary); font-size:0.75rem;">—</span>`;
-                    
-                    tr.innerHTML = `
-                        <td style="font-size:0.82rem; white-space:nowrap;">${dataFormatada}</td>
-                        <td><strong>${item.corretor_nome}</strong></td>
-                        <td><span class="badge badge-${badgeClass}">${item.tipo}</span></td>
-                        <td><strong style="color:${corValor}; font-size:1rem;">${sinal}${valorAbs.toFixed(2)} T$</strong></td>
-                        <td>${statusBadge}</td>
-                        <td style="font-size:0.82rem; color:var(--text-secondary);">${item.admin_nome}</td>
-                        <td style="color: var(--text-secondary); max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size:0.82rem;" title="${item.justificativa}">${item.justificativa}</td>
-                    `;
-                    tbody.appendChild(tr);
+                const select = document.getElementById('corretorSelect');
+                corretoresData.forEach(corretor => {
+                    const option = document.createElement('option');
+                    option.value = corretor.id;
+                    option.textContent = `${corretor.nome} (${corretor.email}) - Saldo: ${corretor.saldo_disponivel}`;
+                    select.appendChild(option);
                 });
             } catch (err) {
-                console.error('Erro ao buscar histórico:', err);
+                console.error('Erro ao buscar corretores:', err);
             }
         }
 
@@ -227,8 +181,8 @@
                     // Reset form
                     document.getElementById('lancamentoForm').reset();
                     
-                    // Refresh data
-                    await fetchHistorico();
+                    // Refresh grid data
+                    if (grid) await grid.refresh();
                     
                     // Clean and reload corretor options to update balances
                     const select = document.getElementById('corretorSelect');
@@ -246,10 +200,87 @@
 
 
         // Init
-        window.addEventListener('DOMContentLoaded', () => {
+        window.addEventListener('DOMContentLoaded', async () => {
             renderHeader("Ajustes de Saldo", "Lançamentos manuais com auditoria total");
-            fetchCorretores();
-            fetchHistorico();
+            await fetchCorretores();
+            
+            const corretoresOptions = corretoresData.map(c => ({ value: c.id, label: c.nome }));
+
+            grid = new PremiumGrid({
+                containerId: 'gridHistoricoLancamentos',
+                title: 'Histórico de Lançamentos Manuais',
+                totalCountId: 'historicoTotalCount',
+                columns: [
+                    { key: 'data_hora', label: 'Data / Hora', width: '130px', sortable: true },
+                    { key: 'corretor_nome', label: 'Corretor', bold: true, sortable: true },
+                    { key: 'tipo', label: 'Tipo', type: 'badge' },
+                    { key: 'valor_formatado', label: 'Valor', align: 'right', sortable: true },
+                    { key: 'status_badge', label: 'Status', align: 'center' },
+                    { key: 'admin_nome', label: 'Realizado por' },
+                    { key: 'descricao', label: 'Justificativa' }
+                ],
+                filters: [
+                    { id: 'usuario_id', label: 'Corretor', type: 'select', options: corretoresOptions },
+                    { id: 'tipo', label: 'Tipo', type: 'select', options: [
+                        { value: 'CREDITO', label: 'Crédito (+)' },
+                        { value: 'DEBITO', label: 'Débito (-)' },
+                        { value: 'ESTORNO', label: 'Estorno (±)' }
+                    ]},
+                    { id: 'data_inicio', label: 'Período De', type: 'date' },
+                    { id: 'data_fim', label: 'Período Até', type: 'date' }
+                ],
+                pagination: { enabled: true, defaultPageSize: 10, pageSizeOptions: [10, 50, 100] },
+                cellRenderer: (row, col) => {
+                    if (col.key === 'data_hora') return new Date(row.created_at).toLocaleString('pt-BR');
+                    if (col.key === 'valor_formatado') {
+                        const isCred = row.tipo === 'CREDITO';
+                        const isEst = row.tipo === 'ESTORNO';
+                        const cor = isCred ? 'var(--success)' : isEst ? 'var(--warning)' : 'var(--error)';
+                        const sinal = isCred ? '+' : isEst ? '±' : '-';
+                        return `<strong style="color: ${cor}; font-size: 0.95rem;">${sinal}${Math.abs(parseFloat(row.valor)).toFixed(2)} T$</strong>`;
+                    }
+                    if (col.key === 'status_badge') {
+                        const isAtivo = row.status || 'CONCLUIDO';
+                        return `<span class="badge badge-${isAtivo.toLowerCase()}" style="font-size:0.7rem;">${isAtivo}</span>`;
+                    }
+                    if (col.key === 'descricao') {
+                        return `<div style="max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size:0.82rem;" title="${row.justificativa}">${row.justificativa || '—'}</div>`;
+                    }
+                    return row[col.key];
+                },
+                fetchFn: async (params) => {
+                    const queryParams = new URLSearchParams({
+                        page: params.page,
+                        limit: params.limit,
+                        origem: 'MANUAL', // Apenas lançamentos manuais
+                        ...(params.filters.tipo && { tipo: params.filters.tipo }),
+                        ...(params.filters.usuario_id && { usuario_id: params.filters.usuario_id }),
+                        ...(params.filters.data_inicio && { data_inicio: params.filters.data_inicio }),
+                        ...(params.filters.data_fim && { data_fim: params.filters.data_fim })
+                    });
+                    
+                    if (params.sortBy) {
+                        queryParams.append('sort_by', params.sortBy);
+                        queryParams.append('sort_dir', params.sortDir);
+                    }
+
+                    const response = await fetch(`${API_BASE}/movimentacoes?${queryParams}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+
+                    if (response.status === 401) { logout(); return; }
+
+                    const resData = await response.json();
+                    if (!resData.success) throw new Error(resData.error || 'Erro ao carregar lançamentos');
+
+                    return {
+                        rows: resData.data,
+                        total: resData.meta.total
+                    };
+                }
+            });
+
+            await grid.init();
         });
     </script>
 </body>

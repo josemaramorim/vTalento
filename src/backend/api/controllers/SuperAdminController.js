@@ -117,7 +117,9 @@ class SuperAdminController {
       const page = parseInt(req.query.page, 10) || 1;
       const limit = parseInt(req.query.limit, 10) || 10;
       const busca = req.query.busca || '';
-      const result = await SuperAdminService.listUsuariosByEmpresa(empresaId, page, limit, busca);
+      const perfil = req.query.perfil || '';
+      const ativo = req.query.ativo || '';
+      const result = await SuperAdminService.listUsuariosByEmpresa(empresaId, page, limit, busca, perfil, ativo);
       return res.json({ success: true, ...result });
     } catch (err) {
       return res.status(500).json({ success: false, error: err.message });

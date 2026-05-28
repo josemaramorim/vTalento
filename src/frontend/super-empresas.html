@@ -13,40 +13,7 @@
             align-items: center;
             margin-bottom: 25px;
         }
-        .table-responsive {
-            overflow-x: auto;
-            width: 100%;
-            border-radius: var(--radius-md);
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            box-shadow: var(--shadow-md);
-        }
-        .premium-table {
-            width: 100%;
-            border-collapse: collapse;
-            text-align: left;
-        }
-        .premium-table th {
-            padding: 18px 24px;
-            background: rgba(255, 255, 255, 0.02);
-            color: var(--text-secondary);
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            border-bottom: 1px solid var(--glass-border);
-        }
-        .premium-table td {
-            padding: 18px 24px;
-            border-bottom: 1px solid var(--glass-border);
-            font-size: 0.9rem;
-            color: var(--text-primary);
-        }
-        .premium-table tr:last-child td {
-            border-bottom: none;
-        }
-        .premium-table tr:hover {
-            background: rgba(255, 255, 255, 0.01);
-        }
+        /* Tabela migrada para PremiumGrid no style.css global */
         /* Badges de Status */
         .badge {
             display: inline-flex;
@@ -182,74 +149,7 @@
             text-transform: uppercase;
         }
 
-        /* Paginação */
-        .pagination-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 20px;
-        }
-        .pagination-btn {
-            padding: 8px 16px;
-            border-radius: var(--radius-sm);
-            background: rgba(255,255,255,0.05);
-            border: 1px solid var(--glass-border);
-            color: var(--text-primary);
-            cursor: pointer;
-            font-weight: 500;
-            transition: all 0.3s ease;
-        }
-        .pagination-btn:hover:not(:disabled) {
-            border-color: var(--accent-primary);
-            background: rgba(255,255,255,0.08);
-        }
-        .pagination-btn:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
-
-        /* Selector box and filter styles */
-        .selector-box {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            padding: 15px 25px;
-            border-radius: var(--radius-md);
-            margin-bottom: 30px;
-            box-shadow: var(--shadow-sm);
-            flex-wrap: wrap;
-        }
-        .selector-box .filter-group {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .selector-box .filter-group label {
-            font-size: 0.8rem;
-            font-weight: 600;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        .selector-box select, .selector-box input {
-            min-width: 150px;
-            padding: 8px 12px;
-            border-radius: var(--radius-sm);
-            background: rgba(255,255,255,0.03);
-            border: 1px solid var(--glass-border);
-            color: var(--text-primary);
-            font-family: var(--font-main);
-            font-size: 0.85rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        .selector-box select:focus, .selector-box input:focus {
-            outline: none;
-            border-color: var(--accent-primary);
-            background: rgba(255,255,255,0.06);
-        }
+        /* Filtros e Paginação migrados para PremiumGrid no style.css global */
     </style>
 </head>
 <body data-theme="dark">
@@ -269,71 +169,9 @@
                 <button class="btn btn-primary" onclick="openNewEmpresaModal()" style="font-weight: 600;">➕ CADASTRAR NOVO CLIENTE</button>
             </div>
 
-            <!-- Seção de Filtros Diversos de Inquilinos -->
-            <div class="selector-box animate-fade" style="animation-delay: 0.05s;">
-                <div class="filter-group">
-                    <label for="filtroBusca">Buscar:</label>
-                    <input type="text" id="filtroBusca" placeholder="Nome ou slug..." style="width: 200px;" oninput="handleFilterChange()">
-                </div>
-                <div class="filter-group">
-                    <label for="filtroPlano">Plano:</label>
-                    <select id="filtroPlano" onchange="handleFilterChange()">
-                        <option value="">Todos os Planos</option>
-                        <option value="ESSENCIAL">ESSENCIAL</option>
-                        <option value="PROFISSIONAL">PROFISSIONAL</option>
-                        <option value="ENTERPRISE">ENTERPRISE</option>
-                    </select>
-                </div>
-                <div class="filter-group">
-                    <label for="filtroStatus">Status:</label>
-                    <select id="filtroStatus" onchange="handleFilterChange()">
-                        <option value="">Todos os Status</option>
-                        <option value="ATIVO">ATIVO</option>
-                        <option value="SUSPENSO">SUSPENSO</option>
-                        <option value="CANCELADO">CANCELADO</option>
-                    </select>
-                </div>
-                <div class="filter-group">
-                    <label for="filtroSaude">Saúde da Licença:</label>
-                    <select id="filtroSaude" onchange="handleFilterChange()">
-                        <option value="">Todas as Situações</option>
-                        <option value="ATIVA">Ativa (Em Dia)</option>
-                        <option value="EXPIRADA">Expirada / Vencida</option>
-                        <option value="CORTESIA">bypass Cortesia Ativo</option>
-                    </select>
-                </div>
-                <button class="btn" onclick="limparFiltros()" style="margin-left: auto; padding: 8px 16px; font-size: 0.8rem; font-weight: 600; background: rgba(255,255,255,0.05); color: var(--text-primary); border-radius: var(--radius-sm);">🧹 Limpar</button>
-            </div>
-
-            <!-- Tabela de Empresas -->
-            <div class="table-responsive animate-fade" style="animation-delay: 0.1s;">
-                <table class="premium-table">
-                    <thead>
-                        <tr>
-                            <th>Nome / Slug</th>
-                            <th>Plano Contratado</th>
-                            <th>Status Conta</th>
-                            <th>Expiração Licença</th>
-                            <th>Finanças (Pago / Aberto)</th>
-                            <th style="text-align: right;">Ações de Operação</th>
-                        </tr>
-                    </thead>
-                    <tbody id="empresasTableBody">
-                        <tr>
-                            <td colspan="6" style="text-align: center; color: var(--text-secondary);">Buscando inquilinos na nuvem...</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Paginação -->
-            <div class="pagination-container animate-fade" style="animation-delay: 0.15s;">
-                <span id="pageInfo" style="font-size: 0.85rem; color: var(--text-secondary);">Página 1 de 1</span>
-                <div style="display: flex; gap: 10px;">
-                    <button class="pagination-btn" id="prevPageBtn" disabled>Anterior</button>
-                    <button class="pagination-btn" id="nextPageBtn" disabled>Próxima</button>
-                </div>
-            </div>
+            <section class="glass animate-fade" style="padding: 25px; margin-top: 20px; margin-bottom: 25px; animation-delay: 0.05s;">
+                <div id="gridEmpresas"></div>
+            </section>
         </main>
     </div>
 
@@ -461,6 +299,7 @@
     </div>
 
     <script src="assets/js/auth.js"></script>
+    <script src="assets/js/premium-grid.js"></script>
     <script>
         const token = localStorage.getItem('@VTalentos:token');
         const userStr = localStorage.getItem('@VTalentos:user');
@@ -504,118 +343,81 @@
             return new Date(dateStr).toLocaleDateString('pt-BR');
         }
 
-        let filterTimeout = null;
+        let globalGrid = null;
+        
+        async function setupGrid() {
+            globalGrid = new PremiumGrid({
+                containerId: 'gridEmpresas',
+                title: 'Inquilinos SaaS Cadastrados',
+                totalCountId: 'superEmpresasTotalCount',
+                columns: [
+                    { key: 'nome', label: 'Nome / Slug', bold: true, sortable: true },
+                    { key: 'plano', label: 'Plano Contratado', sortable: true },
+                    { key: 'status', label: 'Status Conta', align: 'center', sortable: true },
+                    { key: 'expiracao', label: 'Expiração Licença', sortable: true },
+                    { key: 'financas', label: 'Finanças (Pago / Aberto)', align: 'left', sortable: true },
+                    { key: 'acoes', label: 'Ações de Operação', align: 'right' }
+                ],
+                filters: [
+                    { id: 'busca', label: 'Buscar', type: 'text', placeholder: 'Nome ou slug...' },
+                    { id: 'plano', label: 'Plano', type: 'select', options: [{value:'', label:'Todos os Planos'}, {value:'ESSENCIAL', label:'ESSENCIAL'}, {value:'PROFISSIONAL', label:'PROFISSIONAL'}, {value:'ENTERPRISE', label:'ENTERPRISE'}] },
+                    { id: 'status', label: 'Status', type: 'select', options: [{value:'', label:'Todos os Status'}, {value:'ATIVO', label:'ATIVO'}, {value:'SUSPENSO', label:'SUSPENSO'}, {value:'CANCELADO', label:'CANCELADO'}] },
+                    { id: 'saude', label: 'Saúde da Licença', type: 'select', options: [{value:'', label:'Todas as Situações'}, {value:'ATIVA', label:'Ativa (Em Dia)'}, {value:'EXPIRADA', label:'Expirada / Vencida'}, {value:'CORTESIA', label:'bypass Cortesia Ativo'}] }
+                ],
+                pagination: { enabled: true, defaultPageSize: 10, pageSizeOptions: [10, 50, 100] },
+                cellRenderer: (row, col) => {
+                    if (col.key === 'nome') return `<div style="font-weight:600;">${row.nome}</div><div style="font-size:0.75rem; color:var(--text-secondary); font-family:monospace;">/${row.slug}</div>`;
+                    if (col.key === 'plano') return `<span class="badge badge-plano">${row.plano}</span><div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;">Limite: ${row.corretores_ativos}/${row.limite_corretores} corretores</div>`;
+                    if (col.key === 'status') {
+                        const statusBadge = row.status === 'ATIVO' ? 'badge-ativo' : row.status === 'SUSPENSO' ? 'badge-suspenso' : 'badge-cancelado';
+                        return `<span class="badge ${statusBadge}">${row.status}</span>`;
+                    }
+                    if (col.key === 'expiracao') {
+                        return `<div>${formatData(row.data_expiracao)}</div>${row.liberacao_emergencia ? `<span style="font-size:0.7rem; color:var(--warning); font-weight:600; background:rgba(230,126,34,0.08); padding:1px 5px; border-radius:4px;">Bypass até ${formatData(row.emergencia_expiracao)}</span>` : ''}`;
+                    }
+                    if (col.key === 'financas') return `<strong>${formatReal(row.total_pago)}</strong> <span style="color:var(--text-secondary); font-size:0.75rem;">pago</span> / <span style="color:var(--error); font-size:0.75rem;">${formatReal(row.total_pendente)} aberto</span>`;
+                    if (col.key === 'acoes') {
+                        let emergenciaBtn = '';
+                        if (row.status === 'SUSPENSO' || new Date(row.data_expiracao) < new Date()) {
+                            emergenciaBtn = `<button type="button" class="btn" onclick="openEmergenciaModal('${row.id}')" style="padding: 6px 12px; font-size: 0.75rem; background: rgba(230, 126, 34, 0.15); color: var(--warning); font-weight:600; border-radius:4px; margin-right:5px;">⚡ CORTESIA</button>`;
+                        }
+                        return `
+                            ${emergenciaBtn}
+                            <button type="button" class="btn btn-primary" onclick="window.location.href='super-faturamento.html?empresa_id=${row.id}'" style="padding: 6px 12px; font-size: 0.75rem; font-weight:600; border-radius:4px; margin-right:5px; box-shadow:none;">📊 SAÚDE</button>
+                            <button type="button" class="btn" onclick="openEditEmpresaModal('${row.id}')" style="padding: 6px 12px; font-size: 0.75rem; font-weight:600; background:rgba(255,255,255,0.05); color:var(--text-primary); border-radius:4px; margin-right:5px;">✏️ EDITAR</button>
+                            <button type="button" class="btn" onclick="deletarEmpresa('${row.id}', '${row.nome}')" style="padding: 6px 12px; font-size: 0.75rem; font-weight:600; background:rgba(255,0,0,0.1); color:var(--error); border-radius:4px;">❌ EXCLUIR</button>
+                        `;
+                    }
+                    return row[col.key];
+                },
+                fetchFn: async (params) => {
+                    let url = `http://localhost:3001/api/super/empresas?page=${params.page}&limit=${params.limit}`;
+                    if (params.filters.busca) url += `&busca=${encodeURIComponent(params.filters.busca)}`;
+                    if (params.filters.plano) url += `&plano=${encodeURIComponent(params.filters.plano)}`;
+                    if (params.filters.status) url += `&status=${encodeURIComponent(params.filters.status)}`;
+                    if (params.filters.saude) url += `&saude=${encodeURIComponent(params.filters.saude)}`;
+                    
+                    if (params.sortBy) {
+                        url += `&sort_by=${encodeURIComponent(params.sortBy)}&sort_dir=${encodeURIComponent(params.sortDir)}`;
+                    }
 
-        function handleFilterChange() {
-            clearTimeout(filterTimeout);
-            filterTimeout = setTimeout(() => {
-                fetchEmpresas(1);
-            }, 300);
-        }
+                    const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+                    const data = await res.json();
+                    if (!data.success) throw new Error(data.error);
 
-        function limparFiltros() {
-            document.getElementById('filtroBusca').value = '';
-            document.getElementById('filtroPlano').value = '';
-            document.getElementById('filtroStatus').value = '';
-            document.getElementById('filtroSaude').value = '';
-            fetchEmpresas(1);
-        }
-
-        // Buscar Inquilinos
-        async function fetchEmpresas(page = 1) {
-            try {
-                const busca = document.getElementById('filtroBusca').value;
-                const plano = document.getElementById('filtroPlano').value;
-                const status = document.getElementById('filtroStatus').value;
-                const saude = document.getElementById('filtroSaude').value;
-
-                let url = `http://localhost:3001/api/super/empresas?page=${page}&limit=${limitPerPage}`;
-                if (busca) url += `&busca=${encodeURIComponent(busca)}`;
-                if (plano) url += `&plano=${encodeURIComponent(plano)}`;
-                if (status) url += `&status=${encodeURIComponent(status)}`;
-                if (saude) url += `&saude=${encodeURIComponent(saude)}`;
-
-                const res = await fetch(url, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const data = await res.json();
-                
-                if (data.success) {
-                    currentPage = page;
-                    loadedEmpresas = data.data; // Armazena em memória as empresas carregadas
-                    renderTable(data.data);
-                    updatePagination(data.meta);
-                } else {
-                    throw new Error(data.error);
+                    loadedEmpresas = data.data;
+                    currentPage = params.page;
+                    return { rows: data.data, total: data.meta.total };
                 }
-            } catch (err) {
-                showToast(err.message || 'Erro ao carregar lista de empresas.', 'error');
-            }
-        }
-
-        function renderTable(empresas) {
-            const tbody = document.getElementById('empresasTableBody');
-            tbody.innerHTML = '';
-
-            if (empresas.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-secondary);">Nenhum inquilino cadastrado na nuvem.</td></tr>`;
-                return;
-            }
-
-            empresas.forEach(emp => {
-                const tr = document.createElement('tr');
-                
-                const statusBadge = emp.status === 'ATIVO' ? 'badge-ativo' : emp.status === 'SUSPENSO' ? 'badge-suspenso' : 'badge-cancelado';
-                const faturamentoText = `<strong>${formatReal(emp.total_pago)}</strong> <span style="color:var(--text-secondary); font-size:0.75rem;">pago</span> / <span style="color:var(--error); font-size:0.75rem;">${formatReal(emp.total_pendente)} aberto</span>`;
-                
-                let emergenciaBtn = '';
-                if (emp.status === 'SUSPENSO' || new Date(emp.data_expiracao) < new Date()) {
-                    emergenciaBtn = `<button class="btn" onclick="openEmergenciaModal('${emp.id}')" style="padding: 6px 12px; font-size: 0.75rem; background: rgba(230, 126, 34, 0.15); color: var(--warning); font-weight:600; border-radius:4px; margin-right:5px;">⚡ CORTESIA</button>`;
-                }
-
-                tr.innerHTML = `
-                    <td>
-                        <div style="font-weight:600;">${emp.nome}</div>
-                        <div style="font-size:0.75rem; color:var(--text-secondary); font-family:monospace;">/${emp.slug}</div>
-                    </td>
-                    <td>
-                        <span class="badge badge-plano">${emp.plano}</span>
-                        <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:2px;">Limite: ${emp.corretores_ativos}/${emp.limite_corretores} corretores</div>
-                    </td>
-                    <td><span class="badge ${statusBadge}">${emp.status}</span></td>
-                    <td>
-                        <div>${formatData(emp.data_expiracao)}</div>
-                        ${emp.liberacao_emergencia ? `<span style="font-size:0.7rem; color:var(--warning); font-weight:600; background:rgba(230,126,34,0.08); padding:1px 5px; border-radius:4px;">Bypass até ${formatData(emp.emergencia_expiracao)}</span>` : ''}
-                    </td>
-                    <td>${faturamentoText}</td>
-                    <td style="text-align: right;">
-                        ${emergenciaBtn}
-                        <button class="btn btn-primary" onclick="window.location.href='super-faturamento.html?empresa_id=${emp.id}'" style="padding: 6px 12px; font-size: 0.75rem; font-weight:600; border-radius:4px; margin-right:5px; box-shadow:none;">📊 SAÚDE</button>
-                        <button class="btn" onclick="openEditEmpresaModal('${emp.id}')" style="padding: 6px 12px; font-size: 0.75rem; font-weight:600; background:rgba(255,255,255,0.05); color:var(--text-primary); border-radius:4px; margin-right:5px;">✏️ EDITAR</button>
-                        <button class="btn" onclick="deletarEmpresa('${emp.id}', '${emp.nome}')" style="padding: 6px 12px; font-size: 0.75rem; font-weight:600; background:rgba(255,0,0,0.1); color:var(--error); border-radius:4px;">❌ EXCLUIR</button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
             });
+            await globalGrid.init();
         }
 
-        function updatePagination(meta) {
-            document.getElementById('pageInfo').innerText = `Página ${meta.page} de ${meta.totalPages || 1}`;
-            
-            const prev = document.getElementById('prevPageBtn');
-            const next = document.getElementById('nextPageBtn');
-
-            prev.disabled = meta.page <= 1;
-            next.disabled = meta.page >= meta.totalPages;
-
-            // Remove antigos event listeners clonando os botões
-            const newPrev = prev.cloneNode(true);
-            prev.parentNode.replaceChild(newPrev, prev);
-            newPrev.addEventListener('click', () => fetchEmpresas(meta.page - 1));
-
-            const newNext = next.cloneNode(true);
-            next.parentNode.replaceChild(newNext, next);
-            newNext.addEventListener('click', () => fetchEmpresas(meta.page + 1));
+        function fetchEmpresas(page = 1) {
+            if (globalGrid) {
+                globalGrid.state.page = page;
+                globalGrid.refresh();
+            }
         }
 
         // Modais Controle
@@ -794,7 +596,7 @@
         }
 
         window.addEventListener('DOMContentLoaded', () => {
-            fetchEmpresas(currentPage);
+            setupGrid();
         });
     </script>
 </body>

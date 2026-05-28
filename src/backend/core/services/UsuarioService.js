@@ -3,7 +3,7 @@ const bcrypt = require('bcryptjs');
 
 class UsuarioService {
   // Tarefa 12.1 — FASE 5 — Listar corretores/usuários da empresa de forma paginada e com filtros
-  async listAllUsuariosAdmin({ empresa_id, page = 1, limit = 10, busca }) {
+  async listAllUsuariosAdmin({ empresa_id, page = 1, limit = 10, busca, perfil, ativo }) {
     const limitSanitizado = [10, 50, 100].includes(parseInt(limit, 10)) ? parseInt(limit, 10) : 10;
     const paginaSanitizada = Math.max(1, parseInt(page, 10) || 1);
     const offset = (paginaSanitizada - 1) * limitSanitizado;
@@ -18,6 +18,15 @@ class UsuarioService {
             .orWhere('email', 'LIKE', termo)
             .orWhere('cpf', 'LIKE', termo);
       });
+    }
+
+    if (perfil) {
+      query = query.where('perfil', perfil);
+    }
+
+    if (ativo !== undefined && ativo !== '') {
+      const isAtivo = String(ativo) === 'true' || ativo === '1' || ativo === true;
+      query = query.where('ativo', isAtivo);
     }
 
     // Conta total de registros para paginação

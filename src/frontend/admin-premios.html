@@ -69,33 +69,15 @@
                 </form>
             </section>
 
-            <!-- Catálogo Atual -->
-            <section class="history-card glass" style="margin-top: 30px;">
-                <h2 style="font-size: 1.2rem; margin-bottom: 10px; color: var(--text-primary);">Catálogo de Prêmios</h2>
-                <div class="table-responsive">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Título</th>
-                                <th>Estoque</th>
-                                <th>Custo</th>
-                                <th>Status</th>
-                                <th>Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="premiosTableBody">
-                            <tr>
-                                <td colspan="6" style="text-align: center; color: var(--text-secondary);">Carregando prêmios...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+            <!-- Catálogo Atual com PremiumGrid -->
+            <section class="glass" style="padding: 25px; margin-top: 30px;">
+                <div id="gridCatalogoPremios"></div>
             </section>
         </main>
     </div>
 
     <script src="assets/js/auth.js"></script>
+    <script src="assets/js/premium-grid.js"></script>
     <script>
         // Check Admin Auth
         const token = localStorage.getItem('@VTalentos:token');
@@ -125,49 +107,7 @@
         const API_BASE = 'http://localhost:3001/api/admin';
         let statePremios = [];
 
-        async function fetchPremios() {
-            try {
-                const response = await fetch(`${API_BASE}/premios`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const resData = await response.json();
-                
-                const tbody = document.getElementById('premiosTableBody');
-                tbody.innerHTML = '';
-
-                if (!resData.success || resData.data.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-secondary);">Nenhum prêmio cadastrado.</td></tr>`;
-                    statePremios = [];
-                    return;
-                }
-
-                statePremios = resData.data;
-
-                statePremios.forEach(premio => {
-                    const tr = document.createElement('tr');
-                    const badgeClass = premio.ativo ? 'badge-ativo' : 'badge-inativo';
-                    const statusText = premio.ativo ? 'ATIVO' : 'INATIVO';
-                    
-                    tr.innerHTML = `
-                        <td>#${premio.id}</td>
-                        <td><strong>${premio.titulo}</strong></td>
-                        <td>${premio.quantidade_disponivel} un.</td>
-                        <td><strong style="color: var(--accent-primary)">${premio.custo_pontos} T$</strong></td>
-                        <td><span class="badge ${badgeClass}">${statusText}</span></td>
-                        <td>
-                            <div class="actions-btn">
-                                <button class="btn btn-sm" onclick="editPremio(${premio.id})" style="background: rgba(255,255,255,0.1); color: var(--text-primary);">Editar</button>
-                                <button class="btn btn-sm" onclick="deletePremio(${premio.id})" style="background: rgba(255,0,0,0.1); color: var(--error);">Excluir</button>
-                            </div>
-                        </td>
-                    `;
-                    tbody.appendChild(tr);
-                });
-            } catch (err) {
-                console.error('Erro ao buscar prêmios:', err);
-                showToast('Erro ao buscar catálogo de prêmios.', 'error');
-            }
-        }
+        let grid = null;
 
         // Form Submit
         document.getElementById('premioForm').addEventListener('submit', async (e) => {
@@ -206,7 +146,7 @@
 
                 showToast(id ? 'Prêmio atualizado com sucesso!' : 'Prêmio criado com sucesso!', 'success');
                 resetForm();
-                await fetchPremios();
+                if (grid) await grid.refresh();
 
             } catch (err) {
                 showToast(err.message, 'error');
@@ -249,7 +189,7 @@
                 }
 
                 showToast('Prêmio removido/inativado com sucesso.', 'success');
-                await fetchPremios();
+                if (grid) await grid.refresh();
             } catch (err) {
                 showToast(err.message, 'error');
             }
@@ -264,9 +204,104 @@
         }
 
         // Init
-        window.addEventListener('DOMContentLoaded', () => {
+        window.addEventListener('DOMContentLoaded', async () => {
             renderHeader("Vitrine de Prêmios", "Gerencie o catálogo de recompensas disponíveis para resgate");
-            fetchPremios();
+            
+            grid = new PremiumGrid({
+                containerId: 'gridCatalogoPremios',
+                title: 'Catálogo de Prêmios Cadastrados',
+                totalCountId: 'premiosTotalCount',
+                columns: [
+                    { key: 'id', label: 'ID', width: '80px' },
+                    { key: 'titulo', label: 'Título', bold: true, sortable: true },
+                    { key: 'quantidade_disponivel', label: 'Estoque', sortable: true },
+                    { key: 'custo_pontos', label: 'Custo', highlight: true, sortable: true },
+                    { key: 'ativo_badge', label: 'Status', align: 'center' },
+                    { key: 'acoes', label: 'Ações', align: 'center' }
+                ],
+                filters: [
+                    { id: 'busca', label: 'Pesquisar por Título ou Descrição', type: 'text' },
+                    { id: 'ativo', label: 'Status', type: 'select', options: [
+                        { value: 'true', label: 'Ativo' },
+                        { value: 'false', label: 'Inativo' }
+                    ]}
+                ],
+                pagination: { enabled: true, defaultPageSize: 10, pageSizeOptions: [10, 50, 100] },
+                cellRenderer: (row, col) => {
+                    if (col.key === 'id') return `#${row.id}`;
+                    if (col.key === 'quantidade_disponivel') return `${row.quantidade_disponivel} un.`;
+                    if (col.key === 'custo_pontos') return `<strong style="color: var(--accent-primary)">${row.custo_pontos} T$</strong>`;
+                    if (col.key === 'ativo_badge') {
+                        const badgeClass = row.ativo ? 'badge-ativo' : 'badge-inativo';
+                        const statusText = row.ativo ? 'ATIVO' : 'INATIVO';
+                        return `<span class="badge ${badgeClass}">${statusText}</span>`;
+                    }
+                    if (col.key === 'acoes') {
+                        return `
+                            <div class="actions-btn" style="justify-content: center;">
+                                <button class="btn btn-sm" onclick="editPremio(${row.id})" style="background: rgba(255,255,255,0.1); color: var(--text-primary); padding: 4px 8px; font-size: 0.75rem;">Editar</button>
+                                <button class="btn btn-sm" onclick="deletePremio(${row.id})" style="background: rgba(255,0,0,0.1); color: var(--error); padding: 4px 8px; font-size: 0.75rem;">Excluir</button>
+                            </div>
+                        `;
+                    }
+                    return row[col.key];
+                },
+                fetchFn: async (params) => {
+                    const response = await fetch(`${API_BASE}/premios`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    const resData = await response.json();
+                    if (!resData.success) throw new Error(resData.error || 'Erro ao carregar prêmios');
+                    
+                    let rows = resData.data || [];
+                    statePremios = rows; // keep local state for form editing
+
+                    // Client-side text search
+                    if (params.filters.busca) {
+                        const query = params.filters.busca.toLowerCase();
+                        rows = rows.filter(r => 
+                            String(r.titulo).toLowerCase().includes(query) || 
+                            String(r.descricao).toLowerCase().includes(query)
+                        );
+                    }
+
+                    // Client-side status filter
+                    if (params.filters.ativo) {
+                        const filterVal = params.filters.ativo === 'true';
+                        rows = rows.filter(r => r.ativo === filterVal);
+                    }
+
+                    // Client-side sorting
+                    if (params.sortBy) {
+                        rows.sort((a, b) => {
+                            let valA = a[params.sortBy];
+                            let valB = b[params.sortBy];
+                            
+                            if (params.sortBy === 'custo_pontos' || params.sortBy === 'quantidade_disponivel') {
+                                return params.sortDir === 'asc' ? valA - valB : valB - valA;
+                            }
+                            
+                            if (typeof valA === 'string') valA = valA.toLowerCase();
+                            if (typeof valB === 'string') valB = valB.toLowerCase();
+                            if (valA < valB) return params.sortDir === 'asc' ? -1 : 1;
+                            if (valA > valB) return params.sortDir === 'asc' ? 1 : -1;
+                            return 0;
+                        });
+                    }
+
+                    // Client-side pagination
+                    const total = rows.length;
+                    if (params.limit) {
+                        const start = (params.page - 1) * params.limit;
+                        const end = start + params.limit;
+                        rows = rows.slice(start, end);
+                    }
+
+                    return { rows, total };
+                }
+            });
+
+            await grid.init();
         });
     </script>
 </body>

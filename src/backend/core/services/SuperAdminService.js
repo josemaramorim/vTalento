@@ -393,7 +393,7 @@ class SuperAdminService {
 
   // --- USUÁRIOS ISOLADOS POR TENANT (GamUsuario) ---
 
-  async listUsuariosByEmpresa(empresaId, page = 1, limit = 10, busca = '') {
+  async listUsuariosByEmpresa(empresaId, page = 1, limit = 10, busca = '', perfil = '', ativo = '') {
     const limitSanitizado = [10, 50, 100].includes(parseInt(limit, 10)) ? parseInt(limit, 10) : 10;
     const paginaSanitizada = Math.max(1, parseInt(page, 10) || 1);
     const offset = (paginaSanitizada - 1) * limitSanitizado;
@@ -409,11 +409,20 @@ class SuperAdminService {
       });
     }
 
+    if (perfil) {
+      query = query.where('perfil', perfil);
+    }
+
+    if (ativo !== undefined && ativo !== '') {
+      const isAtivo = ativo === 'true' || ativo === '1' || ativo === true;
+      query = query.where('ativo', isAtivo);
+    }
+
     const [{ total }] = await query.clone().count('id as total');
     const totalRegistros = parseInt(total, 10);
 
     const data = await query
-      .select('id', 'nome', 'email', 'cpf', 'perfil', 'saldo_disponivel', 'saldo_a_receber', 'created_at')
+      .select('id', 'nome', 'email', 'cpf', 'perfil', 'saldo_disponivel', 'saldo_a_receber', 'ativo', 'created_at')
       .orderBy('nome', 'asc')
       .limit(limitSanitizado)
       .offset(offset);
@@ -468,6 +477,7 @@ class SuperAdminService {
       saldo_disponivel: 0,
       saldo_a_receber: 0,
       tema_preferido: 'dark',
+      ativo: true,
       created_at: db.fn.now(),
       updated_at: db.fn.now()
     };
@@ -477,7 +487,7 @@ class SuperAdminService {
     // Busca o usuário do banco para evitar retornar os helpers do Knex (db.fn.now) que possuem estrutura circular
     const usuarioCriado = await db('GamUsuario')
       .where({ id: userId })
-      .select('id', 'nome', 'email', 'cpf', 'perfil', 'saldo_disponivel', 'saldo_a_receber', 'tema_preferido', 'created_at', 'updated_at')
+      .select('id', 'nome', 'email', 'cpf', 'perfil', 'saldo_disponivel', 'saldo_a_receber', 'ativo', 'tema_preferido', 'created_at', 'updated_at')
       .first();
 
     return usuarioCriado;
@@ -501,6 +511,7 @@ class SuperAdminService {
       email: dados.email || usuario.email,
       cpf: dados.cpf !== undefined ? dados.cpf : usuario.cpf,
       perfil: dados.perfil || usuario.perfil,
+      ativo: dados.ativo !== undefined ? (dados.ativo === 'true' || dados.ativo === '1' || dados.ativo === true) : usuario.ativo,
       updated_at: db.fn.now()
     };
 
@@ -515,7 +526,7 @@ class SuperAdminService {
     // Busca o usuário atualizado do banco para evitar problemas com serialização circular de db.fn.now()
     const usuarioAtualizado = await db('GamUsuario')
       .where({ id: usuarioId, empresa_id: empresaId })
-      .select('id', 'nome', 'email', 'cpf', 'perfil', 'saldo_disponivel', 'saldo_a_receber', 'tema_preferido', 'created_at', 'updated_at')
+      .select('id', 'nome', 'email', 'cpf', 'perfil', 'saldo_disponivel', 'saldo_a_receber', 'ativo', 'tema_preferido', 'created_at', 'updated_at')
       .first();
 
     return usuarioAtualizado;

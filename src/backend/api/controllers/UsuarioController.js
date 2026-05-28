@@ -5,13 +5,15 @@ class UsuarioController {
   async listAdmin(req, res) {
     try {
       const { empresa_id } = req;
-      const { page, limit, busca } = req.query;
+      const { page, limit, busca, perfil, ativo } = req.query;
 
       const result = await UsuarioService.listAllUsuariosAdmin({
         empresa_id,
         page,
         limit,
-        busca
+        busca,
+        perfil,
+        ativo
       });
 
       return res.status(200).json({

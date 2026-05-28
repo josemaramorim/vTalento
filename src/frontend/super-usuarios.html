@@ -41,40 +41,7 @@
             outline: none;
             border-color: var(--accent-primary);
         }
-        .table-responsive {
-            overflow-x: auto;
-            width: 100%;
-            border-radius: var(--radius-md);
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            box-shadow: var(--shadow-md);
-        }
-        .premium-table {
-            width: 100%;
-            border-collapse: collapse;
-            text-align: left;
-        }
-        .premium-table th {
-            padding: 18px 24px;
-            background: rgba(255, 255, 255, 0.02);
-            color: var(--text-secondary);
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            border-bottom: 1px solid var(--glass-border);
-        }
-        .premium-table td {
-            padding: 18px 24px;
-            border-bottom: 1px solid var(--glass-border);
-            font-size: 0.9rem;
-            color: var(--text-primary);
-        }
-        .premium-table tr:last-child td {
-            border-bottom: none;
-        }
-        .premium-table tr:hover {
-            background: rgba(255, 255, 255, 0.01);
-        }
+        /* Tabela migrada para PremiumGrid no style.css global */
         .badge {
             display: inline-flex;
             align-items: center;
@@ -162,30 +129,7 @@
             outline: none;
             border-color: var(--accent-primary);
         }
-        .pagination-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 20px;
-        }
-        .pagination-btn {
-            padding: 8px 16px;
-            border-radius: var(--radius-sm);
-            background: rgba(255,255,255,0.05);
-            border: 1px solid var(--glass-border);
-            color: var(--text-primary);
-            cursor: pointer;
-            font-weight: 500;
-            transition: all 0.3s ease;
-        }
-        .pagination-btn:hover:not(:disabled) {
-            border-color: var(--accent-primary);
-            background: rgba(255,255,255,0.08);
-        }
-        .pagination-btn:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
+        /* Paginação migrada para PremiumGrid no style.css global */
     </style>
 </head>
 <body data-theme="dark">
@@ -205,44 +149,16 @@
                 <button class="btn btn-primary" id="btnNovoUsuario" onclick="openNewUsuarioModal()" style="font-weight: 600;">➕ ADICIONAR NOVO USUÁRIO</button>
             </div>
 
-            <!-- Seletor de Tenant -->
             <div class="selector-box animate-fade" style="animation-delay: 0.05s;">
                 <label for="tenantSelect" style="font-weight: 600; font-size: 0.95rem;">Empresa Alvo (Isolamento):</label>
                 <select id="tenantSelect" onchange="handleTenantChange()">
                     <option value="">Selecione uma empresa...</option>
                 </select>
-                <input type="text" id="buscaInput" class="form-control" placeholder="Buscar por Nome, E-mail ou CPF..." style="max-width: 300px; margin-left: auto;" oninput="handleSearch()" disabled>
             </div>
 
-            <!-- Tabela de Usuários -->
-            <div class="table-responsive animate-fade" style="animation-delay: 0.1s;">
-                <table class="premium-table">
-                    <thead>
-                        <tr>
-                            <th>Nome Completo</th>
-                            <th>E-mail de Acesso</th>
-                            <th>CPF</th>
-                            <th>Perfil / Permissão</th>
-                            <th>Saldos (Disponível / A Receber)</th>
-                            <th style="text-align: right;">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody id="usuariosTableBody">
-                        <tr>
-                            <td colspan="6" style="text-align: center; color: var(--text-secondary);">Selecione uma empresa acima para isolar e carregar os usuários.</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Paginação -->
-            <div class="premium-pagination-bar animate-fade" style="animation-delay: 0.15s;">
-                <div class="premium-pagination-info" id="pageInfo">Página 1 de 1</div>
-                <div class="premium-pagination-controls">
-                    <button class="premium-pagination-btn" id="prevPageBtn" disabled>Anterior</button>
-                    <button class="premium-pagination-btn" id="nextPageBtn" disabled>Próxima</button>
-                </div>
-            </div>
+            <section class="glass animate-fade" style="padding: 25px; margin-top: 20px; margin-bottom: 25px; animation-delay: 0.1s;">
+                <div id="gridUsuarios"></div>
+            </section>
         </main>
     </div>
 
@@ -319,6 +235,13 @@
                     </select>
                 </div>
                 <div class="form-group">
+                    <label for="editAtivo">Status da Conta</label>
+                    <select id="editAtivo" class="form-control">
+                        <option value="true">ATIVO</option>
+                        <option value="false">INATIVO</option>
+                    </select>
+                </div>
+                <div class="form-group">
                     <label for="editSenha">Alterar Senha (Opcional)</label>
                     <input type="password" id="editSenha" class="form-control" placeholder="Deixe vazio para manter a atual">
                 </div>
@@ -328,6 +251,7 @@
     </div>
 
     <script src="assets/js/auth.js"></script>
+    <script src="assets/js/premium-grid.js"></script>
     <script>
         const token = localStorage.getItem('@VTalentos:token');
         const userStr = localStorage.getItem('@VTalentos:user');
@@ -390,102 +314,98 @@
             }
         }
 
+        let globalGrid = null;
+
         // Eventos do Dropdown
         function handleTenantChange() {
             const select = document.getElementById('tenantSelect');
             selectedTenantId = select.value;
             
-            const busca = document.getElementById('buscaInput');
-
-            if (selectedTenantId) {
-                busca.disabled = false;
-                fetchUsuarios(1);
-            } else {
-                busca.disabled = true;
-                document.getElementById('usuariosTableBody').innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-secondary);">Selecione uma empresa acima para isolar e carregar os usuários.</td></tr>`;
-                updatePagination({ page: 1, totalPages: 1 });
+            if (globalGrid) {
+                globalGrid.state.page = 1;
+                globalGrid.refresh();
             }
         }
 
-        // Evento de Busca (Debounce 300ms)
-        function handleSearch() {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => {
-                fetchUsuarios(1);
-            }, 300);
-        }
+        async function setupGrid() {
+            globalGrid = new PremiumGrid({
+                containerId: 'gridUsuarios',
+                title: 'Usuários Cadastrados na Plataforma',
+                totalCountId: 'superUsuariosTotalCount',
+                columns: [
+                    { key: 'nome', label: 'Nome Completo', bold: true, sortable: true },
+                    { key: 'email', label: 'E-mail de Acesso', sortable: true },
+                    { key: 'cpf', label: 'CPF', sortable: true },
+                    { key: 'perfil', label: 'Perfil / Permissão', align: 'center', sortable: true },
+                    { key: 'saldos', label: 'Saldos (Disponível / A Receber)', align: 'left', sortable: true },
+                    { key: 'status', label: 'Status', align: 'center', sortable: true },
+                    { key: 'acoes', label: 'Ações', align: 'right' }
+                ],
+                filters: [
+                    { id: 'busca', label: 'Pesquisar', type: 'text', placeholder: 'Buscar por Nome, E-mail ou CPF...' },
+                    { id: 'perfil', label: 'Perfil', type: 'select', options: [
+                        { value: 'CORRETOR', label: 'Corretor' },
+                        { value: 'ADMIN_EMPRESA', label: 'Admin da Empresa' }
+                    ]},
+                    { id: 'ativo', label: 'Status', type: 'select', options: [
+                        { value: 'true', label: 'Ativo' },
+                        { value: 'false', label: 'Inativo' }
+                    ]}
+                ],
+                pagination: { enabled: true, defaultPageSize: 10, pageSizeOptions: [10, 50, 100] },
+                cellRenderer: (row, col) => {
+                    if (col.key === 'nome') return `<strong>${row.nome}</strong>`;
+                    if (col.key === 'perfil') {
+                        const badgeClass = row.perfil === 'ADMIN_EMPRESA' ? 'badge-admin' : 'badge-corretor';
+                        const roleLabel = row.perfil === 'ADMIN_EMPRESA' ? 'Admin' : 'Corretor';
+                        return `<span class="badge ${badgeClass}">${roleLabel}</span>`;
+                    }
+                    if (col.key === 'cpf') return row.cpf || 'Não informado';
+                    if (col.key === 'saldos') return `<strong>${formatReal(row.saldo_disponivel)}</strong> / <span style="color:var(--text-secondary); font-size:0.8rem;">${formatReal(row.saldo_a_receber)}</span>`;
+                    if (col.key === 'status') {
+                        const isAtivo = row.ativo === true || row.ativo === 1 || String(row.ativo) === 'true' || String(row.ativo) === '1';
+                        const bg = isAtivo ? 'rgba(46,213,115,0.12)' : 'rgba(252,129,74,0.12)';
+                        const color = isAtivo ? 'var(--success)' : 'var(--error)';
+                        const label = isAtivo ? 'Ativo' : 'Inativo';
+                        return `<span class="badge" style="background: ${bg}; color: ${color}; border: 1px solid rgba(255,255,255,0.05); font-weight:600;">${label}</span>`;
+                    }
+                    if (col.key === 'acoes') {
+                        return `
+                            <button type="button" class="btn btn-primary" onclick="openEditUsuarioModal('${row.id}')" style="padding: 6px 12px; font-size: 0.75rem; font-weight:600; border-radius:4px; margin-right:5px; box-shadow:none;">✏️ EDITAR</button>
+                            <button type="button" class="btn" onclick="deletarUsuario('${row.id}')" style="padding: 6px 12px; font-size: 0.75rem; font-weight:600; background:rgba(255,0,0,0.1); color:var(--error); border-radius:4px;">❌ EXCLUIR</button>
+                        `;
+                    }
+                    return row[col.key];
+                },
+                fetchFn: async (params) => {
+                    if (!selectedTenantId) {
+                        return { rows: [], total: 0 };
+                    }
+                    
+                    let url = `http://localhost:3001/api/super/empresas/${selectedTenantId}/usuarios?page=${params.page}&limit=${params.limit}&_t=${Date.now()}`;
+                    if (params.filters && params.filters.busca) url += `&busca=${encodeURIComponent(params.filters.busca)}`;
+                    if (params.filters && params.filters.perfil) url += `&perfil=${encodeURIComponent(params.filters.perfil)}`;
+                    if (params.filters && params.filters.ativo) url += `&ativo=${encodeURIComponent(params.filters.ativo)}`;
+                    if (params.sortBy) url += `&sort_by=${encodeURIComponent(params.sortBy)}&sort_dir=${encodeURIComponent(params.sortDir)}`;
 
-        // Buscar Usuários
-        async function fetchUsuarios(page = 1) {
-            if (!selectedTenantId) return;
+                    const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+                    const data = await res.json();
+                    if (!data.success) throw new Error(data.error);
 
-            const busca = document.getElementById('buscaInput').value;
-
-            try {
-                const res = await fetch(`http://localhost:3001/api/super/empresas/${selectedTenantId}/usuarios?page=${page}&limit=${limitPerPage}&busca=${encodeURIComponent(busca)}`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const data = await res.json();
-                
-                if (data.success) {
-                    currentPage = page;
-                    renderTable(data.data);
-                    updatePagination(data.meta);
-                } else {
-                    throw new Error(data.error);
+                    currentPage = params.page; // Sincroniza a página atual
+                    return { rows: data.data, total: data.meta.total };
                 }
-            } catch (err) {
-                showToast(err.message || 'Erro ao carregar usuários.', 'error');
-            }
-        }
-
-        function renderTable(usuarios) {
-            const tbody = document.getElementById('usuariosTableBody');
-            tbody.innerHTML = '';
-
-            if (usuarios.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; color: var(--text-secondary);">Nenhum usuário cadastrado neste inquilino.</td></tr>`;
-                return;
-            }
-
-            usuarios.forEach(user => {
-                const tr = document.createElement('tr');
-                
-                const badgeClass = user.perfil === 'ADMIN_EMPRESA' ? 'badge-admin' : 'badge-corretor';
-                const roleLabel = user.perfil === 'ADMIN_EMPRESA' ? 'Admin' : 'Corretor';
-                
-                tr.innerHTML = `
-                    <td><strong>${user.nome}</strong></td>
-                    <td>${user.email}</td>
-                    <td>${user.cpf || 'Não informado'}</td>
-                    <td><span class="badge ${badgeClass}">${roleLabel}</span></td>
-                    <td><strong>${formatReal(user.saldo_disponivel)}</strong> / <span style="color:var(--text-secondary); font-size:0.8rem;">${formatReal(user.saldo_a_receber)}</span></td>
-                    <td style="text-align: right;">
-                        <button class="btn btn-primary" onclick="openEditUsuarioModal('${user.id}', '${user.nome}', '${user.email}', '${user.cpf || ''}', '${user.perfil}')" style="padding: 6px 12px; font-size: 0.75rem; font-weight:600; border-radius:4px; margin-right:5px; box-shadow:none;">✏️ EDITAR</button>
-                        <button class="btn" onclick="deletarUsuario('${user.id}')" style="padding: 6px 12px; font-size: 0.75rem; font-weight:600; background:rgba(255,0,0,0.1); color:var(--error); border-radius:4px;">❌ EXCLUIR</button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
             });
+            await globalGrid.init();
         }
 
-        function updatePagination(meta) {
-            document.getElementById('pageInfo').innerText = `Página ${meta.page} de ${meta.totalPages || 1}`;
-            
-            const prev = document.getElementById('prevPageBtn');
-            const next = document.getElementById('nextPageBtn');
-
-            prev.disabled = meta.page <= 1;
-            next.disabled = meta.page >= meta.totalPages;
-
-            // Remove antigos event listeners clonando os botões
-            const newPrev = prev.cloneNode(true);
-            prev.parentNode.replaceChild(newPrev, prev);
-            newPrev.addEventListener('click', () => fetchUsuarios(meta.page - 1));
-
-            const newNext = next.cloneNode(true);
-            next.parentNode.replaceChild(newNext, next);
-            newNext.addEventListener('click', () => fetchUsuarios(meta.page + 1));
+        function fetchUsuarios(page) {
+            if (globalGrid) {
+                if (page !== undefined) {
+                    globalGrid.state.page = page;
+                }
+                globalGrid.refresh();
+            }
         }
 
         // Modal Controle
@@ -537,7 +457,7 @@
                 if (data.success) {
                     showToast('Usuário cadastrado com sucesso!', 'success');
                     closeModal('newUsuarioModal');
-                    fetchUsuarios(currentPage);
+                    fetchUsuarios(1); // Sempre volta para página 1 ao criar novo usuário
                 } else {
                     throw new Error(data.error);
                 }
@@ -547,12 +467,17 @@
         });
 
         // EDITAR USUÁRIO
-        function openEditUsuarioModal(id, nome, email, cpf, perfil) {
-            document.getElementById('editId').value = id;
-            document.getElementById('editNome').value = nome;
-            document.getElementById('editEmail').value = email;
-            document.getElementById('editCpf').value = cpf;
-            document.getElementById('editPerfil').value = perfil;
+        function openEditUsuarioModal(id) {
+            const row = globalGrid.state.data.find(r => r.id === id);
+            if (!row) return;
+
+            document.getElementById('editId').value = row.id;
+            document.getElementById('editNome').value = row.nome;
+            document.getElementById('editEmail').value = row.email;
+            document.getElementById('editCpf').value = row.cpf || '';
+            document.getElementById('editPerfil').value = row.perfil;
+            const isAtivo = row.ativo === true || row.ativo === 1 || String(row.ativo) === 'true' || String(row.ativo) === '1';
+            document.getElementById('editAtivo').value = String(isAtivo);
             document.getElementById('editSenha').value = '';
             
             // Busca o nome da empresa selecionada no combo box principal
@@ -571,7 +496,8 @@
                 nome: document.getElementById('editNome').value,
                 email: document.getElementById('editEmail').value,
                 cpf: document.getElementById('editCpf').value,
-                perfil: document.getElementById('editPerfil').value
+                perfil: document.getElementById('editPerfil').value,
+                ativo: document.getElementById('editAtivo').value === 'true'
             };
             const senha = document.getElementById('editSenha').value;
             if (senha) payload.senha = senha;
@@ -627,6 +553,7 @@
 
         window.addEventListener('DOMContentLoaded', () => {
             loadTenants();
+            setupGrid();
         });
     </script>
 </body>
