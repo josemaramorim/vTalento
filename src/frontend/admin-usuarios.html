@@ -164,7 +164,7 @@
                 </div>
 
                 <div class="table-responsive">
-                    <table>
+                    <table class="premium-table">
                         <thead>
                             <tr>
                                 <th>Nome</th>
@@ -186,17 +186,17 @@
                 </div>
 
                 <!-- Paginação -->
-                <div class="paginacao-bar">
-                    <div class="paginacao-info" id="paginacaoInfo">—</div>
-                    <div class="paginacao-controles">
+                <div class="premium-pagination-bar">
+                    <div class="premium-pagination-info" id="paginacaoInfo">—</div>
+                    <div class="premium-pagination-controls">
                         <label style="font-size: 0.8rem; color: var(--text-secondary);">Registros por página:</label>
                         <select id="limitSelect" onchange="onLimitChange()">
                             <option value="10" selected>10</option>
                             <option value="50">50</option>
                             <option value="100">100</option>
                         </select>
-                        <button class="btn-pag" id="btnPagAnterior" onclick="mudarPagina(-1)" disabled>← Anterior</button>
-                        <button class="btn-pag" id="btnPagProximo" onclick="mudarPagina(1)">Próximo →</button>
+                        <button class="premium-pagination-btn" id="btnPagAnterior" onclick="mudarPagina(-1)" disabled>← Anterior</button>
+                        <button class="premium-pagination-btn" id="btnPagProximo" onclick="mudarPagina(1)">Próximo →</button>
                     </div>
                 </div>
             </section>
@@ -243,21 +243,7 @@
             window.location.href = 'login.html';
         }
 
-        function renderSidebar() {
-            const nav = document.getElementById('navLinks');
-            nav.innerHTML = `
-                <p style="color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; margin-bottom: 10px;">MENU PRINCIPAL</p>
-                <a href="dashboard.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">🏠 Dashboard</a>
-                <a href="vitrine.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">🎁 Vitrine de Prêmios</a>
-                
-                <p style="color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; margin-top: 15px; margin-bottom: 10px;">ADMINISTRAÇÃO</p>
-                <a href="admin-lancamento.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">💎 Lançamento Manual</a>
-                <a href="admin-importacao.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">📤 Importação Excel</a>
-                <a href="admin-premios.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">⚙️ Gerenciar Prêmios</a>
-                <a href="admin-usuarios.html" class="active" style="color: var(--accent-primary); text-decoration: none; font-weight: 600;">👥 Gestão de Corretores</a>
-                <a href="admin-faturamento.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">💳 Faturamento SaaS</a>
-            `;
-        }
+
 
         const API_BASE = 'http://localhost:3001/api/admin';
         let stateUsuarios = [];
@@ -482,7 +468,6 @@
         }
 
         window.addEventListener('DOMContentLoaded', () => {
-            renderSidebar();
             renderHeader("Gestão de Corretores", "Cadastre, visualize e edite os corretores vinculados à sua imobiliária");
             fetchUsuarios(1);
         });

@@ -324,6 +324,64 @@ window.renderHeader = function(titulo, subtitulo) {
     }
 };
 
+// Componente de Sidebar Dinâmica Premium Unificada (Request 1)
+window.renderSidebar = function() {
+    const nav = document.getElementById('navLinks');
+    if (!nav) return;
+
+    const userStr = localStorage.getItem('@VTalentos:user');
+    if (!userStr) return;
+
+    const user = JSON.parse(userStr);
+    
+    // Extrai o nome do arquivo atual (ex: dashboard.html)
+    let activePage = window.location.pathname.split('/').pop() || 'dashboard.html';
+    if (!activePage.endsWith('.html')) {
+        activePage = 'dashboard.html';
+    }
+
+    let html = '';
+
+    if (user.perfil === 'SUPER_ADMIN') {
+        html = `
+            <p style="color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; margin-bottom: 10px;">SAAS PLATAFORMA</p>
+            <a href="super-dashboard.html" class="${activePage === 'super-dashboard.html' ? 'active' : ''}" style="${activePage === 'super-dashboard.html' ? 'color: var(--accent-primary) !important; font-weight: 600;' : ''}">📊 Plataforma Dashboard</a>
+            <a href="super-empresas.html" class="${activePage === 'super-empresas.html' ? 'active' : ''}" style="${activePage === 'super-empresas.html' ? 'color: var(--accent-primary) !important; font-weight: 600;' : ''}">🏢 Inquilinos (Empresas)</a>
+            <a href="super-usuarios.html" class="${activePage === 'super-usuarios.html' ? 'active' : ''}" style="${activePage === 'super-usuarios.html' ? 'color: var(--accent-primary) !important; font-weight: 600;' : ''}">👥 Usuários Isolados</a>
+            <a href="super-faturamento.html" class="${activePage === 'super-faturamento.html' ? 'active' : ''}" style="${activePage === 'super-faturamento.html' ? 'color: var(--accent-primary) !important; font-weight: 600;' : ''}">💰 Faturamento SaaS</a>
+            <a href="super-provedores.html" class="${activePage === 'super-provedores.html' ? 'active' : ''}" style="${activePage === 'super-provedores.html' ? 'color: var(--accent-primary) !important; font-weight: 600;' : ''}">💳 Provedores de Pgto.</a>
+            <p style="color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; margin-top: 20px; margin-bottom: 10px;">PERFIL</p>
+            <a href="meu-perfil.html" class="${activePage === 'meu-perfil.html' ? 'active' : ''}" style="${activePage === 'meu-perfil.html' ? 'color: var(--accent-primary) !important; font-weight: 600;' : ''}">👤 Meus Dados</a>
+        `;
+    } else {
+        html = `
+            <p style="color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; margin-bottom: 10px;">MENU PRINCIPAL</p>
+            <a href="dashboard.html" class="${activePage === 'dashboard.html' ? 'active' : ''}" style="${activePage === 'dashboard.html' ? 'color: var(--accent-primary) !important; font-weight: 600;' : ''}">🏠 Dashboard</a>
+            <a href="vitrine.html" class="${activePage === 'vitrine.html' ? 'active' : ''}" style="${activePage === 'vitrine.html' ? 'color: var(--accent-primary) !important; font-weight: 600;' : ''}">🎁 Vitrine de Prêmios</a>
+            <a href="meu-extrato.html" class="${activePage === 'meu-extrato.html' ? 'active' : ''}" style="${activePage === 'meu-extrato.html' ? 'color: var(--accent-primary) !important; font-weight: 600;' : ''}">📊 Meu Extrato</a>
+        `;
+
+        if (user.perfil === 'ADMIN_EMPRESA') {
+            html += `
+                <p style="color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; margin-top: 15px; margin-bottom: 10px;">ADMINISTRAÇÃO</p>
+                <a href="admin-lancamento.html" class="${activePage === 'admin-lancamento.html' ? 'active' : ''}" style="${activePage === 'admin-lancamento.html' ? 'color: var(--accent-primary) !important; font-weight: 600;' : ''}">💎 Lançamento Manual</a>
+                <a href="admin-importacao.html" class="${activePage === 'admin-importacao.html' ? 'active' : ''}" style="${activePage === 'admin-importacao.html' ? 'color: var(--accent-primary) !important; font-weight: 600;' : ''}">📤 Importação Excel</a>
+                <a href="admin-premios.html" class="${activePage === 'admin-premios.html' ? 'active' : ''}" style="${activePage === 'admin-premios.html' ? 'color: var(--accent-primary) !important; font-weight: 600;' : ''}">⚙️ Gerenciar Prêmios</a>
+                <a href="admin-usuarios.html" class="${activePage === 'admin-usuarios.html' ? 'active' : ''}" style="${activePage === 'admin-usuarios.html' ? 'color: var(--accent-primary) !important; font-weight: 600;' : ''}">👥 Gestão de Corretores</a>
+                <a href="admin-movimentacoes.html" class="${activePage === 'admin-movimentacoes.html' ? 'active' : ''}" style="${activePage === 'admin-movimentacoes.html' ? 'color: var(--accent-primary) !important; font-weight: 600;' : ''}">📈 Movimentações</a>
+                <a href="admin-faturamento.html" class="${activePage === 'admin-faturamento.html' ? 'active' : ''}" style="${activePage === 'admin-faturamento.html' ? 'color: var(--accent-primary) !important; font-weight: 600;' : ''}">💳 Faturamento SaaS</a>
+            `;
+        }
+
+        html += `
+            <p style="color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; margin-top: 15px; margin-bottom: 10px;">PERFIL</p>
+            <a href="meu-perfil.html" class="${activePage === 'meu-perfil.html' ? 'active' : ''}" style="${activePage === 'meu-perfil.html' ? 'color: var(--accent-primary) !important; font-weight: 600;' : ''}">👤 Meus Dados</a>
+        `;
+    }
+
+    nav.innerHTML = html;
+};
+
 // Aplica branding personalizado da empresa (Tenant)
 window.applyTenantBranding = function(user) {
     if (!user || user.perfil === 'SUPER_ADMIN') return;
@@ -339,6 +397,11 @@ window.applyTenantBranding = function(user) {
 
 // Controle de Tema Unificado e Automático (Claro/Escuro)
 window.addEventListener('DOMContentLoaded', async () => {
+    // Renderiza a sidebar automaticamente se o elemento #navLinks existir
+    if (window.renderSidebar) {
+        window.renderSidebar();
+    }
+
     // A tela de login é sempre forçada a manter o tema escuro premium
     if (window.location.pathname.includes('login.html') || window.location.pathname === '/' || window.location.pathname.endsWith('/')) {
         document.body.setAttribute('data-theme', 'dark');

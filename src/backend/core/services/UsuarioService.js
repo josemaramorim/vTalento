@@ -183,7 +183,12 @@ class UsuarioService {
 
     await db('GamUsuario').where({ id: usuario_id }).update(updates);
 
-    const { senha_hash: _, ...usuarioAtualizado } = { ...usuario, ...updates };
+    const { senha_hash: _, ...usuarioAtualizado } = {
+      ...usuario,
+      ...updates,
+      updated_at: new Date().toISOString()
+    };
+
     return usuarioAtualizado;
   }
 

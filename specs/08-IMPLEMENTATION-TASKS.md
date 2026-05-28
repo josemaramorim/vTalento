@@ -133,7 +133,7 @@ Este documento é o guia de execução do projeto. Nenhuma tarefa deve ser inici
 ### História 10: Correção do Constraint de Origem em GamTransacao
 *Como corretor, quero conseguir resgatar prêmios sem erros de banco de dados.*
 
-- [x] **Tarefa 10.1:** Criar migration `20260526010000_update_transacoes_add_premio_origem.js` para adicionar `'PREMIO'` ao CHECK constraint do campo `origem` na tabela `GamTransacao` (SQLite não suporta ALTER COLUMN — tabela recriada via raw SQL).
+- [/] **Tarefa 10.1:** Criar migration `20260526010000_update_transacoes_add_premio_origem.js` para adicionar `'PREMIO'` ao CHECK constraint do campo `origem` na tabela `GamTransacao` (SQLite não suporta ALTER COLUMN — tabela recriada via raw SQL).
 
 ---
 
@@ -365,7 +365,7 @@ Esta fase permite que o administrador da empresa (`ADMIN_EMPRESA`) gerencie a id
 - [x] **Tarefa 20.8 (Docs):** Criar o guia de implantação e deploy em produção do ecossistema em `specs/15-PRODUCTION-DEPLOYMENT-GUIDE.md`.
 - [x] **Tarefa 20.9 (Hotfix/Infra):** Corrigir migration de check constraint de transações para suportar dialeto pg do PostgreSQL de forma não destrutiva.
 - [x] **Tarefa 20.10 (Infra/Produção):** Criar script CLI de inicialização segura em produção para cadastrar o primeiro SUPER_ADMIN e configurações de SaaS se não existirem no banco PostgreSQL.
-- [/] **Tarefa 20.11 (Saúde Financeira SaaS):** Criar a tela de faturamento dedicada `super-faturamento.html` para o Super Admin, unificando a gestão de faturas, filtros avançados, métricas agregadas, baixa manual e o redirecionamento com filtro a partir da listagem de inquilinos.
+- [x] **Tarefa 20.11 (Saúde Financeira SaaS):** Criar a tela de faturamento dedicada `super-faturamento.html` para o Super Admin, unificando a gestão de faturas, filtros avançados, métricas agregadas, baixa manual e o redirecionamento com filtro a partir da listagem de inquilinos.
 
 
 

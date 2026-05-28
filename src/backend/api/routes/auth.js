@@ -21,9 +21,20 @@ routes.get('/meu-extrato', tenantMiddleware, async (req, res) => {
     const paginaSanitizada = Math.max(1, parseInt(page, 10) || 1);
     const offset = (paginaSanitizada - 1) * limitSanitizado;
 
-    let query = db('GamTransacao')
+    let queryBase = db('GamTransacao')
       .where({ 'GamTransacao.usuario_id': usuario_id })
-      .leftJoin('GamUsuario as Admin', 'GamTransacao.admin_id', 'Admin.id')
+      .leftJoin('GamUsuario as Admin', 'GamTransacao.admin_id', 'Admin.id');
+
+    if (tipo) queryBase = queryBase.where('GamTransacao.tipo', tipo);
+    if (origem) queryBase = queryBase.where('GamTransacao.origem', origem);
+    if (status) queryBase = queryBase.where('GamTransacao.status', status);
+    if (data_inicio) queryBase = queryBase.where('GamTransacao.created_at', '>=', data_inicio);
+    if (data_fim) queryBase = queryBase.where('GamTransacao.created_at', '<=', data_fim + ' 23:59:59');
+
+    const [{ total }] = await queryBase.clone().count('GamTransacao.id as total');
+    const totalRegistros = parseInt(total, 10);
+
+    const transacoes = await queryBase
       .select(
         'GamTransacao.id',
         'GamTransacao.tipo',
@@ -37,18 +48,7 @@ routes.get('/meu-extrato', tenantMiddleware, async (req, res) => {
         'GamTransacao.data_compensacao',
         'GamTransacao.created_at',
         db.raw("COALESCE(\"Admin\".\"nome\", 'Sistema') as admin_nome")
-      );
-
-    if (tipo) query = query.where('GamTransacao.tipo', tipo);
-    if (origem) query = query.where('GamTransacao.origem', origem);
-    if (status) query = query.where('GamTransacao.status', status);
-    if (data_inicio) query = query.where('GamTransacao.created_at', '>=', data_inicio);
-    if (data_fim) query = query.where('GamTransacao.created_at', '<=', data_fim + ' 23:59:59');
-
-    const [{ total }] = await query.clone().count('GamTransacao.id as total');
-    const totalRegistros = parseInt(total, 10);
-
-    const transacoes = await query
+      )
       .orderBy('GamTransacao.created_at', 'desc')
       .limit(limitSanitizado)
       .offset(offset);

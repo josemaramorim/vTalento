@@ -240,13 +240,16 @@ class BillingController {
 
       await db('GamEmpresa').where({ id: req.empresa_id }).update(updatePayload);
 
+      const dataBranding = {
+        ...empresa,
+        ...updatePayload,
+        updated_at: new Date().toISOString()
+      };
+
       return res.json({
         success: true,
         message: 'Dados da empresa atualizados com sucesso!',
-        data: {
-          id: req.empresa_id,
-          ...updatePayload
-        }
+        data: dataBranding
       });
     } catch (err) {
       return res.status(500).json({ success: false, error: err.message });

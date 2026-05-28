@@ -284,7 +284,7 @@
                 </div>
 
                 <div class="extrato-table-wrap">
-                    <table class="extrato-table">
+                    <table class="premium-table">
                         <thead>
                             <tr>
                                 <th>Data / Hora</th>
@@ -303,12 +303,12 @@
                 </div>
 
                 <!-- Paginação -->
-                <div class="pag-bar">
-                    <span class="pag-info" id="pagInfo">—</span>
-                    <div class="pag-btns">
-                        <button class="pag-btn" id="btnAnterior" onclick="mudarPag(-1)" disabled>← Anterior</button>
-                        <span id="pagNum" style="font-size:0.82rem; color:var(--text-secondary);">—</span>
-                        <button class="pag-btn" id="btnProximo" onclick="mudarPag(1)" disabled>Próximo →</button>
+                <div class="premium-pagination-bar">
+                    <div class="premium-pagination-info" id="pagInfo">—</div>
+                    <div class="premium-pagination-controls">
+                        <button class="premium-pagination-btn" id="btnAnterior" onclick="mudarPag(-1)" disabled>← Anterior</button>
+                        <span id="pagNum" style="font-size:0.82rem; color:var(--text-secondary); margin: 0 10px;">—</span>
+                        <button class="premium-pagination-btn" id="btnProximo" onclick="mudarPag(1)" disabled>Próximo →</button>
                     </div>
                 </div>
             </section>
@@ -453,38 +453,7 @@
             if (nova >= 1 && nova <= totalPaginas) carregarExtrato(nova);
         }
 
-        function renderSidebar() {
-            const nav = document.getElementById('navLinks');
-            const currentUser = JSON.parse(userStr);
-            const isAdmin = currentUser.perfil === 'ADMIN_EMPRESA' || currentUser.perfil === 'SUPER_ADMIN';
-
-            nav.innerHTML = `
-                <p style="color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; margin-bottom: 10px;">MENU PRINCIPAL</p>
-                <a href="dashboard.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">🏠 Dashboard</a>
-                <a href="vitrine.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">🎁 Vitrine de Prêmios</a>
-                <a href="meu-extrato.html" style="color: var(--accent-primary); text-decoration: none; font-weight: 600;">📊 Meu Extrato</a>
-            `;
-
-            if (isAdmin) {
-                nav.innerHTML += `
-                    <p style="color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; margin-top: 15px; margin-bottom: 10px;">ADMINISTRAÇÃO</p>
-                    <a href="admin-lancamento.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">💎 Lançamento Manual</a>
-                    <a href="admin-importacao.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">📤 Importação Excel</a>
-                    <a href="admin-premios.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">⚙️ Gerenciar Prêmios</a>
-                    <a href="admin-usuarios.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">👥 Gestão de Corretores</a>
-                    <a href="admin-movimentacoes.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">📈 Movimentações</a>
-                    <a href="admin-faturamento.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">💳 Faturamento SaaS</a>
-                `;
-            }
-
-            nav.innerHTML += `
-                <p style="color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; margin-top: 15px; margin-bottom: 10px;">PERFIL</p>
-                <a href="meu-perfil.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">👤 Meus Dados</a>
-            `;
-        }
-
         window.addEventListener('DOMContentLoaded', () => {
-            renderSidebar();
             renderHeader('Meu Extrato', 'Histórico completo das suas movimentações de Talentos');
             carregarExtrato(1);
         });

@@ -210,47 +210,7 @@
             window.location.href = 'login.html';
         }
 
-        function renderSidebar() {
-            const nav = document.getElementById('navLinks');
 
-            if (currentUser.perfil === 'SUPER_ADMIN') {
-                nav.innerHTML = `
-                    <p style="color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; margin-bottom: 10px;">SAAS PLATAFORMA</p>
-                    <a href="super-dashboard.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">📊 Plataforma Dashboard</a>
-                    <a href="super-empresas.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">🏢 Inquilinos (Empresas)</a>
-                    <a href="super-usuarios.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">👥 Usuários Isolados</a>
-                    <a href="super-faturamento.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">💰 Faturamento SaaS</a>
-                    <a href="super-provedores.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">💳 Provedores de Pgto.</a>
-                    <p style="color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; margin-top: 20px; margin-bottom: 10px;">PERFIL</p>
-                    <a href="meu-perfil.html" class="active" style="color: var(--accent-primary); text-decoration: none; font-weight: 600;">👤 Meus Dados</a>
-                `;
-                return;
-            }
-
-            nav.innerHTML = `
-                <p style="color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; margin-bottom: 10px;">MENU PRINCIPAL</p>
-                <a href="dashboard.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">🏠 Dashboard</a>
-                <a href="vitrine.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">🎁 Vitrine de Prêmios</a>
-                <a href="meu-extrato.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">📊 Meu Extrato</a>
-            `;
-
-            if (isAdmin()) {
-                nav.innerHTML += `
-                    <p style="color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; margin-top: 15px; margin-bottom: 10px;">ADMINISTRAÇÃO</p>
-                    <a href="admin-lancamento.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">💎 Lançamento Manual</a>
-                    <a href="admin-importacao.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">📤 Importação Excel</a>
-                    <a href="admin-premios.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">⚙️ Gerenciar Prêmios</a>
-                    <a href="admin-usuarios.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">👥 Gestão de Corretores</a>
-                    <a href="admin-movimentacoes.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">📈 Movimentações</a>
-                    <a href="admin-faturamento.html" style="color: var(--text-secondary); text-decoration: none; font-weight: 500;">💳 Faturamento SaaS</a>
-                `;
-            }
-            // Marcador visual de perfil
-            nav.innerHTML += `
-                <p style="color: var(--text-secondary); font-size: 0.8rem; letter-spacing: 1px; margin-top: 15px; margin-bottom: 10px;">PERFIL</p>
-                <a href="meu-perfil.html" class="active" style="color: var(--accent-primary); text-decoration: none; font-weight: 600;">👤 Meus Dados</a>
-            `;
-        }
 
         async function syncProfileInfo() {
             try {
@@ -275,7 +235,7 @@
                     localStorage.setItem('@VTalentos:user', JSON.stringify(currentUser));
                     
                     // Garante que o menu lateral sincroniza com o perfil mais atualizado do banco
-                    renderSidebar();
+                    if (window.renderSidebar) window.renderSidebar();
                 }
             } catch (err) {
                 console.error('Erro de sincronização de perfil:', err);
@@ -475,7 +435,6 @@
         });
 
         window.addEventListener('DOMContentLoaded', async () => {
-            renderSidebar();
             await syncProfileInfo();
         });
     </script>
