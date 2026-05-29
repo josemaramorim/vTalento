@@ -203,12 +203,14 @@ class UsuarioController {
         .where({ usuario_id: id })
         .select(
           db.raw(`SUM(CASE WHEN status = 'COMPENSADO' THEN valor ELSE 0 END) as novo_disponivel`),
-          db.raw(`SUM(CASE WHEN status = 'PENDENTE' AND tipo = 'CREDITO' THEN valor ELSE 0 END) as novo_a_receber`)
+          db.raw(`SUM(CASE WHEN status = 'PENDENTE' AND tipo = 'CREDITO' THEN valor ELSE 0 END) as novo_a_receber`),
+          db.raw(`COUNT(id) as transacoes_processadas`)
         )
         .first();
 
       const novoDisponivel = parseFloat(resultado.novo_disponivel || 0);
       const novoAReceber = parseFloat(resultado.novo_a_receber || 0);
+      const qtdTransacoes = parseInt(resultado.transacoes_processadas || 0, 10);
 
       const saldoDisponivel = Math.max(0, novoDisponivel);
       const saldoAReceber = Math.max(0, novoAReceber);
@@ -224,7 +226,7 @@ class UsuarioController {
         message: 'Saldo recalculado com base nas transações registradas.',
         saldo_disponivel: saldoDisponivel,
         saldo_a_receber: saldoAReceber,
-        transacoes_processadas: transacoes.length
+        transacoes_processadas: qtdTransacoes
       });
     } catch (err) {
       return res.status(500).json({ success: false, error: err.message });
