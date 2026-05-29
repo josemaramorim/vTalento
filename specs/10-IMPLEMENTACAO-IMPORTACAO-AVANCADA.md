@@ -32,43 +32,71 @@ O usuário sobe a planilha do financeiro (os extratos bancários, repasses de se
 
 ---
 
-## 3. Exemplos Práticos por Ramo de Negócio
-
-Com o novo modelo, um único perfil de configuração flexibiliza o V-Talentos para dezenas de mercados.
-
 ### Exemplo 1: Mercado Imobiliário (Longo Prazo / Construção)
-- **Cenário:** O corretor vende um imóvel na planta em 48 meses.
-- **Mapeamento - Passo 1:** 
-  - `Produto/Serviço`: "Residencial Park View" / "Apt 204"
-  - `Parcelas Qtd`: 48
-  - `Parcelas Valor`: R$ 1.500,00
-  - `Recebimentos Extras`: Datas dos "Balões" (reforços anuais).
-- **Dinâmica - Passo 2:** Todo mês, a construtora exporta do seu ERP financeiro a lista de clientes que pagaram os boletos. O administrador sobe essa lista no "Passo 2" e o motor FIFO abate as parcelas e balões na ordem do vencimento.
+- **Cenário:** O corretor vende um imóvel na planta em 48 meses com balões anuais.
+- **Configuração do Perfil de Importação (Configurações Gerais):**
+  - `Fator de Conversão`: 100 (100 reais = 1 Talento)
+  - `Separador de Múltiplos`: `;`
+- **Mapeamento (Passo 1 - Contratos):** 
+  - `Nome do Parceiro`: Coluna `CORRETOR`
+  - `ID Profissional (Identificador Extra)`: Coluna `CRECI`
+  - `Produto/Serviço`: Coluna `EMPREENDIMENTO`
+  - `Ref. Contrato`: Coluna `UNIDADE`
+  - `Valor da Venda`: Coluna `VGV`
+  - `Valor Pago (Entrada)`: Coluna `SINAL_PAGO` (Gera transação imediata COMPENSADA)
+  - `Quantidade de Parcelas`: Coluna `QTD_PARCELAS` (ex: 48)
+  - `Valor da Parcela`: Coluna `VALOR_MENSAL` (ex: 1500,00)
+  - `Data Início (Parcelas)`: Coluna `VENCIMENTO_1`
+  - `Datas Recebimentos Extras (Balões)`: Coluna `DATAS_BALOES` (ex: 10/12/2026;10/12/2027)
+  - `Valores Recebimentos Extras`: Coluna `VALORES_BALOES` (ex: 50000,00;50000,00)
+- **Dinâmica (Passo 2 - Baixa via FIFO):** 
+  - A construtora exporta o extrato do mês com as colunas `CRECI_CORRETOR` e `VALOR_COMISSAO_PAGA`. 
+  - O gestor sobe no Passo 2 e o motor FIFO busca as parcelas/balões PENDENTES daquele corretor (usando o `CRECI`) e liquida as mais antigas usando o `VALOR_COMISSAO_PAGA`.
 
 ### Exemplo 2: Corretoras de Seguros (Comissão Recorrente)
-- **Cenário:** O consultor vende uma Apólice de Vida com pagamento mensal (12x). A comissão só é liberada se o cliente pagar o boleto da seguradora.
-- **Mapeamento - Passo 1:**
-  - `Produto/Serviço`: "Seguro de Vida - SulAmérica" / "Apólice 99823"
-  - `Parcelas Qtd`: 12
-  - `Parcelas Valor`: R$ 200,00
-  - `Data Início`: Data da contratação.
-- **Dinâmica - Passo 2:** A seguradora envia no dia 05 o extrato de repasse (arquivo de comissões pagas). O gestor da corretora sobe o arquivo no "Passo 2", e o V-Talentos converte os repasses líquidos em Talentos, liquidando automaticamente as parcelas PENDENTES correspondentes a essas apólices.
+- **Cenário:** O consultor vende uma Apólice de Vida com pagamento mensal (12x). A comissão só é liberada se o cliente pagar o boleto.
+- **Configuração do Perfil de Importação:**
+  - `Fator de Conversão`: 1 (1 real = 1 Talento, ou seja, pontos 1:1)
+- **Mapeamento (Passo 1 - Contratos):**
+  - `Nome do Parceiro`: Coluna `CONSULTOR`
+  - `ID Profissional`: Coluna `SUSEP`
+  - `Produto/Serviço`: Coluna `RAMO_SEGURO`
+  - `Ref. Contrato`: Coluna `NUM_APOLICE`
+  - `Quantidade de Parcelas`: Coluna `PARCELAS_VIGENCIA` (ex: 12)
+  - `Valor da Parcela`: Coluna `COMISSAO_PREVISTA` (ex: 200,00)
+  - `Data Início (Parcelas)`: Coluna `DATA_INICIO_VIGENCIA`
+- **Dinâmica (Passo 2 - Baixa via FIFO):** 
+  - A seguradora envia no dia 05 o extrato de repasse (arquivo de comissões). 
+  - O gestor sobe o arquivo mapeando `SUSEP` e `VALOR_LIQUIDO_REPASSE` no "Passo 2". O V-Talentos liquida automaticamente as parcelas PENDENTES correspondentes a essas apólices (ex: a 1ª das 12 parcelas passa para COMPENSADO).
 
 ### Exemplo 3: Administradoras de Consórcio
-- **Cenário:** O vendedor recebe um percentual imediato na assinatura (Ato) e o restante "pulverizado" caso o consorciado mantenha as parcelas em dia por 6 meses.
-- **Mapeamento - Passo 1:**
-  - `Valor Pago (Entrada)`: R$ 500,00 (Gera saldo imediato COMPENSADO).
-  - `Parcelas Qtd`: 6
-  - `Parcelas Valor`: R$ 100,00
-- **Dinâmica - Passo 2:** O consórcio manda a planilha de recebimentos do mês. Se o cliente 1 pagou, entra o fluxo financeiro na planilha. O Passo 2 lê o valor recebido e transforma a 1ª parcela de PENDENTE para COMPENSADO.
+- **Cenário:** O vendedor recebe um percentual imediato na assinatura (Ato) e bônus residual pulverizado em 6 meses.
+- **Mapeamento (Passo 1 - Contratos):**
+  - `Nome do Parceiro`: Coluna `VENDEDOR`
+  - `ID Profissional`: Coluna `CPF_VENDEDOR`
+  - `Produto/Serviço`: Coluna `GRUPO_CONSORCIO`
+  - `Ref. Contrato`: Coluna `COTA`
+  - `Valor Pago (Entrada)`: Coluna `COMISSAO_ATO` (ex: 500,00 - vira saldo imediato)
+  - `Quantidade de Parcelas`: Coluna `MESES_BONUS` (ex: 6)
+  - `Valor da Parcela`: Coluna `VALOR_BONUS_MENSAL` (ex: 100,00)
+- **Dinâmica (Passo 2 - Baixa via FIFO):** 
+  - O consórcio exporta a base de cotas adimplentes do mês. 
+  - Ao subir a planilha no Passo 2, mapeando `CPF_VENDEDOR` e o valor pago naquele mês (ex: 100,00), o sistema transforma a parcela do mês de PENDENTE para COMPENSADA. Se um cliente não pagou a cota, o valor não vem na planilha e a parcela PENDENTE aguarda o próximo repasse.
 
 ### Exemplo 4: Escolas, Cursos e Clínicas (Indicação de Alunos/Pacientes)
-- **Cenário:** Um embaixador (Parceiro) indicou um aluno para um curso de inglês com duração de 24 meses. Ele ganha um residual de R$ 50 a cada mensalidade paga pelo aluno indicado.
-- **Mapeamento - Passo 1:**
-  - `Produto/Serviço`: "Inglês Fluency - Turma B" / "Aluno João Silva"
-  - `Parcelas Qtd`: 24
-  - `Parcelas Valor`: R$ 50,00
-- **Dinâmica - Passo 2:** A secretaria sobe o controle de inadimplência mensal com os pagamentos recebidos no sistema. O motor abate apenas as mensalidades que constarem na planilha, garantindo que o embaixador não receba por alunos inadimplentes.
+- **Cenário:** Um embaixador indicou um aluno para um curso de 24 meses. Ele ganha R$ 50 a cada mensalidade paga pelo aluno indicado.
+- **Configuração do Perfil de Importação:**
+  - `Fator de Conversão`: 50 (50 reais = 1 Talento)
+- **Mapeamento (Passo 1 - Contratos):**
+  - `Nome do Parceiro`: Coluna `NOME_EMBAIXADOR`
+  - `ID Profissional`: Coluna `MATRICULA_EMBAIXADOR`
+  - `Produto/Serviço`: Coluna `CURSO`
+  - `Cliente (Indicado)`: Coluna `ALUNO_INDICADO`
+  - `Quantidade de Parcelas`: Coluna `DURACAO_MESES` (ex: 24)
+  - `Valor da Parcela`: Coluna `BKP_VALOR_MENSAL` (ex: 50,00)
+- **Dinâmica (Passo 2 - Baixa via FIFO):** 
+  - A secretaria sobe o relatório de recebimentos (mensalidades pagas). 
+  - Ao mapear a `MATRICULA_EMBAIXADOR` e o `VALOR_REPASSE`, o motor abate exatamente as mensalidades (pendências) pagas naquele mês, convertendo 50 reais em 1 Talento automaticamente e creditando no extrato do embaixador.
 
 ---
 
