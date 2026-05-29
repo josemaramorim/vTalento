@@ -390,7 +390,7 @@ class ImportacaoService {
     return parcelas;
   }
 
-  async previewImportacao(empresa_id, fileBase64, perfil_id) {
+  async previewImportacao(empresa_id, fileBase64, perfil_id, modo = 'CONTRATOS') {
     const perfil = await this.obterPerfil(empresa_id, perfil_id);
     if (!perfil) {
       throw new Error('Perfil de importaÃ§Ã£o nÃ£o encontrado');
@@ -430,14 +430,18 @@ class ImportacaoService {
     };
 
     // Valida se as colunas essenciais mapeadas existem no arquivo
-    const colunasObrigatorias = ['corretor_identificador', 'valor_venda', 'valor_pago', 'empreendimento'];
+    let colunasObrigatorias = ['corretor_identificador', 'valor_pago'];
+    if (modo !== 'BAIXAS') {
+      colunasObrigatorias.push('valor_venda', 'empreendimento');
+    }
+    
     colunasObrigatorias.forEach(col => {
       const colNameInFile = mapeamento[col];
       if (!colNameInFile) {
-        throw new Error(`Coluna obrigatÃ³ria de mapeamento '${col}' nÃ£o foi configurada no perfil.`);
+        throw new Error(`Coluna obrigatória de mapeamento '${col}' não foi configurada no perfil.`);
       }
       if (headerIndices[colNameInFile.trim().toUpperCase()] === undefined) {
-        throw new Error(`A coluna configurada '${colNameInFile}' nÃ£o existe no cabeÃ§alho da planilha.`);
+        throw new Error(`A coluna configurada '${colNameInFile}' não existe no cabeçalho da planilha.`);
       }
     });
 
@@ -495,9 +499,9 @@ class ImportacaoService {
       
       if (modo !== 'BAIXAS') {
         const baloesValores = {
-          balao_datas_raw: getValByName(perfil.balao_datas),
-          balao_valor_raw: getValByName(perfil.balao_valor),
-          balao_qtd_raw: getValByName(perfil.balao_qtd)
+          balao_datas_raw: getVal('balao_datas'),
+          balao_valor_raw: getVal('balao_valor'),
+          balao_qtd_raw: getVal('balao_qtd')
         };
         baloesCalculados = this._parseBaloes(baloesValores, perfil.separador_multiplo, fatorConversao, perfil.formato_data_balao);
         
@@ -561,8 +565,8 @@ class ImportacaoService {
     };
   }
 
-  async confirmarImportacao(empresa_id, admin_id, fileBase64, perfil_id, resolucoes = {}) {
-    const preview = await this.previewImportacao(empresa_id, fileBase64, perfil_id);
+  async confirmarImportacao(empresa_id, admin_id, fileBase64, perfil_id, resolucoes = {}, modo = 'CONTRATOS') {
+    const preview = await this.previewImportacao(empresa_id, fileBase64, perfil_id, modo);
 
     // Aplicar resolucões manuais de ambiguidade (admin escolheu o corretor correto)
     for (const row of preview.linhas) {

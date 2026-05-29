@@ -180,7 +180,7 @@ describe('ImportacaoService', () => {
       
       // Balões
       expect(linha.baloes.length).toBe(2);
-      expect(linha.baloes[0].valor_talentos).toBe(150); // 30k total / 2 = 15k cada -> 15k * 0.01 = 150 talentos
+      expect(linha.baloes[0].valor_talentos).toBe(300); // Valor é por balão: 30k * 0.01 = 300 talentos
       expect(linha.baloes[0].data_vencimento).toBeInstanceOf(Date);
     });
 
@@ -202,6 +202,92 @@ describe('ImportacaoService', () => {
       expect(suggestion.sugestoes_mapeamento.empreendimento).toBe('Empreendimento');
       expect(suggestion.usa_ia).toBe(false);
       expect(suggestion.metodo).toBe('heuristica');
+    });
+  });
+
+  describe('Motor de Recebíveis (Agnóstico)', () => {
+    it('deve gerar um array de N parcelas fixas mensais quando os campos de parcelamento estiverem mapeados (Passo 1)', async () => {
+      const mockPerfil = {
+        id: 'perfil-parcelas', empresa_id: 'empresa-123', nome_perfil: 'Venda Parcelada',
+        mapeamento_json: JSON.stringify({ corretor_identificador: 'Corretor', corretor_creci: 'ID', valor_venda: 'Total', valor_pago: 'Entrada', empreendimento: 'Obra' }),
+        parcela_valor: 'Mensal', parcela_qtd: 'Qtd', parcela_data_inicio: 'Vencimento',
+        fator_conversao: 100, separador_multiplo: '|', linha_cabecalho: 1, formato_data_balao: 'DD/MM/YYYY'
+      };
+
+      const mockSheetData = [
+        ['Corretor', 'ID', 'Total', 'Entrada', 'Obra', 'Mensal', 'Qtd', 'Vencimento'],
+        ['João Silva', '123', '50000', '5000', 'Park View', '1000', '5', '10/01/2026'] // 5 parcelas de R$ 1000
+      ];
+
+      const mockCorretor = { id: 'corretor-123', nome: 'João Silva', empresa_id: 'empresa-123', perfil: 'CORRETOR' };
+
+      db.mockImplementation((table) => {
+        const queryBuilder = { where: jest.fn().mockReturnThis(), andWhereRaw: jest.fn().mockReturnThis(), first: jest.fn() };
+        if (table === 'GamConfigImportacao') { queryBuilder.first.mockResolvedValue(mockPerfil); return queryBuilder; }
+        if (table === 'GamUsuario') { queryBuilder.first.mockResolvedValue(mockCorretor); return queryBuilder; }
+        return db;
+      });
+
+      xlsx.read.mockReturnValue({ SheetNames: ['Sheet1'], Sheets: { 'Sheet1': {} } });
+      xlsx.utils.sheet_to_json.mockReturnValue(mockSheetData);
+
+      const preview = await ImportacaoService.previewImportacao('empresa-123', 'fake-base64', 'perfil-parcelas', 'CONTRATOS');
+
+      expect(preview.linhas[0].parcelas).toBeDefined();
+      expect(preview.linhas[0].parcelas.length).toBe(5); // 5 meses
+      expect(preview.linhas[0].parcelas[0].valor_rs).toBe(1000);
+      expect(preview.linhas[0].parcelas[0].valor_talentos).toBe(10); // 1000 / 100 = 10 talentos
+      
+      expect(preview.linhas[0].parcelas[0].data_vencimento.getMonth()).toBe(0); // Janeiro (0-indexed)
+      expect(preview.linhas[0].parcelas[4].data_vencimento.getMonth()).toBe(4); // Maio
+      expect(preview.linhas[0].parcelas[4].data_vencimento.getFullYear()).toBe(2026);
+    });
+
+    it('deve realizar a conciliação FIFO (Passo 2) e liquidar parcelas pendentes total ou parcialmente usando os pagamentos', async () => {
+      const mockPerfil = {
+        id: 'perfil-baixa', empresa_id: 'empresa-123', nome_perfil: 'Baixa Extrato',
+        mapeamento_json: JSON.stringify({ corretor_identificador: 'Corretor', corretor_creci: 'ID', valor_pago: 'Valor Baixa' }),
+        fator_conversao: 100, linha_cabecalho: 1
+      };
+
+      const mockSheetData = [
+        ['Corretor', 'ID', 'Valor Baixa'],
+        ['Maria Souza', '123', '450'] // Maria recebe baixa de 450 R$ (4,5 talentos)
+      ];
+
+      const mockCorretor = { id: 'corretor-456', nome: 'Maria Souza', empresa_id: 'empresa-123', perfil: 'CORRETOR', saldo_disponivel: 0 };
+
+      const mockTransacoesPendentes = [
+        { id: 't1', usuario_id: 'corretor-456', valor: 2, status: 'PENDENTE', data_criacao: new Date('2026-01-01') }, // (2 talentos)
+        { id: 't2', usuario_id: 'corretor-456', valor: 3, status: 'PENDENTE', data_criacao: new Date('2026-02-01') }, // (3 talentos)
+        { id: 't3', usuario_id: 'corretor-456', valor: 5, status: 'PENDENTE', data_criacao: new Date('2026-03-01') }  // (5 talentos)
+      ];
+
+      db.mockImplementation((table) => {
+        const qb = { where: jest.fn().mockReturnThis(), andWhereRaw: jest.fn().mockReturnThis(), orderBy: jest.fn().mockReturnThis(), orderByRaw: jest.fn().mockReturnThis(), first: jest.fn(), insert: jest.fn().mockResolvedValue([1]), update: jest.fn().mockResolvedValue(1) };
+        if (table === 'GamConfigImportacao') { qb.first.mockResolvedValue(mockPerfil); return qb; }
+        if (table === 'GamUsuario') { qb.first.mockResolvedValue(mockCorretor); return qb; }
+        if (table === 'GamTransacao') {
+          const promiseQb = Promise.resolve(mockTransacoesPendentes);
+          promiseQb.where = jest.fn().mockReturnThis();
+          promiseQb.orderBy = jest.fn().mockReturnThis();
+          promiseQb.orderByRaw = jest.fn().mockReturnThis();
+          promiseQb.insert = jest.fn().mockResolvedValue([1]);
+          promiseQb.update = jest.fn().mockResolvedValue(1);
+          return promiseQb;
+        }
+        return db;
+      });
+
+      xlsx.read.mockReturnValue({ SheetNames: ['Sheet1'], Sheets: { 'Sheet1': {} } });
+      xlsx.utils.sheet_to_json.mockReturnValue(mockSheetData);
+
+      const confirm = await ImportacaoService.confirmarImportacao('empresa-123', 'admin-789', 'fake-base64', 'perfil-baixa', {}, 'BAIXAS');
+
+      expect(confirm.sucesso).toBe(true);
+      expect(confirm.total_vendas_processadas).toBe(1);
+      expect(confirm.transacoes_criadas).toBe(2); // 1 t1 fully paid (updated) + 1 partial compensada generated for t2
+      expect(confirm.corretores_atualizados).toBe(1); 
     });
   });
 

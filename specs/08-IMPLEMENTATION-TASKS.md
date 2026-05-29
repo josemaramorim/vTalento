@@ -485,5 +485,5 @@ Esta fase permite que o administrador da empresa (`ADMIN_EMPRESA`) gerencie a id
 - [x] **Tarefa 22.3 (Backend):** Implementar no `ImportacaoService` o loop gerador de N parcelas fixas (`PENDENTES` com datas mensais) quando os campos de parcelamento estiverem mapeados (Passo 1 - Importação de Contratos).
 - [x] **Tarefa 22.4 (Frontend):** Adicionar interface de abas/botões para o usuário selecionar entre "Importar Novos Contratos" e "Importar Planilha de Baixas/Recebimentos" no `admin-importacao-upload.html`.
 - [x] **Tarefa 22.5 (Backend):** Desenvolver método no `ImportacaoService` exclusivo para conciliação de Baixas. O método deve utilizar FIFO (First-In, First-Out) nas transações `PENDENTES` do corretor e liquidar total ou parcialmente os valores usando os pagamentos lidos da planilha (Passo 2 - Importação de Baixas).
-- [ ] **Tarefa 22.6 (Testes):** Testes unitários do Gerador de Parcelas mensais no Backend.
-- [ ] **Tarefa 22.7 (Testes):** Testes unitários para o motor de liquidação FIFO (conciliação parcial e total em cascata).
+- [x] **Tarefa 22.6 (Testes):** Testes unitários do Gerador de Parcelas mensais no Backend.
+- [x] **Tarefa 22.7 (Testes):** Testes unitários para o motor de liquidação FIFO (conciliação parcial e total em cascata).
