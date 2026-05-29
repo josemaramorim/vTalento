@@ -471,3 +471,19 @@ Esta fase permite que o administrador da empresa (`ADMIN_EMPRESA`) gerencie a id
 - [x] **Tarefa 21.4 (Backend):** Adicionar função `compensarEmLote` em `LancamentoService` e `POST /api/admin/movimentacoes/lote` em `LancamentoController`.
 - [x] **Tarefa 21.5 (Frontend):** Atualizar `admin-importacao-upload.html` para os novos campos no perfil.
 - [x] **Tarefa 21.6 (Frontend):** Criar `admin-baixas.html` com filtros, checkboxes em lote, calendário de data retroativa e integração com a API.
+
+---
+
+## FASE 7: Terminologia Agnóstica e Motor de Recebíveis (SaaS Enterprise)
+
+### História 22: Universalização e Flexibilidade de Importação
+*Como administrador de um negócio em qualquer segmento, quero que a plataforma adote nomenclaturas comerciais universais ao invés de jargões imobiliários, e que permita importar planilhas em dois formatos independentes: (1) Gerando Saldo e Parcelas Futuras e (2) Dando baixa massiva em saldo pendente por meio de planilhas de recebimentos do mês.*
+
+### Tarefas de Desenvolvimento
+- [ ] **Tarefa 22.1 (Refactor/UI):** Alterar os termos imobiliários (Corretor, CRECI, Empreendimento, Unidade, Balão) para seus correspondentes universais (Parceiro/Consultor, ID Profissional, Produto/Serviço, Ref. Contrato, Recebimento Extra) na tela `admin-importacao-upload.html` e modais do perfil.
+- [ ] **Tarefa 22.2 (Backend):** Adicionar suporte a `parcela_valor`, `parcela_qtd` e `parcela_data_inicio` na tabela `GamConfigImportacao` e no `ImportacaoController`/`ImportacaoService`.
+- [ ] **Tarefa 22.3 (Backend):** Implementar no `ImportacaoService` o loop gerador de N parcelas fixas (`PENDENTES` com datas mensais) quando os campos de parcelamento estiverem mapeados (Passo 1 - Importação de Contratos).
+- [ ] **Tarefa 22.4 (Frontend):** Adicionar interface de abas/botões para o usuário selecionar entre "Importar Novos Contratos" e "Importar Planilha de Baixas/Recebimentos" no `admin-importacao-upload.html`.
+- [ ] **Tarefa 22.5 (Backend):** Desenvolver método no `ImportacaoService` exclusivo para conciliação de Baixas. O método deve utilizar FIFO (First-In, First-Out) nas transações `PENDENTES` do corretor e liquidar total ou parcialmente os valores usando os pagamentos lidos da planilha (Passo 2 - Importação de Baixas).
+- [ ] **Tarefa 22.6 (Testes):** Testes unitários do Gerador de Parcelas mensais no Backend.
+- [ ] **Tarefa 22.7 (Testes):** Testes unitários para o motor de liquidação FIFO (conciliação parcial e total em cascata).
