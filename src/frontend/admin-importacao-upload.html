@@ -786,7 +786,6 @@
                 document.getElementById('mapBalaoValor').value = mapJson?.balao_valor || '';
                 document.getElementById('mapBalaoDatas').value = mapJson?.balao_datas || '';
                 document.getElementById('mapBalaoQtd').value = mapJson?.balao_qtd || '';
-                document.getElementById('identificadorExtraInput').value = perfilData.identificador_extra_coluna || '';
                 
                 document.getElementById('parcelaValorInput').value = perfilData.parcela_valor || '';
                 document.getElementById('parcelaQtdInput').value = perfilData.parcela_qtd || '';
@@ -841,7 +840,7 @@
             const separador_multiplo = document.getElementById('separadorInput').value;
             const fator_conversao = parseFloat(document.getElementById('fatorConversaoInput').value) || 100;
             const formato_data_balao = document.getElementById('formatoDataBalaoInput').value;
-            const identificador_extra_coluna = document.getElementById('identificadorExtraInput').value.trim() || null;
+            const identificador_extra_coluna = null;
 
             const parcela_valor = document.getElementById('parcelaValorInput').value.trim() || null;
             const parcela_qtd = document.getElementById('parcelaQtdInput').value.trim() || null;

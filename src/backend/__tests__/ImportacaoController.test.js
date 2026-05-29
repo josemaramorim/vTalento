@@ -118,7 +118,7 @@ describe('ImportacaoController (Integração)', () => {
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual(mockPreviewResult);
-    expect(ImportacaoService.previewImportacao).toHaveBeenCalledWith('empresa-456', 'fake-base64-data', 'perfil-123');
+    expect(ImportacaoService.previewImportacao).toHaveBeenCalledWith('empresa-456', 'fake-base64-data', 'perfil-123', 'CONTRATOS');
   });
 
   it('POST /api/admin/importacao/sugerir-mapeamento - deve sugerir o mapeamento com sucesso', async () => {
@@ -177,6 +177,6 @@ describe('ImportacaoController (Integração)', () => {
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual(mockConfirmResult);
-    expect(ImportacaoService.confirmarImportacao).toHaveBeenCalledWith('empresa-456', 'admin-123', 'fake-base64-data', 'perfil-123', {});
+    expect(ImportacaoService.confirmarImportacao).toHaveBeenCalledWith('empresa-456', 'admin-123', 'fake-base64-data', 'perfil-123', {}, 'CONTRATOS');
   });
 });
