@@ -303,10 +303,7 @@ class ImportacaoService {
       
     if (datas.length === 0) return [];
     
-    const valorTotalBalao = this._parseMoeda(balao_valor_raw);
-    const qtdBaloes = parseInt(balao_qtd_raw, 10) || datas.length;
-    
-    const valorUnitarioRs = valorTotalBalao / qtdBaloes;
+    const valorUnitarioRs = this._parseMoeda(balao_valor_raw); // Alterado: Assume que a planilha informa o valor de CADA balão, e não o total
     const valorUnitarioTalentos = Math.floor(valorUnitarioRs / fatorConversao);
     
     return datas.map(dataStr => {
