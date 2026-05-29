@@ -341,12 +341,16 @@
             <!-- ═══ SELETOR DE MODO (ABAS) ═══ -->
             <div class="mode-selector" style="display: flex; gap: 15px; margin-bottom: 25px;">
                 <button type="button" id="tabContratos" class="btn active" style="flex: 1; padding: 15px; font-size: 1.05rem; border-radius: var(--radius-sm); border: 1px solid var(--accent-primary); background: rgba(212,175,55,0.15); color: var(--accent-primary); font-weight: bold; transition: all 0.3s; text-align: left;">
-                    <div style="font-size: 1.15rem; margin-bottom: 4px;">📄 Passo 1: Novos Contratos</div>
-                    <div style="font-size: 0.8rem; font-weight: normal; opacity: 0.8;">Gera saldo e cria parcelas futuras PENDENTES.</div>
+                    <div style="font-size: 1.15rem; margin-bottom: 6px;">📄 Passo 1: Novos Contratos</div>
+                    <div style="font-size: 0.82rem; font-weight: normal; opacity: 0.85; line-height: 1.4;">
+                        Utilize este modo para gerar novos saldos. Suba a planilha de contratos ou vendas fechadas para criar automaticamente as parcelas e recebimentos extras (com status PENDENTE) na conta corrente dos seus parceiros.
+                    </div>
                 </button>
                 <button type="button" id="tabBaixas" class="btn" style="flex: 1; padding: 15px; font-size: 1.05rem; border-radius: var(--radius-sm); border: 1px solid var(--glass-border); background: rgba(255,255,255,0.02); color: var(--text-secondary); transition: all 0.3s; text-align: left;">
-                    <div style="font-size: 1.15rem; margin-bottom: 4px;">💰 Passo 2: Baixa de Recebimentos</div>
-                    <div style="font-size: 0.8rem; font-weight: normal; opacity: 0.8;">Lê valores pagos e liquida saldos pendentes via FIFO.</div>
+                    <div style="font-size: 1.15rem; margin-bottom: 6px;">💰 Passo 2: Baixa de Recebimentos</div>
+                    <div style="font-size: 0.82rem; font-weight: normal; opacity: 0.85; line-height: 1.4;">
+                        Utilize este modo para conciliação. Suba a planilha com os repasses/comissões já pagas pelo cliente e o sistema liquidará automaticamente as parcelas pendentes (da mais antiga para a mais nova).
+                    </div>
                 </button>
             </div>
 
