@@ -385,6 +385,7 @@ window.renderSidebar = function() {
                 <a href="admin-premios.html" class="${isPageActive('admin-premios.html') ? 'active' : ''}" style="${isPageActive('admin-premios.html') ? 'color: var(--accent-primary) !important; font-weight: 600;' : ''}">⚙️ Gerenciar Prêmios</a>
                 <a href="admin-usuarios.html" class="${isPageActive('admin-usuarios.html') ? 'active' : ''}" style="${isPageActive('admin-usuarios.html') ? 'color: var(--accent-primary) !important; font-weight: 600;' : ''}">👥 Gestão de Corretores</a>
                 <a href="admin-movimentacoes.html" class="${isPageActive('admin-movimentacoes.html') ? 'active' : ''}" style="${isPageActive('admin-movimentacoes.html') ? 'color: var(--accent-primary) !important; font-weight: 600;' : ''}">📈 Movimentações</a>
+                <a href="admin-baixas.html" class="${isPageActive('admin-baixas.html') ? 'active' : ''}" style="${isPageActive('admin-baixas.html') ? 'color: var(--accent-primary) !important; font-weight: 600;' : ''}">⚡ Baixa em Lote</a>
                 <a href="admin-faturamento.html" class="${isPageActive('admin-faturamento.html') ? 'active' : ''}" style="${isPageActive('admin-faturamento.html') ? 'color: var(--accent-primary) !important; font-weight: 600;' : ''}">💳 Faturamento SaaS</a>
             `;
         }

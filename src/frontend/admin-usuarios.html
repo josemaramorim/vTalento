@@ -192,10 +192,10 @@
                             : 'background: rgba(46, 213, 115, 0.15); color: var(--success); border: 1px solid rgba(46, 213, 115, 0.3);';
 
                         return `
-                            <div class="actions-btn" style="justify-content: center; gap: 6px; display: flex;">
+                            <div class="actions-btn" style="justify-content: center; gap: 6px; display: flex; flex-wrap: wrap;">
                                 <button type="button" class="btn btn-sm" onclick="editUsuario('${row.id}')" style="background: rgba(255,255,255,0.1); color: var(--text-primary); padding: 4px 8px; font-size: 0.75rem;">Editar</button>
                                 <button type="button" class="btn btn-sm" onclick="toggleStatus('${row.id}', ${isAtivo})" style="${toggleStyle} padding: 4px 8px; font-size: 0.75rem;">${toggleLabel}</button>
-                                <button type="button" class="btn btn-sm" onclick="window.location.href='admin-movimentacoes.html?usuario_id=${row.id}'" style="background: rgba(212,175,55,0.15); color: var(--accent-primary); border: 1px solid rgba(212,175,55,0.3); padding: 4px 8px; font-size: 0.75rem;">Extrato</button>
+                                <button type="button" class="btn btn-sm" onclick="recalcularSaldo('${row.id}')" style="background: rgba(52, 152, 219, 0.15); color: #3498db; border: 1px solid rgba(52, 152, 219, 0.3); padding: 4px 8px; font-size: 0.75rem;" title="Recalcular Saldo">🔄 Sync</button>
                                 <button type="button" class="btn btn-sm" onclick="confirmExcluir('${row.id}', '${row.nome}')" style="background: rgba(235, 77, 75, 0.2); color: var(--error); border: 1px solid rgba(235, 77, 75, 0.4); padding: 4px 8px; font-size: 0.75rem;">Excluir</button>
                             </div>
                         `;
@@ -367,6 +367,25 @@
 
 
         let excluirUsuarioId = null;
+
+        window.recalcularSaldo = async function(id) {
+            try {
+                const res = await fetch(`${API_BASE}/usuarios/${id}/recalcular-saldo`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (data.success) {
+                    showToast('Saldo recalculado com sucesso!', 'success');
+                    if (globalGrid) globalGrid.refresh();
+                } else {
+                    showToast(data.error || 'Erro ao recalcular saldo', 'error');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('Erro de conexão ao recalcular saldo', 'error');
+            }
+        };
 
         function confirmExcluir(id, nome) {
             excluirUsuarioId = id;

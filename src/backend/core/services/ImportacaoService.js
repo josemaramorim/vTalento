@@ -287,7 +287,7 @@ class ImportacaoService {
   }
 
   // Processa as datas e valores de balÃµes futuros
-  _parseBaloes(rowValores, separador) {
+  _parseBaloes(rowValores, separador, fatorConversao = 100, formatoData = 'DD/MM/YYYY') {
     const { balao_datas_raw, balao_valor_raw, balao_qtd_raw } = rowValores;
     
     if (!balao_datas_raw) return [];
@@ -303,17 +303,24 @@ class ImportacaoService {
     const qtdBaloes = parseInt(balao_qtd_raw, 10) || datas.length;
     
     const valorUnitarioRs = valorTotalBalao / qtdBaloes;
-    const valorUnitarioTalentos = Math.floor(valorUnitarioRs * 0.01); // Regra padrÃ£o: R$ 1000 = 10 Talentos -> R$ 1 = 0.01 Talentos
+    const valorUnitarioTalentos = Math.floor(valorUnitarioRs / fatorConversao);
     
     return datas.map(dataStr => {
-      // Tentar converter dataStr ("10/02/2027") em formato Date
       let dataVencimento = null;
-      const partes = dataStr.split('/');
-      if (partes.length === 3) {
-        // dia/mes/ano -> Date(ano, mes-1, dia)
-        dataVencimento = new Date(parseInt(partes[2], 10), parseInt(partes[1], 10) - 1, parseInt(partes[0], 10));
+      
+      if (formatoData === 'DD/MM/YYYY' || formatoData === 'MM/DD/YYYY') {
+        const partes = dataStr.split(/[\/\-\.]/); // suporta /, -, .
+        if (partes.length === 3) {
+          if (formatoData === 'DD/MM/YYYY') {
+            dataVencimento = new Date(parseInt(partes[2], 10), parseInt(partes[1], 10) - 1, parseInt(partes[0], 10));
+          } else {
+            dataVencimento = new Date(parseInt(partes[2], 10), parseInt(partes[0], 10) - 1, parseInt(partes[1], 10));
+          }
+        } else {
+           const parsed = Date.parse(dataStr);
+           if (!isNaN(parsed)) dataVencimento = new Date(parsed);
+        }
       } else {
-        // Fallback para conversÃ£o direta
         const parsed = Date.parse(dataStr);
         if (!isNaN(parsed)) dataVencimento = new Date(parsed);
       }
@@ -414,8 +421,10 @@ class ImportacaoService {
       const valorVendaRs = this._parseMoeda(rawValorVenda);
       const valorPagoRs = this._parseMoeda(rawValorPago);
       
-      const totalTalentos = Math.floor(valorVendaRs * 0.01);
-      const talentosDisponiveis = Math.floor(valorPagoRs * 0.01);
+      const fatorConversao = parseFloat(perfil.fator_conversao) || 100;
+      
+      const totalTalentos = Math.floor(valorVendaRs / fatorConversao);
+      const talentosDisponiveis = Math.floor(valorPagoRs / fatorConversao);
       const talentosAReceber = totalTalentos - talentosDisponiveis;
 
       // Balões
@@ -424,11 +433,13 @@ class ImportacaoService {
         balao_valor_raw: getVal('balao_valor'),
         balao_qtd_raw: getVal('balao_qtd')
       };
-      const baloesCalculados = this._parseBaloes(baloesValores, perfil.separador_multiplo);
+      const baloesCalculados = this._parseBaloes(baloesValores, perfil.separador_multiplo, fatorConversao, perfil.formato_data_balao);
       const somaBaloesTalentos = baloesCalculados.reduce((acc, curr) => acc + curr.valor_talentos, 0);
 
       // Extração de campos extras configurados no perfil
-      const dadosExtras = {};
+      const dadosExtras = {
+        fator_conversao_utilizado: fatorConversao
+      };
       if (perfil.campos_extras && Array.isArray(perfil.campos_extras)) {
         perfil.campos_extras.forEach(extra => {
           if (extra && extra.coluna) {

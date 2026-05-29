@@ -202,6 +202,52 @@ class LancamentoService {
       }
     };
   }
+
+  async compensarEmLote(empresa_id, admin_id, transacao_ids, data_compensacao) {
+    if (!transacao_ids || !Array.isArray(transacao_ids) || transacao_ids.length === 0) {
+      throw new Error('Nenhuma transação selecionada para baixa.');
+    }
+
+    return await db.transaction(async (trx) => {
+      // 1. Buscar as transacoes selecionadas (e garantir que sao da empresa e estao PENDENTES)
+      const transacoes = await trx('GamTransacao')
+        .whereIn('id', transacao_ids)
+        .andWhere({ empresa_id, status: 'PENDENTE' });
+
+      if (transacoes.length === 0) {
+        throw new Error('Nenhuma transação PENDENTE válida foi encontrada para compensação.');
+      }
+
+      // Agrupar os valores por corretor (para atualizar saldo)
+      const valoresPorCorretor = {};
+      for (const t of transacoes) {
+        if (!valoresPorCorretor[t.usuario_id]) {
+          valoresPorCorretor[t.usuario_id] = 0;
+        }
+        valoresPorCorretor[t.usuario_id] += parseFloat(t.valor);
+      }
+
+      // 2. Atualizar transacoes para COMPENSADO
+      const idsCompensados = transacoes.map(t => t.id);
+      await trx('GamTransacao')
+        .whereIn('id', idsCompensados)
+        .update({
+          status: 'COMPENSADO',
+          admin_id: admin_id,
+          data_compensacao: data_compensacao || trx.fn.now()
+        });
+
+      // 3. Atualizar saldos dos corretores
+      for (const [usuario_id, valorTotal] of Object.entries(valoresPorCorretor)) {
+        await trx('GamUsuario')
+          .where({ id: usuario_id })
+          .decrement('saldo_a_receber', valorTotal)
+          .increment('saldo_disponivel', valorTotal);
+      }
+
+      return { success: true, atualizados: transacoes.length };
+    });
+  }
 }
 
 module.exports = new LancamentoService();

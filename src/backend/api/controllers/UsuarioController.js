@@ -198,19 +198,17 @@ class UsuarioController {
         return res.status(404).json({ success: false, error: 'Corretor não encontrado.' });
       }
 
-      const transacoes = await db('GamTransacao').where({ usuario_id: id });
+      // Otimização: As somas são feitas diretamente no banco de dados, sendo muito mais rápido e não consumindo memória do Node.js
+      const resultado = await db('GamTransacao')
+        .where({ usuario_id: id })
+        .select(
+          db.raw(`SUM(CASE WHEN status = 'COMPENSADO' THEN valor ELSE 0 END) as novo_disponivel`),
+          db.raw(`SUM(CASE WHEN status = 'PENDENTE' AND tipo = 'CREDITO' THEN valor ELSE 0 END) as novo_a_receber`)
+        )
+        .first();
 
-      let novoDisponivel = 0;
-      let novoAReceber = 0;
-
-      transacoes.forEach(t => {
-        const v = parseFloat(t.valor);
-        if (t.status === 'COMPENSADO') {
-          novoDisponivel += v; // valor já vem negativo para DEBITO
-        } else if (t.status === 'PENDENTE') {
-          if (t.tipo === 'CREDITO') novoAReceber += v;
-        }
-      });
+      const novoDisponivel = parseFloat(resultado.novo_disponivel || 0);
+      const novoAReceber = parseFloat(resultado.novo_a_receber || 0);
 
       const saldoDisponivel = Math.max(0, novoDisponivel);
       const saldoAReceber = Math.max(0, novoAReceber);

@@ -37,6 +37,9 @@ routes.get('/dashboard-graficos', LancamentoController.obterDadosGraficos);
 // Endpoint de extrato/movimentações de toda a equipe
 routes.get('/movimentacoes', LancamentoController.obterMovimentacoesEquipe);
 
+// Endpoint de baixa/compensação em lote de movimentações pendentes
+routes.post('/movimentacoes/lote', LancamentoController.baixarEmLote);
+
 // Endpoints de perfis de importação
 routes.get('/importacao/perfis', ImportacaoController.obterPerfis);
 routes.get('/importacao/perfis/:id', ImportacaoController.obterPerfilUnico);

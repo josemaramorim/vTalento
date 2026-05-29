@@ -421,8 +421,22 @@
                             <input type="number" id="linhaCabecalhoInput" min="1" value="3" required>
                         </div>
                         <div class="form-group">
+                            <label for="fatorConversaoInput">Fator de Conversão (Ex: 100)</label>
+                            <input type="number" id="fatorConversaoInput" min="1" value="100" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-mini-row">
+                        <div class="form-group">
                             <label for="separadorInput">Separador de Balões</label>
                             <input type="text" id="separadorInput" value="|" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="formatoDataBalaoInput">Formato Datas (Balões)</label>
+                            <select id="formatoDataBalaoInput" class="form-control" style="background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: #fff; padding: 12px; border-radius: var(--radius-sm); font-size: 0.9rem;">
+                                <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+                                <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+                            </select>
                         </div>
                     </div>
 
@@ -620,6 +634,7 @@
             if (typeof camposExtras === 'string') { try { camposExtras = JSON.parse(camposExtras); } catch(e) { camposExtras = null; } }
 
             let html = `<strong>Cabeçalho:</strong> Linha ${perfil.linha_cabecalho} | <strong>Separador:</strong> "${perfil.separador_multiplo}"<br>`;
+            html += `<strong>Fator de Conversão:</strong> ${perfil.fator_conversao || '100'} | <strong>Formato Data:</strong> ${perfil.formato_data_balao || 'DD/MM/YYYY'}<br>`;
             html += `<strong>Corretor:</strong> ${mapJson?.corretor_identificador || '—'}<br>`;
             html += `<strong>Valor Venda:</strong> ${mapJson?.valor_venda || '—'} | <strong>Valor Pago:</strong> ${mapJson?.valor_pago || '—'}`;
 
@@ -644,6 +659,8 @@
             document.getElementById('perfilForm').reset();
             document.getElementById('linhaCabecalhoInput').value = '3';
             document.getElementById('separadorInput').value = '|';
+            document.getElementById('fatorConversaoInput').value = '100';
+            document.getElementById('formatoDataBalaoInput').value = 'DD/MM/YYYY';
             document.getElementById('camposExtrasList').innerHTML = '';
 
             if (mode === 'edit' && perfilData) {
@@ -654,7 +671,9 @@
 
                 document.getElementById('nomePerfilInput').value = perfilData.nome_perfil || '';
                 document.getElementById('linhaCabecalhoInput').value = perfilData.linha_cabecalho || 3;
+                document.getElementById('fatorConversaoInput').value = perfilData.fator_conversao || 100;
                 document.getElementById('separadorInput').value = perfilData.separador_multiplo || '|';
+                document.getElementById('formatoDataBalaoInput').value = perfilData.formato_data_balao || 'DD/MM/YYYY';
                 document.getElementById('mapCorretor').value = mapJson?.corretor_identificador || '';
                 document.getElementById('mapCreci').value = mapJson?.corretor_creci || '';
                 document.getElementById('mapValorVenda').value = mapJson?.valor_venda || '';
@@ -714,6 +733,8 @@
             const nome_perfil = document.getElementById('nomePerfilInput').value;
             const linha_cabecalho = parseInt(document.getElementById('linhaCabecalhoInput').value, 10);
             const separador_multiplo = document.getElementById('separadorInput').value;
+            const fator_conversao = parseFloat(document.getElementById('fatorConversaoInput').value) || 100;
+            const formato_data_balao = document.getElementById('formatoDataBalaoInput').value;
             const identificador_extra_coluna = document.getElementById('identificadorExtraInput').value.trim() || null;
 
             const mapeamento_json = {
@@ -746,7 +767,11 @@
                 const res = await fetch(endpoint, {
                     method,
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                    body: JSON.stringify({ nome_perfil, linha_cabecalho, separador_multiplo, mapeamento_json, identificador_extra_coluna, campos_extras: campos_extras.length > 0 ? campos_extras : null })
+                    body: JSON.stringify({ 
+                        nome_perfil, linha_cabecalho, separador_multiplo, fator_conversao, formato_data_balao,
+                        mapeamento_json, identificador_extra_coluna, 
+                        campos_extras: campos_extras.length > 0 ? campos_extras : null 
+                    })
                 });
                 if (!res.ok) { const err = await res.json(); throw new Error(err.error || 'Erro ao salvar perfil'); }
 

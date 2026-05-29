@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>V-TALENTOS | Compensação em Lote</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <style>
+        .resumo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+        .resumo-card {
+            padding: 20px;
+            border-radius: var(--radius-md);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .resumo-card:hover {
+            transform: translateY(-2px);
+        }
+        .resumo-card p {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+        .resumo-card h3 {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+        /* Estilos de Grid migrados para PremiumGrid (style.css) */
+    </style>
+</head>
+<body data-theme="dark">
+    <div class="app-layout">
+        <aside class="sidebar">
+            <div class="logo" style="font-size: 1.5rem; margin-bottom: 50px;">V-<span>TALENTOS</span></div>
+            <nav id="navLinks" style="display: flex; flex-direction: column; gap: 15px;">
+                <!-- Sidebar preenchido dinamicamente no script -->
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="header" id="appHeader"></header>
+
+            <!-- Painel de Ação de Baixa -->
+            <section class="glass" style="padding: 20px; margin-bottom: 25px; border-color: var(--accent-primary); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px;">
+                <div>
+                    <h3 style="color: var(--accent-primary); margin-bottom: 5px; font-size: 1.1rem;">⚡ Baixa em Lote</h3>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary);">Selecione as transações pendentes na tabela abaixo e escolha a data em que o pagamento foi realizado.</p>
+                </div>
+                <div style="display: flex; gap: 15px; align-items: flex-end;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="inputDataCompensacao" style="font-size: 0.8rem;">Data da Compensação</label>
+                        <input type="date" id="inputDataCompensacao" class="form-control" style="padding: 10px;">
+                    </div>
+                    <button id="btnBaixarLote" class="btn btn-primary" style="padding: 10px 25px;" disabled>Baixar Selecionados</button>
+                </div>
+            </section>
+
+            <!-- Componente PremiumGrid -->
+            <section class="glass" style="padding: 25px; margin-bottom: 25px;">
+                <div id="gridMovimentacoes"></div>
+            </section>
+        </main>
+    </div>
+
+    <!-- MODAL DE DETALHES -->
+    <div id="detalhesModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:1001; align-items:center; justify-content:center; padding: 20px; backdrop-filter: blur(10px);">
+        <div class="glass" style="max-width:550px; width:100%; border-radius:16px; padding:32px; border:1px solid rgba(255,255,255,0.08); box-shadow: 0 20px 40px rgba(0,0,0,0.5);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px; border-bottom: 1px solid var(--glass-border); padding-bottom: 15px;">
+                <h3 style="font-size: 1.3rem; font-weight: 700; color: var(--text-primary); margin:0;">Detalhes do Lançamento</h3>
+                <button onclick="closeDetalhesModal()" style="background:none; border:none; color:var(--text-secondary); font-size:1.5rem; cursor:pointer;">&times;</button>
+            </div>
+            <div id="detalhesContent" style="display: flex; flex-direction: column; gap: 15px; font-size: 0.95rem;">
+                <!-- Preenchido via JS -->
+            </div>
+            <div style="margin-top: 25px; text-align: right;">
+                <button onclick="closeDetalhesModal()" class="btn" style="background: rgba(255,255,255,0.08); color: var(--text-primary); padding: 10px 24px; border-radius: 8px;">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/auth.js"></script>
+    <script src="assets/js/premium-grid.js"></script>
+    <script>
+        const token = localStorage.getItem('@VTalentos:token');
+        const userStr = localStorage.getItem('@VTalentos:user');
+
+        if (!token || !userStr) {
+            window.location.href = 'login.html';
+        }
+
+        const currentUser = JSON.parse(userStr);
+        const isAdmin = currentUser.perfil === 'ADMIN_EMPRESA' || currentUser.perfil === 'SUPER_ADMIN';
+
+        if (!isAdmin) {
+            window.location.href = 'dashboard.html';
+        }
+
+        function logout() {
+            localStorage.removeItem('@VTalentos:token');
+            localStorage.removeItem('@VTalentos:user');
+            window.location.href = 'login.html';
+        }
+
+
+
+        const API_BASE = 'http://localhost:3001/api/admin';
+        let globalGrid = null;
+
+        async function populateCorretoresDropdown() {
+            try {
+                const response = await fetch(`${API_BASE}/corretores`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!response.ok) throw new Error();
+                const corretores = await response.json();
+                
+                // Return options array for PremiumGrid filter
+                return corretores.map(c => ({ value: c.id, label: c.nome }));
+            } catch (err) {
+                console.error('Erro ao popular corretores:', err);
+                return [];
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            renderHeader("Compensação em Lote", "Filtre e baixe comissões pendentes massivamente com opção de data retroativa");
+            
+            // Set data default para hoje
+            document.getElementById('inputDataCompensacao').valueAsDate = new Date();
+
+            const corretoresOptions = await populateCorretoresDropdown();
+            
+            // Verifica se há filtro de corretor vindo da URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const initialCorretor = urlParams.get('usuario_id') || '';
+
+            globalGrid = new PremiumGrid({
+                containerId: 'gridMovimentacoes',
+                title: 'Transações Pendentes',
+                totalCountId: 'paginacaoInfo', // reaproveitando IDs para o titulo
+                
+                columns: [
+                    { 
+                        key: 'selecao', 
+                        label: '<input type="checkbox" id="selectAllCheckbox" style="cursor: pointer; width: 16px; height: 16px;" onchange="toggleSelectAll(this)">', 
+                        align: 'center', 
+                        sortable: false 
+                    },
+                    { key: 'created_at', label: 'Data', sortable: true },
+                    { key: 'corretor_nome', label: 'Corretor', sortable: true, bold: true },
+                    { key: 'descricao', label: 'Detalhes (Empreendimento / Ref)', sortable: false },
+                    { key: 'data_vencimento', label: 'Vencimento Prev.', sortable: true },
+                    { key: 'status', label: 'Status', align: 'center', sortable: true },
+                    { key: 'valor_formatado', label: 'Valor', align: 'right', sortable: false }
+                ],
+
+                filters: [
+                    { id: 'usuario_id', label: 'Corretor', type: 'select', options: corretoresOptions },
+                    { id: 'data_inicio', label: 'Vencimento (A Partir de)', type: 'date' },
+                    { id: 'data_fim', label: 'Vencimento (Até)', type: 'date' }
+                ],
+                
+                pagination: { enabled: true, defaultPageSize: 10, pageSizeOptions: [10, 50, 100] },
+                
+                // summary configs currently disabled as API doesn't return per-column summary for this specific layout, 
+                // it returns a global `resumo` which we update separately.
+                
+                cellRenderer: (row, col) => {
+                    const formatarData = (dt) => {
+                        if (!dt) return '—';
+                        const d = new Date(dt);
+                        return d.toLocaleDateString('pt-BR', { timeZone: 'UTC' }); 
+                    };
+
+                    if (col.key === 'selecao') {
+                        return `<input type="checkbox" class="row-checkbox" value="${row.id}" style="cursor: pointer; width: 16px; height: 16px;" onchange="updateSelectedCount()">`;
+                    }
+                    if (col.key === 'created_at') return formatarData(row.created_at);
+                    if (col.key === 'data_vencimento') return formatarData(row.data_vencimento);
+                    
+                    if (col.key === 'status') {
+                        return '<span class="badge" style="background: rgba(255,165,0,0.15); color: var(--warning);">Pendente</span>';
+                    }
+                    if (col.key === 'valor_formatado') {
+                        return `<strong style="color: var(--success); font-size: 0.95rem;">+${Math.abs(parseFloat(row.valor)).toFixed(2)} T$</strong>`;
+                    }
+                    if (col.key === 'descricao') {
+                        const desc = row.empreendimento 
+                            ? `${row.empreendimento}${row.unidade ? ' / Unidade ' + row.unidade : ''}` 
+                            : (row.justificativa || '—');
+                        return `<div style="max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.8rem; color: var(--text-secondary);" title="${desc}">${desc}</div>`;
+                    }
+                    return row[col.key];
+                },
+                
+                fetchFn: async (params) => {
+                    const queryParams = new URLSearchParams({
+                        page: params.page,
+                        limit: params.limit,
+                        status: 'PENDENTE', // FORÇAMOS PENDENTE
+                        ...(params.filters.usuario_id && { usuario_id: params.filters.usuario_id }),
+                        ...(params.filters.data_inicio && { data_inicio: params.filters.data_inicio }),
+                        ...(params.filters.data_fim && { data_fim: params.filters.data_fim })
+                    });
+                    
+                    if (params.sortBy) {
+                        queryParams.append('sort_by', params.sortBy);
+                        queryParams.append('sort_dir', params.sortDir);
+                    }
+
+                    const response = await fetch(`${API_BASE}/movimentacoes?${queryParams}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+
+                    if (response.status === 401) { logout(); return; }
+
+                    const resData = await response.json();
+                    if (!resData.success) throw new Error(resData.error || 'Erro ao carregar movimentações');
+
+                    // Atualizar Cards Consolidado Global
+                    if(resData.resumo) {
+                        document.getElementById('cardDispTotal').textContent = `${parseFloat(resData.resumo.saldo_disponivel_total).toFixed(2)} T$`;
+                        document.getElementById('cardRecTotal').textContent = `${parseFloat(resData.resumo.saldo_a_receber_total).toFixed(2)} T$`;
+                        document.getElementById('cardCredTotal').textContent = `${parseFloat(resData.resumo.creditos_total).toFixed(2)} T$`;
+                        document.getElementById('cardDebTotal').textContent = `${parseFloat(resData.resumo.debitos_total).toFixed(2)} T$`;
+                    }
+
+                    return {
+                        rows: resData.data,
+                        total: resData.meta.total
+                    };
+                }
+            });
+
+            // Set initial filter if provided by URL
+            if (initialCorretor) {
+                globalGrid.state.filters.usuario_id = initialCorretor;
+                setTimeout(() => {
+                    const el = document.getElementById(`gridMovimentacoes-filter-usuario_id`);
+                    if(el) el.value = initialCorretor;
+                }, 100);
+            }
+
+            // Sobrescreve o refresh do grid para atualizar o contador após carregamento
+            const originalRefresh = globalGrid.refresh.bind(globalGrid);
+            globalGrid.refresh = async () => {
+                await originalRefresh();
+                updateSelectedCount(); // Reset count when grid reloads
+                const master = document.getElementById('selectAllCheckbox');
+                if (master) master.checked = false;
+            };
+
+            await globalGrid.init();
+        });
+
+        function toggleSelectAll(masterCheckbox) {
+            const checkboxes = document.querySelectorAll('.row-checkbox');
+            checkboxes.forEach(cb => cb.checked = masterCheckbox.checked);
+            updateSelectedCount();
+        }
+
+        function updateSelectedCount() {
+            const checkedBoxes = document.querySelectorAll('.row-checkbox:checked');
+            const btn = document.getElementById('btnBaixarLote');
+            
+            if (checkedBoxes.length > 0) {
+                btn.disabled = false;
+                btn.textContent = `Baixar Selecionados (${checkedBoxes.length})`;
+            } else {
+                btn.disabled = true;
+                btn.textContent = 'Baixar Selecionados';
+            }
+            
+            const master = document.getElementById('selectAllCheckbox');
+            if (master) {
+                const totalBoxes = document.querySelectorAll('.row-checkbox');
+                master.checked = totalBoxes.length > 0 && checkedBoxes.length === totalBoxes.length;
+            }
+        }
+
+        document.getElementById('btnBaixarLote').addEventListener('click', async () => {
+            const checkedBoxes = document.querySelectorAll('.row-checkbox:checked');
+            if (checkedBoxes.length === 0) return;
+            
+            const dataCompensacaoStr = document.getElementById('inputDataCompensacao').value;
+            if (!dataCompensacaoStr) {
+                alert('Por favor, informe a Data da Compensação.');
+                return;
+            }
+            
+            // Adjust to timezone to avoid off-by-one day bugs
+            const d = new Date(dataCompensacaoStr + 'T12:00:00Z');
+
+            const ids = Array.from(checkedBoxes).map(cb => cb.value);
+
+            if (!confirm(`Confirma a baixa de ${ids.length} transação(ões) na data ${d.toLocaleDateString('pt-BR')}?`)) return;
+
+            try {
+                const btn = document.getElementById('btnBaixarLote');
+                btn.disabled = true;
+                btn.textContent = 'Processando...';
+
+                const response = await fetch(`${API_BASE}/movimentacoes/lote`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        transacao_ids: ids,
+                        data_compensacao: d.toISOString()
+                    })
+                });
+
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || 'Erro ao processar baixa em lote');
+
+                alert(`Sucesso: ${data.atualizados} registro(s) baixado(s) com sucesso.`);
+                
+                // Refresh grid will reset checkboxes
+                await globalGrid.refresh();
+                
+            } catch (err) {
+                alert(err.message);
+                updateSelectedCount(); // reset btn
+            }
+        });
+    </script>
+</body>
+</html>

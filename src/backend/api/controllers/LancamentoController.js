@@ -22,6 +22,19 @@ class LancamentoController {
     }
   }
 
+  async baixarEmLote(req, res) {
+    try {
+      const { transacao_ids, data_compensacao } = req.body;
+      const empresa_id = req.empresa_id;
+      const admin_id = req.usuario_id;
+
+      const result = await LancamentoService.compensarEmLote(empresa_id, admin_id, transacao_ids, data_compensacao);
+      return res.json(result);
+    } catch (err) {
+      return res.status(400).json({ error: err.message });
+    }
+  }
+
   async obterCorretores(req, res) {
     try {
       const corretores = await LancamentoService.listarCorretores(req.empresa_id);

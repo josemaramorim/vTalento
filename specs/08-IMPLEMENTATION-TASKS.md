@@ -3,6 +3,7 @@
 
 Este documento é o guia de execução do projeto. Nenhuma tarefa deve ser iniciada sem estar documentada aqui e aprovada pelo usuário.
 
+>> Observação: Nenhuma alteração de código deve ser iniciada antes da atualização física das SPECs (itens 12.1, 12.2, 12.3) e aprovação do Product Owner.
 ---
 
 ## FASE 1: Fundação do Ecossistema SaaS
@@ -257,6 +258,20 @@ Este documento é o guia de execução do projeto. Nenhuma tarefa deve ser inici
   - Confirm executa POST `/api/admin/importacao/confirm` e mostra resultado detalhado.
   - Critério de Aceite: publicação do import resulta em registros persistidos com `dados_extras`.
 
+---
+
+### FASE 6: Fator de Conversão Configurável e Baixa em Lote
+
+### História 13: Flexibilidade Multi-Tenant e Operação em Lote
+*Como administrador de múltiplos perfis de empresa, quero poder configurar dinamicamente o fator de conversão de moeda (R$ para Talentos) direto no perfil de importação, além de precisar de uma tela específica para aplicar a compensação de múltiplas transações simultaneamente com a flexibilidade de aplicar datas retroativas.*
+
+**Critérios de Aceite:**
+- `GamConfigImportacao` e a interface de perfis devem suportar "fator_conversao" (float, default 100) e "formato_data_balao".
+- `ImportacaoService` não usa mais o hardcode `* 0.01`, calculando divisões baseadas no novo parâmetro. O fator utilizado deve constar em `dados_extras`.
+- Existência de script retroativo para injetar `{"fator_conversao_utilizado": 100}` nas transações passadas.
+- Criação da página `admin-baixas.html` focada exclusivamente em transações `PENDENTES`, contendo grid, checkboxes por linha, toggle "Selecionar Todos" (baseado nos filtros atuais) e submissão em lote (`compensarEmLote`) para o status `COMPENSADO`.
+- Funcionalidades de alteração de status em lote alteram coerentemente os saldos (`saldo_a_receber` e `saldo_disponivel`) numa única transação de banco.
+
 #### Tarefas de Testes e Usabilidade
 - [ ] **Tarefa 12.12:** Testes E2E (Cypress / Playwright)
   - Fluxos: criar perfil com campo extra, fazer upload, revisar preview, confirmar importação, validar dados no backend.
@@ -442,9 +457,17 @@ Esta fase permite que o administrador da empresa (`ADMIN_EMPRESA`) gerencie a id
 - [x] **Tarefa 20.10 (Infra/Produção):** Criar script CLI de inicialização segura em produção para cadastrar o primeiro SUPER_ADMIN e configurações de SaaS se não existirem no banco PostgreSQL.
 - [x] **Tarefa 20.11 (Saúde Financeira SaaS):** Criar a tela de faturamento dedicada `super-faturamento.html` para o Super Admin, unificando a gestão de faturas, filtros avançados, métricas agregadas, baixa manual e o redirecionamento com filtro a partir da listagem de inquilinos.
 
+---
 
+## FASE 6: Fator Dinâmico e Baixa em Lote
 
+### História 7: Flexibilidade na Importação e Agilidade Financeira
+*Como administrador, quero poder definir o fator de conversão de pontos e o formato de data dos balões por perfil de importação, além de conseguir realizar baixas em lote (com data retroativa) de comissões pendentes para manter meu extrato preciso e ágil.*
 
-
-
-
+### Tarefas de Desenvolvimento
+- [x] **Tarefa 21.1 (Backend/Migração):** Criar migration para adicionar `fator_conversao` e `formato_data_balao` na tabela `GamConfigImportacao`.
+- [x] **Tarefa 21.2 (Backend/Script):** Escrever script para aplicar o `fator_conversao_utilizado: 100` em transações passadas.
+- [x] **Tarefa 21.3 (Backend):** Modificar `ImportacaoController` e `ImportacaoService` para usar `fator_conversao` e tratar os formatos de data customizados dos balões, salvando o fator nos `dados_extras` das transações.
+- [x] **Tarefa 21.4 (Backend):** Adicionar função `compensarEmLote` em `LancamentoService` e `POST /api/admin/movimentacoes/lote` em `LancamentoController`.
+- [x] **Tarefa 21.5 (Frontend):** Atualizar `admin-importacao-upload.html` para os novos campos no perfil.
+- [x] **Tarefa 21.6 (Frontend):** Criar `admin-baixas.html` com filtros, checkboxes em lote, calendário de data retroativa e integração com a API.
