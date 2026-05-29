@@ -96,6 +96,8 @@ Para garantir a continuidade perfeita e o alinhamento do projeto, a IA deve segu
 | **DESENVOLVIMENTO** | ✅ Concluído | Fase 6: Fator Dinâmico e Baixa em Lote | `develop` | Fator de conversão dinâmico na importação (com suporte a formatos de datas em balões) e nova tela de Baixa em Lote para liquidação em massa retroativa. Estabilizada a tela de baixas contra erros TypeError de DOM. |
 | **DESENVOLVIMENTO** | ✅ Concluído | Fase 7: Terminologia Agnóstica e Motor Recebíveis | `develop` | Terminologia agnóstica, motor FIFO de conciliação, gerador de parcelas fixas, campos de parcelamento no perfil e testes unitários (22.1–22.7) 100% concluídos. |
 | **DESENVOLVIMENTO** | ✅ Concluído | Tarefa 22.8: Unificação `identificador_extra_coluna` | `develop` | Refatoração de unificação de campos concluída. Corrigido erro TypeError no carregamento do modal de edição de perfil e testes unitários 100% estabilizados. |
+| **DESENVOLVIMENTO** | ✅ Concluído | Lote de Baixas (Diálogos Premium Glassmorphic) | `develop` | Substituição de alert/confirm nativos por Toasts e Modais de Confirmação customizados em `admin-baixas.html`, com guards preventivos de DOM para evitar travamentos de cartões ausentes; testes 100% verdes. |
+| **ARQUITETURA**     | ✅ Concluído | Estudo: Motor Importação Programável & Editor Visual | `develop` | Elaboração da especificação de arquitetura e produto para o segundo motor de importação baseado em JSON scriptável e sandboxed, incluindo concepção do Editor Visual No-Code (estilo N8N) com Governança Doc-as-Code. |
 
 ---
 
