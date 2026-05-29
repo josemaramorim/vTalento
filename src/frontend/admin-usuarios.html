@@ -67,6 +67,10 @@
 
                     <div class="form-row">
                         <div class="form-group">
+                            <label for="identificadorExtraInput">Identificador Extra (Opcional)</label>
+                            <input type="text" id="identificadorExtraInput" placeholder="Ex: CRECI, CRM, Matrícula">
+                        </div>
+                        <div class="form-group">
                             <label for="perfilSelect">Perfil de Acesso</label>
                             <select id="perfilSelect" style="width:100%; padding: 10px 14px; border-radius: var(--radius-sm); background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: var(--text-primary); font-family: var(--font-main); font-size: 0.9rem; cursor: pointer;">
                                 <option value="CORRETOR" selected>CORRETOR (Colaborador da Equipe)</option>
@@ -145,6 +149,7 @@
                     { key: 'nome', label: 'Nome', bold: true, sortable: true },
                     { key: 'email', label: 'E-mail', sortable: true },
                     { key: 'cpf', label: 'CPF', align: 'center' },
+                    { key: 'identificador_extra', label: 'ID Extra', align: 'center' },
                     { key: 'perfil', label: 'Perfil', align: 'center', sortable: true },
                     { key: 'saldo_disponivel', label: 'Saldo Disponível', align: 'right', highlight: true, sortable: true },
                     { key: 'saldo_a_receber', label: 'Saldo a Receber', align: 'right', sortable: true },
@@ -165,6 +170,7 @@
                 pagination: { enabled: true, defaultPageSize: 10, pageSizeOptions: [10, 50, 100] },
                 cellRenderer: (row, col) => {
                     if (col.key === 'cpf') return row.cpf || '—';
+                    if (col.key === 'identificador_extra') return row.identificador_extra || '—';
                     if (col.key === 'perfil') {
                         const badgeClass = row.perfil === 'ADMIN_EMPRESA' ? 'badge-admin' : 'badge-corretor';
                         const roleLabel = row.perfil === 'ADMIN_EMPRESA' ? 'Admin' : 'Corretor';
@@ -247,6 +253,7 @@
             const nome = document.getElementById('nomeInput').value;
             const email = document.getElementById('emailInput').value;
             const cpf = document.getElementById('cpfInput').value;
+            const identificador_extra = document.getElementById('identificadorExtraInput').value;
             const senha = document.getElementById('senhaInput').value;
             const perfil = document.getElementById('perfilSelect').value;
 
@@ -268,7 +275,7 @@
                 const url = id ? `${API_BASE}/usuarios/${id}` : `${API_BASE}/usuarios`;
                 const method = id ? 'PUT' : 'POST';
 
-                const payload = { nome, email, cpf, perfil, ...(senha && !id ? { senha } : {}), ...(novaSenha ? { senha: novaSenha } : {}) };
+                const payload = { nome, email, cpf, identificador_extra, perfil, ...(senha && !id ? { senha } : {}), ...(novaSenha ? { senha: novaSenha } : {}) };
 
                 const response = await fetch(url, {
                     method,
@@ -311,6 +318,7 @@
             document.getElementById('nomeInput').value = usuario.nome;
             document.getElementById('emailInput').value = usuario.email;
             document.getElementById('cpfInput').value = usuario.cpf || '';
+            document.getElementById('identificadorExtraInput').value = usuario.identificador_extra || '';
             document.getElementById('perfilSelect').value = usuario.perfil || 'CORRETOR';
             
             // No modo edição: oculta campo de senha obrigatória e mostra redefinir
@@ -337,6 +345,7 @@
             document.getElementById('formTitle').innerText = 'Novo Corretor';
             document.getElementById('usuarioId').value = '';
             document.getElementById('usuarioForm').reset();
+            document.getElementById('identificadorExtraInput').value = '';
             document.getElementById('perfilSelect').value = 'CORRETOR';
 
             // Restaura campo de senha obrigatória

@@ -422,7 +422,7 @@ class SuperAdminService {
     const totalRegistros = parseInt(total, 10);
 
     const data = await query
-      .select('id', 'nome', 'email', 'cpf', 'perfil', 'saldo_disponivel', 'saldo_a_receber', 'ativo', 'created_at')
+      .select('id', 'nome', 'email', 'cpf', 'identificador_extra', 'perfil', 'saldo_disponivel', 'saldo_a_receber', 'ativo', 'created_at')
       .orderBy('nome', 'asc')
       .limit(limitSanitizado)
       .offset(offset);
@@ -439,7 +439,7 @@ class SuperAdminService {
   }
 
   async createUsuarioForEmpresa(empresaId, dados) {
-    const { nome, email, senha, cpf, perfil } = dados;
+    const { nome, email, senha, cpf, perfil, identificador_extra } = dados;
 
     if (!nome || !email || !senha) {
       throw new Error('Nome, e-mail e senha são obrigatórios.');
@@ -473,6 +473,7 @@ class SuperAdminService {
       email,
       senha_hash,
       cpf: cpf || null,
+      identificador_extra: identificador_extra || null,
       perfil: perfil || 'CORRETOR',
       saldo_disponivel: 0,
       saldo_a_receber: 0,
@@ -487,7 +488,7 @@ class SuperAdminService {
     // Busca o usuário do banco para evitar retornar os helpers do Knex (db.fn.now) que possuem estrutura circular
     const usuarioCriado = await db('GamUsuario')
       .where({ id: userId })
-      .select('id', 'nome', 'email', 'cpf', 'perfil', 'saldo_disponivel', 'saldo_a_receber', 'ativo', 'tema_preferido', 'created_at', 'updated_at')
+      .select('id', 'nome', 'email', 'cpf', 'identificador_extra', 'perfil', 'saldo_disponivel', 'saldo_a_receber', 'ativo', 'tema_preferido', 'created_at', 'updated_at')
       .first();
 
     return usuarioCriado;
@@ -510,6 +511,7 @@ class SuperAdminService {
       nome: dados.nome || usuario.nome,
       email: dados.email || usuario.email,
       cpf: dados.cpf !== undefined ? dados.cpf : usuario.cpf,
+      identificador_extra: dados.identificador_extra !== undefined ? dados.identificador_extra : usuario.identificador_extra,
       perfil: dados.perfil || usuario.perfil,
       ativo: dados.ativo !== undefined ? (dados.ativo === 'true' || dados.ativo === '1' || dados.ativo === true) : usuario.ativo,
       updated_at: db.fn.now()
@@ -526,7 +528,7 @@ class SuperAdminService {
     // Busca o usuário atualizado do banco para evitar problemas com serialização circular de db.fn.now()
     const usuarioAtualizado = await db('GamUsuario')
       .where({ id: usuarioId, empresa_id: empresaId })
-      .select('id', 'nome', 'email', 'cpf', 'perfil', 'saldo_disponivel', 'saldo_a_receber', 'ativo', 'tema_preferido', 'created_at', 'updated_at')
+      .select('id', 'nome', 'email', 'cpf', 'identificador_extra', 'perfil', 'saldo_disponivel', 'saldo_a_receber', 'ativo', 'tema_preferido', 'created_at', 'updated_at')
       .first();
 
     return usuarioAtualizado;

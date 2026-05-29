@@ -36,7 +36,7 @@ class UsuarioService {
 
     // Busca os registros selecionados com limitação
     const data = await query
-      .select('id', 'nome', 'email', 'cpf', 'perfil', 'saldo_disponivel', 'saldo_a_receber', 'tema_preferido', 'ativo', 'created_at')
+      .select('id', 'nome', 'email', 'cpf', 'identificador_extra', 'perfil', 'saldo_disponivel', 'saldo_a_receber', 'tema_preferido', 'ativo', 'created_at')
       .orderBy('nome', 'asc')
       .limit(limitSanitizado)
       .offset(offset);
@@ -53,7 +53,7 @@ class UsuarioService {
   }
 
   // Tarefa 12.2 — FASE 5 — Cadastrar novo corretor no tenant
-  async createUsuarioAdmin({ empresa_id, nome, email, senha, cpf, perfil }) {
+  async createUsuarioAdmin({ empresa_id, nome, email, senha, cpf, perfil, identificador_extra }) {
     if (!nome || !email || !senha) {
       throw new Error('Nome, e-mail e senha são obrigatórios.');
     }
@@ -88,6 +88,7 @@ class UsuarioService {
       email,
       senha_hash,
       cpf: cpf || null,
+      identificador_extra: identificador_extra || null,
       perfil: perfilSanitizado,
       saldo_disponivel: 0,
       saldo_a_receber: 0,
@@ -109,7 +110,7 @@ class UsuarioService {
   }
 
   // Tarefa 12.3 — FASE 5 — Editar dados de um usuário pelo Admin
-  async updateUsuarioAdmin({ empresa_id, id, nome, email, cpf, senha, ativo, perfil }) {
+  async updateUsuarioAdmin({ empresa_id, id, nome, email, cpf, senha, ativo, perfil, identificador_extra }) {
     const usuario = await db('GamUsuario').where({ id, empresa_id }).first();
     if (!usuario) {
       throw new Error('Usuário não encontrado.');
@@ -127,6 +128,7 @@ class UsuarioService {
       nome: nome || usuario.nome,
       email: email || usuario.email,
       cpf: cpf !== undefined ? cpf : usuario.cpf,
+      identificador_extra: identificador_extra !== undefined ? identificador_extra : usuario.identificador_extra,
       ativo: ativo !== undefined ? (ativo === true || ativo === 'true' || ativo === 1 || ativo === '1') : usuario.ativo,
       updated_at: db.fn.now()
     };
@@ -149,7 +151,7 @@ class UsuarioService {
     // Re-fetch to avoid returning raw db.fn.now() Timeout objects that break JSON serialization
     const atualizado = await db('GamUsuario')
       .where({ id, empresa_id })
-      .select('id', 'nome', 'email', 'cpf', 'perfil', 'saldo_disponivel', 'saldo_a_receber', 'ativo', 'created_at', 'updated_at')
+      .select('id', 'nome', 'email', 'cpf', 'identificador_extra', 'perfil', 'saldo_disponivel', 'saldo_a_receber', 'ativo', 'created_at', 'updated_at')
       .first();
 
     return atualizado;

@@ -191,6 +191,10 @@
                     <input type="text" id="newCpf" class="form-control" placeholder="Apenas números">
                 </div>
                 <div class="form-group">
+                    <label for="newIdentificadorExtra">Identificador Extra (Opcional)</label>
+                    <input type="text" id="newIdentificadorExtra" class="form-control" placeholder="Ex: CRECI, CRM, Matrícula">
+                </div>
+                <div class="form-group">
                     <label for="newPerfil">Perfil de Acesso</label>
                     <select id="newPerfil" class="form-control">
                         <option value="CORRETOR" selected>CORRETOR (Colaborador)</option>
@@ -226,6 +230,10 @@
                 <div class="form-group">
                     <label for="editCpf">CPF (Opcional)</label>
                     <input type="text" id="editCpf" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="editIdentificadorExtra">Identificador Extra (Opcional)</label>
+                    <input type="text" id="editIdentificadorExtra" class="form-control" placeholder="Ex: CRECI, CRM, Matrícula">
                 </div>
                 <div class="form-group">
                     <label for="editPerfil">Perfil de Acesso</label>
@@ -336,6 +344,7 @@
                     { key: 'nome', label: 'Nome Completo', bold: true, sortable: true },
                     { key: 'email', label: 'E-mail de Acesso', sortable: true },
                     { key: 'cpf', label: 'CPF', sortable: true },
+                    { key: 'identificador_extra', label: 'ID Extra', sortable: true },
                     { key: 'perfil', label: 'Perfil / Permissão', align: 'center', sortable: true },
                     { key: 'saldos', label: 'Saldos (Disponível / A Receber)', align: 'left', sortable: true },
                     { key: 'status', label: 'Status', align: 'center', sortable: true },
@@ -361,6 +370,7 @@
                         return `<span class="badge ${badgeClass}">${roleLabel}</span>`;
                     }
                     if (col.key === 'cpf') return row.cpf || 'Não informado';
+                    if (col.key === 'identificador_extra') return row.identificador_extra || 'Não informado';
                     if (col.key === 'saldos') return `<strong>${formatReal(row.saldo_disponivel)}</strong> / <span style="color:var(--text-secondary); font-size:0.8rem;">${formatReal(row.saldo_a_receber)}</span>`;
                     if (col.key === 'status') {
                         const isAtivo = row.ativo === true || row.ativo === 1 || String(row.ativo) === 'true' || String(row.ativo) === '1';
@@ -441,6 +451,7 @@
                 email: document.getElementById('newEmail').value,
                 senha: document.getElementById('newSenha').value,
                 cpf: document.getElementById('newCpf').value,
+                identificador_extra: document.getElementById('newIdentificadorExtra').value,
                 perfil: document.getElementById('newPerfil').value
             };
 
@@ -475,6 +486,7 @@
             document.getElementById('editNome').value = row.nome;
             document.getElementById('editEmail').value = row.email;
             document.getElementById('editCpf').value = row.cpf || '';
+            document.getElementById('editIdentificadorExtra').value = row.identificador_extra || '';
             document.getElementById('editPerfil').value = row.perfil;
             const isAtivo = row.ativo === true || row.ativo === 1 || String(row.ativo) === 'true' || String(row.ativo) === '1';
             document.getElementById('editAtivo').value = String(isAtivo);
@@ -496,6 +508,7 @@
                 nome: document.getElementById('editNome').value,
                 email: document.getElementById('editEmail').value,
                 cpf: document.getElementById('editCpf').value,
+                identificador_extra: document.getElementById('editIdentificadorExtra').value,
                 perfil: document.getElementById('editPerfil').value,
                 ativo: document.getElementById('editAtivo').value === 'true'
             };
