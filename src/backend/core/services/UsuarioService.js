@@ -158,7 +158,7 @@ class UsuarioService {
   }
 
   // Tarefa 12.4 — FASE 5 — Atualizar dados próprios (Corretor ou Admin)
-  async updateOwnProfile({ usuario_id, nome, email, cpf, senha_atual, nova_senha }) {
+  async updateOwnProfile({ usuario_id, nome, email, cpf, identificador_extra, senha_atual, nova_senha }) {
     const usuario = await db('GamUsuario').where({ id: usuario_id }).first();
     if (!usuario) {
       throw new Error('Usuário não encontrado.');
@@ -176,6 +176,7 @@ class UsuarioService {
       nome: nome || usuario.nome,
       email: email || usuario.email,
       cpf: cpf !== undefined ? cpf : usuario.cpf,
+      identificador_extra: identificador_extra !== undefined ? identificador_extra : usuario.identificador_extra,
       updated_at: db.fn.now()
     };
 

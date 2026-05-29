@@ -115,13 +115,14 @@ class UsuarioController {
   async updateMe(req, res) {
     try {
       const { usuario_id } = req;
-      const { nome, email, cpf, senha_atual, nova_senha } = req.body;
+      const { nome, email, cpf, identificador_extra, senha_atual, nova_senha } = req.body;
 
       const profileAtualizado = await UsuarioService.updateOwnProfile({
         usuario_id,
         nome,
         email,
         cpf,
+        identificador_extra,
         senha_atual,
         nova_senha
       });

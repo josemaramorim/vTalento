@@ -133,6 +133,10 @@
                                     <label for="cpfInput">CPF</label>
                                     <input type="text" id="cpfInput" placeholder="Ex: 000.000.000-00">
                                 </div>
+                                <div class="form-group">
+                                    <label for="identificadorExtraInput">Identificador Extra (Opcional)</label>
+                                    <input type="text" id="identificadorExtraInput" placeholder="Ex: CRECI, CRM, Matrícula">
+                                </div>
                             </div>
 
                             <h3 style="font-size: 1.05rem; color: var(--text-primary); margin-top: 30px; margin-bottom: 15px; border-top: 1px solid var(--glass-border); padding-top: 20px;">🔒 Segurança & Acesso</h3>
@@ -228,6 +232,7 @@
                     currentUser.nome = latestData.nome;
                     currentUser.email = latestData.email;
                     currentUser.cpf = latestData.cpf;
+                    currentUser.identificador_extra = latestData.identificador_extra;
                     currentUser.saldo_disponivel = latestData.saldo_disponivel;
                     currentUser.saldo_a_receber = latestData.saldo_a_receber;
                     currentUser.perfil = latestData.perfil;
@@ -258,6 +263,7 @@
             document.getElementById('nomeInput').value = currentUser.nome;
             document.getElementById('emailInput').value = currentUser.email;
             document.getElementById('cpfInput').value = currentUser.cpf || '';
+            document.getElementById('identificadorExtraInput').value = currentUser.identificador_extra || '';
 
             // Atualiza botões de tema na tela
             const tema = currentUser.tema_preferido || 'dark';
@@ -309,6 +315,7 @@
             const nome = document.getElementById('nomeInput').value;
             const email = document.getElementById('emailInput').value;
             const cpf = document.getElementById('cpfInput').value;
+            const identificador_extra = document.getElementById('identificadorExtraInput').value;
             const senha_atual = document.getElementById('senhaAtualInput').value;
             const nova_senha = document.getElementById('novaSenhaInput').value;
 
@@ -333,6 +340,7 @@
                         nome,
                         email,
                         cpf,
+                        identificador_extra,
                         ...(nova_senha && { senha_atual, nova_senha })
                     })
                 });
