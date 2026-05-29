@@ -95,7 +95,7 @@ Para garantir a continuidade perfeita e o alinhamento do projeto, a IA deve segu
 | **DESENVOLVIMENTO** | ✅ Concluído | Ajustes Ad Hoc (Movimentações UI) | `develop` | Adicionado Modal premium de confirmação no fim da importação. Modificado o Grid de Movimentações da Equipe para focar em `Data Vencimento` e `Data Compensação`, incluindo filtro de Status e Modal Rico de Detalhes de Lançamento. |
 | **DESENVOLVIMENTO** | ✅ Concluído | Fase 6: Fator Dinâmico e Baixa em Lote | `develop` | Fator de conversão dinâmico na importação (com suporte a formatos de datas em balões) e nova tela de Baixa em Lote para liquidação em massa retroativa. Scripts retroativos executados. |
 | **DESENVOLVIMENTO** | ✅ Concluído | Fase 7: Terminologia Agnóstica e Motor Recebíveis | `develop` | Terminologia agnóstica, motor FIFO de conciliação, gerador de parcelas fixas, campos de parcelamento no perfil e testes unitários (22.1–22.7) 100% concluídos. |
-| **DESENVOLVIMENTO** | 🚧 Em Andamento | Tarefa 22.8: Unificação `identificador_extra_coluna` | `feature/refactor-unify-identificador` | Refactor para unificar campo redundante `identificador_extra_coluna` com `corretor_creci` do `mapeamento_json`, elevando sua prioridade na busca e removendo a seção duplicada do modal. |
+| **DESENVOLVIMENTO** | ✅ Concluído | Tarefa 22.8: Unificação `identificador_extra_coluna` | `develop` | Refatoração de unificação de campos concluída. Corrigido erro TypeError no carregamento do modal de edição de perfil e testes unitários 100% estabilizados. |
 
 ---
 
