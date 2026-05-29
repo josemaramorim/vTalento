@@ -223,12 +223,17 @@
                     const resData = await response.json();
                     if (!resData.success) throw new Error(resData.error || 'Erro ao carregar movimentações');
 
-                    // Atualizar Cards Consolidado Global
+                    // Atualizar Cards Consolidado Global (se presentes na página)
                     if(resData.resumo) {
-                        document.getElementById('cardDispTotal').textContent = `${parseFloat(resData.resumo.saldo_disponivel_total).toFixed(2)} T$`;
-                        document.getElementById('cardRecTotal').textContent = `${parseFloat(resData.resumo.saldo_a_receber_total).toFixed(2)} T$`;
-                        document.getElementById('cardCredTotal').textContent = `${parseFloat(resData.resumo.creditos_total).toFixed(2)} T$`;
-                        document.getElementById('cardDebTotal').textContent = `${parseFloat(resData.resumo.debitos_total).toFixed(2)} T$`;
+                        const cardDisp = document.getElementById('cardDispTotal');
+                        const cardRec = document.getElementById('cardRecTotal');
+                        const cardCred = document.getElementById('cardCredTotal');
+                        const cardDeb = document.getElementById('cardDebTotal');
+                        
+                        if (cardDisp) cardDisp.textContent = `${parseFloat(resData.resumo.saldo_disponivel_total).toFixed(2)} T$`;
+                        if (cardRec) cardRec.textContent = `${parseFloat(resData.resumo.saldo_a_receber_total).toFixed(2)} T$`;
+                        if (cardCred) cardCred.textContent = `${parseFloat(resData.resumo.creditos_total).toFixed(2)} T$`;
+                        if (cardDeb) cardDeb.textContent = `${parseFloat(resData.resumo.debitos_total).toFixed(2)} T$`;
                     }
 
                     return {
