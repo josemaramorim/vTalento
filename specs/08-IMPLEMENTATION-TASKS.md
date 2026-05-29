@@ -222,37 +222,37 @@ Este documento é o guia de execução do projeto. Nenhuma tarefa deve ser inici
   - Critério de Aceite: Protótipos ou descrições aprovadas pelo produto.
 
 #### Tarefas de Backend (detalhadas)
-- [/] **Tarefa 12.4:** Model & Migration — `perfil_importacao` / `GamLancamento`
+- [x] **Tarefa 12.4:** Model & Migration — `perfil_importacao` / `GamLancamento`
   - Criar migration `20260528_add_import_extra_fields.js` que:
     - Adiciona `identificador_extra_coluna` (string/nullable) ao `perfil_importacao`.
     - Adiciona `dados_extras` (JSON nullable) à tabela de lançamentos/importações (`GamLancamento` ou tabela equivalente usada pelo motor).
   - Critério de Aceite: Migration criada e executável localmente sem perda de dados.
-- [ ] **Tarefa 12.5:** API — Endpoints para gerenciar `campos_extras`
+- [x] **Tarefa 12.5:** API — Endpoints para gerenciar `campos_extras`
   - Atualizar endpoints existentes `GET/POST/PUT /api/admin/importacao/perfis` para aceitar/retornar `identificador_extra_coluna` e `campos_extras` (array de {label, coluna}).
   - Critério de Aceite: API aceita payloads novos e valida o formato.
-- [ ] **Tarefa 12.6:** Import Service — lógica de resolução de usuário e armazenamento
+- [x] **Tarefa 12.6:** Import Service — lógica de resolução de usuário e armazenamento
   - Atualizar `ImportacaoService.sugerirMapeamento` e `ImportacaoService.confirm` (ou método equivalente) para:
     - Quando `identificador_extra_coluna` estiver presente e não vazia, buscar usuário por `nome_corretor` + valor_do_identificador (ambos normalizados).
     - Se encontrar múltiplos matches, marcar como inconsistência e registrar possíveis candidatos para revisão manual.
     - Armazenar colunas configuradas como `campos_extras` no `dados_extras` JSON do registro importado.
   - Critério de Aceite: Serviço passa testes unitários cobrindo busca com/sem identificador, e grava `dados_extras` corretamente.
-- [ ] **Tarefa 12.7:** Testes Backend
+- [x] **Tarefa 12.7:** Testes Backend
   - Testes unitários para `ImportacaoService` (Jest): cenário feliz, ambiguidade (dois nomes iguais), identificador extra presente/ausente, fallback por nome.
   - Testes de integração (Supertest) para endpoints de perfis e preview/confirm usando banco em memória.
   - Critério de Aceite: Suites verdes em CI local.
 
 #### Tarefas de Frontend (detalhadas)
-- [/] **Tarefa 12.8:** Arquitetura de páginas
+- [x] **Tarefa 12.8:** Arquitetura de páginas
   - Criar as páginas `src/frontend/admin-importacao-upload.html`, `admin-importacao-preview.html`, `admin-importacao-confirm.html` (ou rotas SPA equivalentes).
   - Cada página tem responsabilidades únicas e botões de navegação (Avançar/Voltar).
   - Critério de Aceite: páginas navegáveis e load/restore do estado do upload.
-- [/] **Tarefa 12.9:** UI de Perfis e Campos Extras
+- [x] **Tarefa 12.9:** UI de Perfis e Campos Extras
   - Modal/rota para criar/editar `PerfilImportacao` com campos: `nome`, `linha_cabecalho`, `separador`, `identificador_extra_coluna` (select) e `campos_extras` (lista dinâmica de label+coluna).
   - Critério de Aceite: perfil salvo via API e listado corretamente.
-- [/] **Tarefa 12.10:** Persistência entre etapas
+- [x] **Tarefa 12.10:** Persistência entre etapas
   - Implementar persistência temporária (localStorage ou sessionStorage) para manter `selectedFileBase64`, `perfilSelecionado`, e mapeamentos entre páginas.
   - Critério de Aceite: usuário pode navegar entre etapas sem perder dados.
-- [/] **Tarefa 12.11:** Preview & Confirm UI
+- [x] **Tarefa 12.11:** Preview & Confirm UI
   - Preview mostra primeiras N linhas, inconsistências, candidatos para correção manual (quando múltiplos matches), resumo de estatísticas.
   - Confirm executa POST `/api/admin/importacao/confirm` e mostra resultado detalhado.
   - Critério de Aceite: publicação do import resulta em registros persistidos com `dados_extras`.

@@ -91,6 +91,8 @@ Para garantir a continuidade perfeita e o alinhamento do projeto, a IA deve segu
 | **DESENVOLVIMENTO** | ✅ Concluído | Fase 11: Gestão de Provedores e Pattern Strategy/Adapter | `develop` | Padrão Strategy/Adapter de pagamentos implementado para Stripe, Asaas e Genérico; nova página premium `super-provedores.html` com formulário dinâmico chave-valor e segurança de segredos; 73/73 testes integrados passando. |
 | **DESENVOLVIMENTO** | ✅ Concluído | Fases 12 e 13: Webhooks & Dashboard Charts | `develop` | Webhooks de Stripe/Asaas, renovações cumulativas, dashboard com gráficos neon interativos Chart.js, especificações de configuração (specs 12, 13, 14 e 15) e 81/81 testes passando. |
 | **IMPLANTAÇÃO** | ✅ Concluído | Fase 14: Inicialização Segura em Produção | `develop` | Correção da migration para PostgreSQL (Pg check constraint) e criação do utilitário CLI `npm run db:init-admin` para inicialização segura e cadastramento do primeiro SUPER_ADMIN em produção; 81/81 testes passando. |
+| **DESENVOLVIMENTO** | ✅ Concluído | Fase 5: Importação Avançada e Redesign | `develop` | Motor de importação em 3 etapas com persistência (Upload, Preview, Confirm), suporte a campos extras customizáveis e `identificador_extra` (CRECI/CPF) no `GamUsuario` e `PerfilImportacao`. Testes backend atualizados e rodando com sucesso. |
+| **DESENVOLVIMENTO** | ✅ Concluído | Ajustes Ad Hoc (Movimentações UI) | `develop` | Adicionado Modal premium de confirmação no fim da importação. Modificado o Grid de Movimentações da Equipe para focar em `Data Vencimento` e `Data Compensação`, incluindo filtro de Status e Modal Rico de Detalhes de Lançamento. |
 
 ---
 
