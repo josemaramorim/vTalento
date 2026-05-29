@@ -295,7 +295,7 @@
             
             const dataCompensacaoStr = document.getElementById('inputDataCompensacao').value;
             if (!dataCompensacaoStr) {
-                alert('Por favor, informe a Data da Compensação.');
+                showToast('Por favor, informe a Data da Compensação.', 'error');
                 return;
             }
             
@@ -304,37 +304,39 @@
 
             const ids = Array.from(checkedBoxes).map(cb => cb.value);
 
-            if (!confirm(`Confirma a baixa de ${ids.length} transação(ões) na data ${d.toLocaleDateString('pt-BR')}?`)) return;
+            const msgConfirm = `Deseja realmente baixar em lote <strong>${ids.length}</strong> transação(ões) pendente(s) com a data de compensação <strong>${d.toLocaleDateString('pt-BR')}</strong>?<br><br><span style="color: var(--accent-primary); font-weight: 600;">Esta ação alterará imediatamente o saldo disponível e o saldo a receber dos parceiros envolvidos de forma auditada.</span>`;
 
-            try {
-                const btn = document.getElementById('btnBaixarLote');
-                btn.disabled = true;
-                btn.textContent = 'Processando...';
+            showConfirmModal('Compensação em Lote', msgConfirm, async () => {
+                try {
+                    const btn = document.getElementById('btnBaixarLote');
+                    btn.disabled = true;
+                    btn.textContent = 'Processando...';
 
-                const response = await fetch(`${API_BASE}/movimentacoes/lote`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({
-                        transacao_ids: ids,
-                        data_compensacao: d.toISOString()
-                    })
-                });
+                    const response = await fetch(`${API_BASE}/movimentacoes/lote`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({
+                            transacao_ids: ids,
+                            data_compensacao: d.toISOString()
+                        })
+                    });
 
-                const data = await response.json();
-                if (!response.ok) throw new Error(data.error || 'Erro ao processar baixa em lote');
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(data.error || 'Erro ao processar baixa em lote');
 
-                alert(`Sucesso: ${data.atualizados} registro(s) baixado(s) com sucesso.`);
-                
-                // Refresh grid will reset checkboxes
-                await globalGrid.refresh();
-                
-            } catch (err) {
-                alert(err.message);
-                updateSelectedCount(); // reset btn
-            }
+                    showToast(`Sucesso: ${data.atualizados} registro(s) baixado(s) com sucesso.`, 'success');
+                    
+                    // Refresh grid will reset checkboxes
+                    await globalGrid.refresh();
+                    
+                } catch (err) {
+                    showToast(err.message, 'error');
+                    updateSelectedCount(); // reset btn
+                }
+            });
         });
     </script>
 </body>
