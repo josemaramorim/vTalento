@@ -307,6 +307,43 @@
             .stepper-line { width: 25px; }
             .import-stepper { padding: 12px; }
         }
+
+        /* Tooltip */
+        .info-tooltip {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            color: var(--text-primary);
+            font-size: 0.7rem;
+            font-weight: bold;
+            margin-left: 8px;
+            cursor: help;
+        }
+        .info-tooltip:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 250px;
+            background: #222;
+            color: #fff;
+            text-align: left;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: normal;
+            line-height: 1.4;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            z-index: 10;
+            white-space: normal;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body data-theme="dark">
@@ -340,17 +377,19 @@
 
             <!-- ═══ SELETOR DE MODO (ABAS) ═══ -->
             <div class="mode-selector" style="display: flex; gap: 15px; margin-bottom: 25px;">
-                <button type="button" id="tabContratos" class="btn active" style="flex: 1; padding: 15px; font-size: 1.05rem; border-radius: var(--radius-sm); border: 1px solid var(--accent-primary); background: rgba(212,175,55,0.15); color: var(--accent-primary); font-weight: bold; transition: all 0.3s; text-align: left;">
-                    <div style="font-size: 1.15rem; margin-bottom: 6px;">📄 Passo 1: Novos Contratos</div>
-                    <div style="font-size: 0.82rem; font-weight: normal; opacity: 0.85; line-height: 1.4;">
-                        Utilize este modo para gerar novos saldos. Suba a planilha de contratos ou vendas fechadas para criar automaticamente as parcelas e recebimentos extras (com status PENDENTE) na conta corrente dos seus parceiros.
+                <button type="button" id="tabContratos" class="btn active" style="flex: 1; padding: 15px; font-size: 1.05rem; border-radius: var(--radius-sm); border: 1px solid var(--accent-primary); background: rgba(212,175,55,0.15); color: var(--accent-primary); font-weight: bold; transition: all 0.3s; text-align: left; display: flex; align-items: center; justify-content: space-between;">
+                    <div>
+                        <div style="font-size: 1.15rem; margin-bottom: 4px;">📄 Passo 1: Novos Contratos</div>
+                        <div style="font-size: 0.8rem; font-weight: normal; opacity: 0.8;">Gera saldo e cria parcelas futuras PENDENTES.</div>
                     </div>
+                    <span class="info-tooltip" data-tooltip="Utilize este modo para gerar novos saldos. Suba a planilha de contratos ou vendas fechadas para criar automaticamente as parcelas e recebimentos extras (com status PENDENTE) na conta corrente dos seus parceiros.">?</span>
                 </button>
-                <button type="button" id="tabBaixas" class="btn" style="flex: 1; padding: 15px; font-size: 1.05rem; border-radius: var(--radius-sm); border: 1px solid var(--glass-border); background: rgba(255,255,255,0.02); color: var(--text-secondary); transition: all 0.3s; text-align: left;">
-                    <div style="font-size: 1.15rem; margin-bottom: 6px;">💰 Passo 2: Baixa de Recebimentos</div>
-                    <div style="font-size: 0.82rem; font-weight: normal; opacity: 0.85; line-height: 1.4;">
-                        Utilize este modo para conciliação. Suba a planilha com os repasses/comissões já pagas pelo cliente e o sistema liquidará automaticamente as parcelas pendentes (da mais antiga para a mais nova).
+                <button type="button" id="tabBaixas" class="btn" style="flex: 1; padding: 15px; font-size: 1.05rem; border-radius: var(--radius-sm); border: 1px solid var(--glass-border); background: rgba(255,255,255,0.02); color: var(--text-secondary); transition: all 0.3s; text-align: left; display: flex; align-items: center; justify-content: space-between;">
+                    <div>
+                        <div style="font-size: 1.15rem; margin-bottom: 4px;">💰 Passo 2: Baixa de Recebimentos</div>
+                        <div style="font-size: 0.8rem; font-weight: normal; opacity: 0.8;">Lê valores pagos e liquida saldos pendentes via FIFO.</div>
                     </div>
+                    <span class="info-tooltip" data-tooltip="Utilize este modo para conciliação. Suba a planilha com os repasses/comissões já pagas pelo cliente e o sistema liquidará automaticamente as parcelas pendentes (da mais antiga para a mais nova).">?</span>
                 </button>
             </div>
 
@@ -433,22 +472,22 @@
                     </div>
                     <div class="form-mini-row">
                         <div class="form-group">
-                            <label for="linhaCabecalhoInput">Linha do Cabeçalho</label>
+                            <label for="linhaCabecalhoInput">Linha do Cabeçalho <span class="info-tooltip" data-tooltip="Em qual linha da planilha começam os nomes das colunas? Ex: 1">?</span></label>
                             <input type="number" id="linhaCabecalhoInput" min="1" value="3" required>
                         </div>
                         <div class="form-group">
-                            <label for="fatorConversaoInput">Fator de Conversão (Ex: 100)</label>
+                            <label for="fatorConversaoInput">Fator de Conversão <span class="info-tooltip" data-tooltip="Se 100 reais = 1 Talento, coloque 100. Se 1 real = 1 Talento, coloque 1.">?</span></label>
                             <input type="number" id="fatorConversaoInput" min="1" value="100" required>
                         </div>
                     </div>
                     
                     <div class="form-mini-row">
                         <div class="form-group">
-                            <label for="separadorInput">Separador Recebimentos Extras</label>
+                            <label for="separadorInput">Separador de Múltiplos <span class="info-tooltip" data-tooltip="Caractere usado caso haja mais de uma data/valor na mesma célula (Ex: 10/12;11/12). Use ; ou |">?</span></label>
                             <input type="text" id="separadorInput" value="|" required>
                         </div>
                         <div class="form-group">
-                            <label for="formatoDataBalaoInput">Formato Datas (Rec. Extras)</label>
+                            <label for="formatoDataBalaoInput">Formato Datas (Rec. Extras) <span class="info-tooltip" data-tooltip="O padrão de formatação das datas na planilha (Ex: DD/MM/YYYY = 25/12/2026)">?</span></label>
                             <select id="formatoDataBalaoInput" class="form-control" style="background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: #fff; padding: 12px; border-radius: var(--radius-sm); font-size: 0.9rem;">
                                 <option value="DD/MM/YYYY">DD/MM/YYYY</option>
                                 <option value="MM/DD/YYYY">MM/DD/YYYY</option>
@@ -469,43 +508,43 @@
 
                         <div class="map-grid">
                             <div class="form-group">
-                                <label for="mapCorretor">Parceiro/Consultor (Nome) *</label>
+                                <label for="mapCorretor">Parceiro/Consultor (Nome) * <span class="info-tooltip" data-tooltip="Nome exato da coluna na planilha que contém o nome do parceiro ou vendedor.">?</span></label>
                                 <input type="text" id="mapCorretor" placeholder="Ex: Corretor" required>
                             </div>
                             <div class="form-group">
-                                <label for="mapCreci">ID Profissional / Matrícula</label>
+                                <label for="mapCreci">ID Profissional / Matrícula <span class="info-tooltip" data-tooltip="Coluna com CPF, CRECI ou Matrícula para garantir a identidade exata em caso de nomes homônimos.">?</span></label>
                                 <input type="text" id="mapCreci" placeholder="Ex: CRECI">
                             </div>
                             <div class="form-group">
-                                <label for="mapValorVenda">Valor Total do Negócio *</label>
+                                <label for="mapValorVenda">Valor Total do Negócio * <span class="info-tooltip" data-tooltip="Coluna com o valor bruto ou VGV da venda (usado no Passo 1).">?</span></label>
                                 <input type="text" id="mapValorVenda" placeholder="Ex: VGV (R$)" required>
                             </div>
                             <div class="form-group">
-                                <label for="mapValorPago">Valor Pago (Entrada/Sinal) *</label>
+                                <label for="mapValorPago">Valor Pago (Entrada/Sinal) * <span class="info-tooltip" data-tooltip="No Passo 1: O valor da entrada paga no Ato (já gera saldo compensado). No Passo 2: O valor da parcela abatida no mês.">?</span></label>
                                 <input type="text" id="mapValorPago" placeholder="Ex: Pago (R$)" required>
                             </div>
                             <div class="form-group">
-                                <label for="mapEmpreendimento">Produto / Serviço / Campanha *</label>
+                                <label for="mapEmpreendimento">Produto / Serviço / Campanha * <span class="info-tooltip" data-tooltip="Coluna com o nome do produto vendido, do consórcio ou do empreendimento.">?</span></label>
                                 <input type="text" id="mapEmpreendimento" placeholder="Ex: Obra" required>
                             </div>
                             <div class="form-group">
-                                <label for="mapUnidade">Ref. Contrato / ID Venda</label>
+                                <label for="mapUnidade">Ref. Contrato / ID Venda <span class="info-tooltip" data-tooltip="Coluna com a unidade, nº do contrato, número da apólice, etc.">?</span></label>
                                 <input type="text" id="mapUnidade" placeholder="Ex: Apto">
                             </div>
                             <div class="form-group">
-                                <label for="mapCliente">Nome do Cliente</label>
+                                <label for="mapCliente">Nome do Cliente <span class="info-tooltip" data-tooltip="Coluna com o nome do cliente final (comprador).">?</span></label>
                                 <input type="text" id="mapCliente" placeholder="Ex: Cliente">
                             </div>
                             <div class="form-group">
-                                <label for="mapBalaoValor">Valor Recebimento Extra</label>
+                                <label for="mapBalaoValor">Valores Rec. Extras <span class="info-tooltip" data-tooltip="Coluna que contém os valores avulsos/balões, separados pelo 'Separador' escolhido.">?</span></label>
                                 <input type="text" id="mapBalaoValor" placeholder="Ex: Val. Reforço">
                             </div>
                             <div class="form-group">
-                                <label for="mapBalaoDatas">Datas Recebimentos Extras</label>
+                                <label for="mapBalaoDatas">Datas Rec. Extras <span class="info-tooltip" data-tooltip="Coluna que contém as datas de vencimento desses valores avulsos.">?</span></label>
                                 <input type="text" id="mapBalaoDatas" placeholder="Ex: Datas">
                             </div>
                             <div class="form-group">
-                                <label for="mapBalaoQtd">Qtd Recebimentos Extras</label>
+                                <label for="mapBalaoQtd">Qtd Recebimentos Extras <span class="info-tooltip" data-tooltip="Opcional. Coluna que informa a quantidade total de recebimentos avulsos/balões.">?</span></label>
                                 <input type="text" id="mapBalaoQtd" placeholder="Ex: Parcelas">
                             </div>
                         </div>
