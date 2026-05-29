@@ -112,7 +112,7 @@ class LancamentoController {
   async obterMovimentacoesEquipe(req, res) {
     try {
       const empresa_id = req.empresa_id;
-      const { page, limit, tipo, origem, usuario_id, data_inicio, data_fim } = req.query;
+      const { page, limit, tipo, origem, status, usuario_id, data_inicio, data_fim } = req.query;
 
       const result = await LancamentoService.listarMovimentacoesEquipe({
         empresa_id,
@@ -120,6 +120,7 @@ class LancamentoController {
         limit,
         tipo,
         origem,
+        status,
         usuario_id,
         data_inicio,
         data_fim

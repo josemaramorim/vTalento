@@ -103,7 +103,7 @@ class LancamentoService {
       .limit(20);
   }
 
-  async listarMovimentacoesEquipe({ empresa_id, page = 1, limit = 10, tipo, origem, usuario_id, data_inicio, data_fim }) {
+  async listarMovimentacoesEquipe({ empresa_id, page = 1, limit = 10, tipo, origem, status, usuario_id, data_inicio, data_fim }) {
     const limitSanitizado = [10, 50, 100].includes(parseInt(limit, 10)) ? parseInt(limit, 10) : 10;
     const paginaSanitizada = Math.max(1, parseInt(page, 10) || 1);
     const offset = (paginaSanitizada - 1) * limitSanitizado;
@@ -119,14 +119,17 @@ class LancamentoService {
     if (origem) {
       query = query.where('GamTransacao.origem', origem);
     }
+    if (status) {
+      query = query.where('GamTransacao.status', status);
+    }
     if (usuario_id) {
       query = query.where('GamTransacao.usuario_id', usuario_id);
     }
     if (data_inicio) {
-      query = query.where('GamTransacao.created_at', '>=', `${data_inicio} 00:00:00`);
+      query = query.where('GamTransacao.data_vencimento', '>=', data_inicio);
     }
     if (data_fim) {
-      query = query.where('GamTransacao.created_at', '<=', `${data_fim} 23:59:59`);
+      query = query.where('GamTransacao.data_vencimento', '<=', data_fim);
     }
 
     // Conta total de registros para paginação
@@ -146,6 +149,8 @@ class LancamentoService {
         'GamTransacao.empreendimento',
         'GamTransacao.unidade',
         'GamTransacao.created_at',
+        'GamTransacao.data_vencimento',
+        'GamTransacao.data_compensacao',
         'Corretor.nome as corretor_nome',
         'Corretor.email as corretor_email',
         db.raw("COALESCE(\"Admin\".\"nome\", 'Sistema') as admin_nome")
@@ -170,12 +175,12 @@ class LancamentoService {
       totalDebitosQuery = totalDebitosQuery.where('usuario_id', usuario_id);
     }
     if (data_inicio) {
-      totalCreditosQuery = totalCreditosQuery.where('created_at', '>=', `${data_inicio} 00:00:00`);
-      totalDebitosQuery = totalDebitosQuery.where('created_at', '>=', `${data_inicio} 00:00:00`);
+      totalCreditosQuery = totalCreditosQuery.where('data_vencimento', '>=', data_inicio);
+      totalDebitosQuery = totalDebitosQuery.where('data_vencimento', '>=', data_inicio);
     }
     if (data_fim) {
-      totalCreditosQuery = totalCreditosQuery.where('created_at', '<=', `${data_fim} 23:59:59`);
-      totalDebitosQuery = totalDebitosQuery.where('created_at', '<=', `${data_fim} 23:59:59`);
+      totalCreditosQuery = totalCreditosQuery.where('data_vencimento', '<=', data_fim);
+      totalDebitosQuery = totalDebitosQuery.where('data_vencimento', '<=', data_fim);
     }
 
     const [{ total_cred }] = await totalCreditosQuery.sum('valor as total_cred');

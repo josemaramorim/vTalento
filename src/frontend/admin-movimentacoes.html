@@ -73,6 +73,22 @@
         </main>
     </div>
 
+    <!-- MODAL DE DETALHES -->
+    <div id="detalhesModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:1001; align-items:center; justify-content:center; padding: 20px; backdrop-filter: blur(10px);">
+        <div class="glass" style="max-width:550px; width:100%; border-radius:16px; padding:32px; border:1px solid rgba(255,255,255,0.08); box-shadow: 0 20px 40px rgba(0,0,0,0.5);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px; border-bottom: 1px solid var(--glass-border); padding-bottom: 15px;">
+                <h3 style="font-size: 1.3rem; font-weight: 700; color: var(--text-primary); margin:0;">Detalhes do Lançamento</h3>
+                <button onclick="closeDetalhesModal()" style="background:none; border:none; color:var(--text-secondary); font-size:1.5rem; cursor:pointer;">&times;</button>
+            </div>
+            <div id="detalhesContent" style="display: flex; flex-direction: column; gap: 15px; font-size: 0.95rem;">
+                <!-- Preenchido via JS -->
+            </div>
+            <div style="margin-top: 25px; text-align: right;">
+                <button onclick="closeDetalhesModal()" class="btn" style="background: rgba(255,255,255,0.08); color: var(--text-primary); padding: 10px 24px; border-radius: 8px;">Fechar</button>
+            </div>
+        </div>
+    </div>
+
     <script src="assets/js/auth.js"></script>
     <script src="assets/js/premium-grid.js"></script>
     <script>
@@ -99,6 +115,7 @@
 
 
         const API_BASE = 'http://localhost:3001/api/admin';
+        let globalGrid = null;
 
         async function populateCorretoresDropdown() {
             try {
@@ -125,19 +142,20 @@
             const urlParams = new URLSearchParams(window.location.search);
             const initialCorretor = urlParams.get('usuario_id') || '';
 
-            const grid = new PremiumGrid({
+            globalGrid = new PremiumGrid({
                 containerId: 'gridMovimentacoes',
                 title: 'Histórico Geral de Lançamentos',
                 totalCountId: 'paginacaoInfo', // reaproveitando IDs para o titulo
                 
                 columns: [
-                    { key: 'data_hora', label: 'Data/Hora', width: '130px', sortable: true },
                     { key: 'corretor_nome', label: 'Corretor', bold: true, sortable: true },
                     { key: 'tipo', label: 'Tipo', type: 'badge' },
-                    { key: 'origem_label', label: 'Origem' },
                     { key: 'valor_formatado', label: 'Valor', align: 'right', sortable: true },
                     { key: 'descricao', label: 'Justificativa / Empreendimento' },
-                    { key: 'admin_nome', label: 'Lançado por' }
+                    { key: 'data_vencimento', label: 'Vencimento', align: 'center', sortable: true },
+                    { key: 'data_compensacao', label: 'Compensação', align: 'center', sortable: true },
+                    { key: 'status', label: 'Status', align: 'center' },
+                    { key: 'acoes', label: 'Ações', align: 'center' }
                 ],
                 
                 filters: [
@@ -152,8 +170,13 @@
                         { value: 'IMPORTACAO', label: 'Importação 📤' },
                         { value: 'PREMIO', label: 'Prêmio 🎁' }
                     ]},
-                    { id: 'data_inicio', label: 'Período De', type: 'date' },
-                    { id: 'data_fim', label: 'Período Até', type: 'date' }
+                    { id: 'status', label: 'Status', type: 'select', options: [
+                        { value: 'PENDENTE', label: 'Pendente' },
+                        { value: 'COMPENSADO', label: 'Compensado' },
+                        { value: 'CANCELADO', label: 'Cancelado' }
+                    ]},
+                    { id: 'data_inicio', label: 'Vencimento De', type: 'date' },
+                    { id: 'data_fim', label: 'Vencimento Até', type: 'date' }
                 ],
                 
                 pagination: { enabled: true, defaultPageSize: 10, pageSizeOptions: [10, 50, 100] },
@@ -162,10 +185,22 @@
                 // it returns a global `resumo` which we update separately.
                 
                 cellRenderer: (row, col) => {
-                    if (col.key === 'data_hora') return new Date(row.created_at).toLocaleString('pt-BR');
-                    if (col.key === 'origem_label') {
-                        const dict = { MANUAL: '✏️ Manual', IMPORTACAO: '📤 Importação', PREMIO: '🎁 Prêmio', RENOVACAO: '🔄 Renovação' };
-                        return dict[row.origem] || row.origem;
+                    const formatarData = (dt) => {
+                        if (!dt) return '—';
+                        const d = new Date(dt);
+                        return d.toLocaleDateString('pt-BR', { timeZone: 'UTC' }); // Assumindo YYYY-MM-DD
+                    };
+
+                    if (col.key === 'data_vencimento') return formatarData(row.data_vencimento);
+                    if (col.key === 'data_compensacao') return formatarData(row.data_compensacao);
+                    
+                    if (col.key === 'status') {
+                        const dictStatus = { 
+                            'PENDENTE': '<span class="badge" style="background: rgba(255,165,0,0.15); color: var(--warning);">Pendente</span>',
+                            'COMPENSADO': '<span class="badge" style="background: rgba(46,213,115,0.15); color: var(--success);">Compensado</span>',
+                            'CANCELADO': '<span class="badge" style="background: rgba(235,77,75,0.15); color: var(--error);">Cancelado</span>'
+                        };
+                        return dictStatus[row.status] || row.status || '—';
                     }
                     if (col.key === 'valor_formatado') {
                         const isCred = row.tipo === 'CREDITO';
@@ -179,6 +214,9 @@
                             ? `${row.empreendimento}${row.unidade ? ' / Unidade ' + row.unidade : ''}` 
                             : (row.justificativa || '—');
                         return `<div style="max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.8rem; color: var(--text-secondary);" title="${desc}">${desc}</div>`;
+                    }
+                    if (col.key === 'acoes') {
+                        return `<button class="btn btn-sm" onclick="showDetalhesModal('${row.id}')" style="background: rgba(255,255,255,0.1); color: var(--text-primary); padding: 4px 8px; font-size: 0.75rem;">Detalhes</button>`;
                     }
                     return row[col.key];
                 },
@@ -195,6 +233,7 @@
                         limit: params.limit,
                         ...(params.filters.tipo && { tipo: params.filters.tipo }),
                         ...(params.filters.origem && { origem: params.filters.origem }),
+                        ...(params.filters.status && { status: params.filters.status }),
                         ...(params.filters.usuario_id && { usuario_id: params.filters.usuario_id }),
                         ...(params.filters.data_inicio && { data_inicio: params.filters.data_inicio }),
                         ...(params.filters.data_fim && { data_fim: params.filters.data_fim })
@@ -231,7 +270,7 @@
 
             // Set initial filter if provided by URL
             if (initialCorretor) {
-                grid.state.filters.usuario_id = initialCorretor;
+                globalGrid.state.filters.usuario_id = initialCorretor;
                 // Wait for render, then set the DOM value so the UI reflects it
                 setTimeout(() => {
                     const el = document.getElementById(`gridMovimentacoes-filter-usuario_id`);
@@ -239,8 +278,49 @@
                 }, 100);
             }
 
-            await grid.init();
+            await globalGrid.init();
         });
+
+        function showDetalhesModal(id) {
+            if (!globalGrid) return;
+            const row = globalGrid.state.data.find(r => r.id === id);
+            if (!row) return;
+
+            const isCred = row.tipo === 'CREDITO';
+            const isEst = row.tipo === 'ESTORNO';
+            const cor = isCred ? 'var(--success)' : isEst ? 'var(--warning)' : 'var(--error)';
+            const sinal = isCred ? '+' : isEst ? '±' : '-';
+            const valFormated = `<strong style="color: ${cor}; font-size: 1.2rem;">${sinal}${Math.abs(parseFloat(row.valor)).toFixed(2)} T$</strong>`;
+
+            const dictOrigem = { MANUAL: '✏️ Manual', IMPORTACAO: '📤 Importação', PREMIO: '🎁 Prêmio', RENOVACAO: '🔄 Renovação' };
+            const origemFormatada = dictOrigem[row.origem] || row.origem;
+            
+            const html = `
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <div style="display: flex; justify-content: space-between;"><strong style="color:var(--text-secondary);">ID do Lançamento:</strong> <span>${row.id}</span></div>
+                    <div style="display: flex; justify-content: space-between;"><strong style="color:var(--text-secondary);">Data/Hora:</strong> <span>${new Date(row.created_at).toLocaleString('pt-BR')}</span></div>
+                    <div style="display: flex; justify-content: space-between;"><strong style="color:var(--text-secondary);">Corretor:</strong> <span>${row.corretor_nome || '—'}</span></div>
+                    <div style="display: flex; justify-content: space-between;"><strong style="color:var(--text-secondary);">Tipo:</strong> <span>${row.tipo}</span></div>
+                    <div style="display: flex; justify-content: space-between;"><strong style="color:var(--text-secondary);">Origem:</strong> <span>${origemFormatada}</span></div>
+                    <div style="display: flex; justify-content: space-between;"><strong style="color:var(--text-secondary);">Status:</strong> <span>${row.status || '—'}</span></div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 5px; padding-top: 10px; border-top: 1px dashed rgba(255,255,255,0.1);"><strong style="color:var(--text-secondary);">Valor:</strong> ${valFormated}</div>
+                    
+                    <div style="margin-top: 10px; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 8px;">
+                        <strong style="color:var(--text-secondary); display:block; margin-bottom: 5px;">Justificativa / Empreendimento:</strong>
+                        <div style="color: var(--text-primary); line-height: 1.5;">${row.empreendimento ? `Empreendimento: ${row.empreendimento}<br>` : ''}${row.unidade ? `Unidade: ${row.unidade}<br>` : ''}${row.justificativa || 'Sem justificativa'}</div>
+                    </div>
+                    
+                    ${row.admin_nome ? `<div style="display: flex; justify-content: space-between; margin-top: 10px;"><strong style="color:var(--text-secondary);">Lançado por (Admin):</strong> <span>${row.admin_nome}</span></div>` : ''}
+                </div>
+            `;
+
+            document.getElementById('detalhesContent').innerHTML = html;
+            document.getElementById('detalhesModal').style.display = 'flex';
+        }
+
+        function closeDetalhesModal() {
+            document.getElementById('detalhesModal').style.display = 'none';
+        }
     </script>
 </body>
 </html>
