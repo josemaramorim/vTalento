@@ -535,6 +535,20 @@
                                 <label for="mapCliente">Nome do Cliente <span class="info-tooltip" data-tooltip="Coluna com o nome do cliente final (comprador).">?</span></label>
                                 <input type="text" id="mapCliente" placeholder="Ex: Cliente">
                             </div>
+                            
+                            <!-- PARCELAS FIXAS -->
+                            <div class="form-group">
+                                <label for="parcelaValorInput">Valor da Parcela <span class="info-tooltip" data-tooltip="Coluna com o valor fixo das parcelas regulares.">?</span></label>
+                                <input type="text" id="parcelaValorInput" placeholder="Ex: Valor Parcela">
+                            </div>
+                            <div class="form-group">
+                                <label for="parcelaQtdInput">Qtd de Parcelas <span class="info-tooltip" data-tooltip="Coluna com a quantidade total de parcelas regulares.">?</span></label>
+                                <input type="text" id="parcelaQtdInput" placeholder="Ex: Qtd Parcelas">
+                            </div>
+                            <div class="form-group">
+                                <label for="parcelaDataInicioInput">Data Início Parcelas <span class="info-tooltip" data-tooltip="Coluna com a data de vencimento da PRIMEIRA parcela. As demais serão calculadas mês a mês.">?</span></label>
+                                <input type="text" id="parcelaDataInicioInput" placeholder="Ex: Data Início">
+                            </div>
                             <div class="form-group">
                                 <label for="mapBalaoValor">Valores Rec. Extras <span class="info-tooltip" data-tooltip="Coluna que contém os valores avulsos/balões, separados pelo 'Separador' escolhido.">?</span></label>
                                 <input type="text" id="mapBalaoValor" placeholder="Ex: Val. Reforço">
@@ -733,6 +747,9 @@
             html += `<strong>Parceiro/Consultor:</strong> ${mapJson?.corretor_identificador || '—'}<br>`;
             html += `<strong>Valor Venda:</strong> ${mapJson?.valor_venda || '—'} | <strong>Valor Pago:</strong> ${mapJson?.valor_pago || '—'}`;
 
+            if (perfil.parcela_valor || perfil.parcela_qtd || perfil.parcela_data_inicio) {
+                html += `<br><span style="color: var(--accent-primary);">📆 Parcelas Fixas:</span> Valor (${perfil.parcela_valor || 'N/A'}) | Qtd (${perfil.parcela_qtd || 'N/A'}) | Início (${perfil.parcela_data_inicio || 'N/A'})`;
+            }
             if (perfil.identificador_extra_coluna) {
                 html += `<br><span style="color: var(--accent-primary);">🆔 Identificador Extra:</span> ${perfil.identificador_extra_coluna}`;
             }
@@ -780,6 +797,10 @@
                 document.getElementById('mapBalaoDatas').value = mapJson?.balao_datas || '';
                 document.getElementById('mapBalaoQtd').value = mapJson?.balao_qtd || '';
                 document.getElementById('identificadorExtraInput').value = perfilData.identificador_extra_coluna || '';
+                
+                document.getElementById('parcelaValorInput').value = perfilData.parcela_valor || '';
+                document.getElementById('parcelaQtdInput').value = perfilData.parcela_qtd || '';
+                document.getElementById('parcelaDataInicioInput').value = perfilData.parcela_data_inicio || '';
 
                 if (camposExtras && Array.isArray(camposExtras)) {
                     camposExtras.forEach(c => addCampoExtraRow(c.label, c.coluna));
@@ -832,6 +853,10 @@
             const formato_data_balao = document.getElementById('formatoDataBalaoInput').value;
             const identificador_extra_coluna = document.getElementById('identificadorExtraInput').value.trim() || null;
 
+            const parcela_valor = document.getElementById('parcelaValorInput').value.trim() || null;
+            const parcela_qtd = document.getElementById('parcelaQtdInput').value.trim() || null;
+            const parcela_data_inicio = document.getElementById('parcelaDataInicioInput').value.trim() || null;
+
             const mapeamento_json = {
                 corretor_identificador: document.getElementById('mapCorretor').value,
                 corretor_creci: document.getElementById('mapCreci').value,
@@ -865,6 +890,7 @@
                     body: JSON.stringify({ 
                         nome_perfil, linha_cabecalho, separador_multiplo, fator_conversao, formato_data_balao,
                         mapeamento_json, identificador_extra_coluna, 
+                        parcela_valor, parcela_qtd, parcela_data_inicio,
                         campos_extras: campos_extras.length > 0 ? campos_extras : null 
                     })
                 });
