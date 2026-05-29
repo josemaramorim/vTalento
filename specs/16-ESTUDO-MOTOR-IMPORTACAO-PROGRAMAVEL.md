@@ -245,7 +245,26 @@ Tudo que é desenhado na tela é mapeado para um formato JSON estruturado (Abstr
    - **If / Else (Se/Senão):** Direciona o fluxo com base em condições (ex: `Se Categoria == 'MASTER'`).
    - **Switch (Múltiplas Opções):** Direciona para diferentes canais dependendo do valor da célula.
 5. **Nó de Repetição (For / Loops):** Recebe um valor numérico (ex: `Quantidade de Parcelas`) e duplica a saída do fluxo $N$ vezes, incrementando datas automaticamente.
-6. **Destino (Database Output Node):** Grava a transação com os valores resultantes na tabela `GamTransacao`.
+6. **Destino (Database Output Node):** Grava a transação com os valores resultantes na tabela `GamTransacao`. Este nó representa o ponto final de escrita da esteira de dados e possui a seguinte arquitetura detalhada:
+   - **Portas de Entrada Dinâmicas (Input Connectors):**
+     - `Valor em Talentos` (Obrigatório): Recebe a saída numérica final de pontos após fator de conversão.
+     - `Valor Original R$` (Opcional): Recebe o valor financeiro bruto da comissão ou venda.
+     - `Data de Vencimento` (Obrigatório): Recebe a data processada do vencimento.
+     - `Data de Compensação` (Opcional): Recebe a data de liquidação (preenchida caso o status seja COMPENSADO).
+     - `Empreendimento` & `Unidade` (Opcional): Informações de rastreamento do produto/contrato.
+     - `Contato Cliente` (Opcional): Dados para fins de apoio de cobrança futura.
+     - `Dados Extras (JSON)`: Uma entrada especial do tipo objeto que aceita conexões de quaisquer outras colunas da planilha (ex: *Gerente de Vendas, Canal de Captação, Regional*). Todos esses valores são empacotados e gravados automaticamente no payload JSON de metadados `GamTransacao.dados_extras`.
+   - **Propriedades Internas (Configurações do Nó):**
+     - **Tipo de Lançamento:** Dropdown estático (`CREDITO`, `DEBITO`, `ESTORNO`) ou ligação dinâmica.
+     - **Status de Lançamento:** Dropdown estático (`PENDENTE`, `COMPENSADO`, `RESGATADO`) ou expressão condicional lógica.
+     - **Origem da Transação:** Definido automaticamente como `IMPORTACAO`.
+   - **Lógica de Resolução de Usuário (`usuario_id`):**
+     - O nó possui uma configuração de **Chave de Resolução** para encontrar o Corretor/Parceiro correto no banco.
+     - O administrador configura quais entradas representam a identificação (ex: ligar o conector da coluna de *CPF* na propriedade `Identificador Principal` ou o *Nome* na propriedade `Identificador Secundário`).
+     - Durante a execução, o motor busca o usuário exato na tabela `GamUsuario` combinando as chaves. Se houver duplicidade ou nenhum usuário for encontrado, a linha é isolada como **Inconsistência de Ambiguidade** e mostrada no painel de preview para que o administrador resolva a identidade manualmente antes de persistir o lote financeiro definitiva e transacionalmente.
+   - **Suporte a Arrays (Parcelas Múltiplas):**
+     - Caso o nó anterior seja um **Nó de Repetição (For)** que gerou um array de parcelas, o nó de destino inteligentemente executa uma gravação em lote de forma sequencial (iterando sobre o array) para aquela mesma linha da planilha.
+
 
 #### Mockup da Interface Visual (Estilo N8N / Glassmorphic):
 Aqui está o conceito visual de como essa tela do Editor No-Code seria construída para o V-Talentos, combinando beleza, produtividade e simplicidade técnica:
