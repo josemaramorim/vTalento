@@ -340,6 +340,56 @@ class ImportacaoService {
     });
   }
 
+  // Gera N parcelas fixas com vencimentos mensais sequenciais
+  _parseParcelas(rawQtd, rawValorRs, rawDataInicio, formatoData, fatorConversao = 100) {
+    const qtd = parseInt(rawQtd, 10);
+    if (isNaN(qtd) || qtd <= 0) return [];
+    
+    const valorUnitarioRs = this._parseMoeda(rawValorRs);
+    if (valorUnitarioRs <= 0) return [];
+
+    let dataInicio = null;
+    const dataStr = String(rawDataInicio || '').trim();
+    if (dataStr) {
+      if (formatoData === 'DD/MM/YYYY' || formatoData === 'MM/DD/YYYY') {
+        const partes = dataStr.split(/[\/\-\.]/);
+        if (partes.length === 3) {
+          if (formatoData === 'DD/MM/YYYY') {
+            dataInicio = new Date(parseInt(partes[2], 10), parseInt(partes[1], 10) - 1, parseInt(partes[0], 10));
+          } else {
+            dataInicio = new Date(parseInt(partes[2], 10), parseInt(partes[0], 10) - 1, parseInt(partes[1], 10));
+          }
+        } else {
+          const parsed = Date.parse(dataStr);
+          if (!isNaN(parsed)) dataInicio = new Date(parsed);
+        }
+      } else {
+        const parsed = Date.parse(dataStr);
+        if (!isNaN(parsed)) dataInicio = new Date(parsed);
+      }
+    }
+
+    if (!dataInicio || isNaN(dataInicio.getTime())) {
+      dataInicio = new Date(); // fallback
+    }
+
+    const valorUnitarioTalentos = Math.floor(valorUnitarioRs / fatorConversao);
+    const parcelas = [];
+
+    for (let i = 0; i < qtd; i++) {
+      const dataVencimento = new Date(dataInicio.getTime());
+      dataVencimento.setMonth(dataVencimento.getMonth() + i);
+
+      parcelas.push({
+        data_vencimento: dataVencimento,
+        valor_rs: valorUnitarioRs,
+        valor_talentos: valorUnitarioTalentos
+      });
+    }
+
+    return parcelas;
+  }
+
   async previewImportacao(empresa_id, fileBase64, perfil_id) {
     const perfil = await this.obterPerfil(empresa_id, perfil_id);
     if (!perfil) {
@@ -443,6 +493,20 @@ class ImportacaoService {
       const baloesCalculados = this._parseBaloes(baloesValores, perfil.separador_multiplo, fatorConversao, perfil.formato_data_balao);
       const somaBaloesTalentos = baloesCalculados.reduce((acc, curr) => acc + curr.valor_talentos, 0);
 
+      // Parcelas
+      const getValByName = (colNameInFile) => {
+        if (!colNameInFile) return null;
+        const colIdx = headerIndices[String(colNameInFile).trim().toUpperCase()];
+        return colIdx !== undefined ? row[colIdx] : null;
+      };
+      
+      const rawParcelaQtd = getValByName(perfil.parcela_qtd);
+      const rawParcelaValor = getValByName(perfil.parcela_valor);
+      const rawParcelaData = getValByName(perfil.parcela_data_inicio);
+
+      const parcelasCalculadas = this._parseParcelas(rawParcelaQtd, rawParcelaValor, rawParcelaData, perfil.formato_data_balao, fatorConversao);
+      const somaParcelasTalentos = parcelasCalculadas.reduce((acc, curr) => acc + curr.valor_talentos, 0);
+
       // Extração de campos extras configurados no perfil
       const dadosExtras = {
         fator_conversao_utilizado: fatorConversao
@@ -475,6 +539,7 @@ class ImportacaoService {
           talentos_a_receber: Math.max(0, talentosAReceber)
         },
         baloes: baloesCalculados,
+        parcelas: parcelasCalculadas,
         corretor_encontrado: !!corretor && !isAmbiguous,
         corretor_id: (corretor && !isAmbiguous) ? corretor.id : null,
         corretor_nome_sistema: (corretor && !isAmbiguous) ? corretor.nome : null,
@@ -588,8 +653,42 @@ class ImportacaoService {
           transacoesCriadas++;
         }
 
-        // 3. Criar transação PENDENTE genérica para o saldo remanescente a receber (ex: parcelas mensais futuras)
-        const saldoRemanescenteAReceber = row.valores.talentos_a_receber - totalBaloesTalentos;
+        // 2.5 Criar transações PENDENTES para as Parcelas Fixas
+        let totalParcelasTalentos = 0;
+        let totalParcelasRs = 0;
+        if (row.parcelas && Array.isArray(row.parcelas)) {
+          for (let idxP = 0; idxP < row.parcelas.length; idxP++) {
+            const par = row.parcelas[idxP];
+            totalParcelasTalentos += par.valor_talentos;
+            totalParcelasRs += par.valor_rs;
+
+            const parTransacaoId = crypto.randomUUID();
+            await trx('GamTransacao').insert({
+              id: parTransacaoId,
+              empresa_id,
+              usuario_id: corretorId,
+              admin_id: admin_id || null,
+              valor: par.valor_talentos,
+              tipo: 'CREDITO',
+              origem: 'IMPORTACAO',
+              justificativa: `${justificativaBase} (Parcela ${idxP + 1}/${row.parcelas.length})`,
+              valor_original_rs: par.valor_rs,
+              status: 'PENDENTE',
+              data_vencimento: par.data_vencimento ? par.data_vencimento.toISOString() : null,
+              empreendimento: row.empreendimento,
+              unidade: row.unidade,
+              contato_cliente: row.cliente_nome,
+              origem_id: `row-${row.linha}-parcela-${idxP + 1}`,
+              dados_extras: dadosExtrasStr,
+              data_compensacao: null,
+              created_at: trx.fn.now()
+            });
+            transacoesCriadas++;
+          }
+        }
+
+        // 3. Criar transação PENDENTE genérica para o saldo remanescente a receber (ex: parcelas pulverizadas sem data)
+        const saldoRemanescenteAReceber = row.valores.talentos_a_receber - totalBaloesTalentos - totalParcelasTalentos;
         if (saldoRemanescenteAReceber > 0) {
           const remTransacaoId = crypto.randomUUID();
           await trx('GamTransacao').insert({
@@ -601,7 +700,7 @@ class ImportacaoService {
             tipo: 'CREDITO',
             origem: 'IMPORTACAO',
             justificativa: `${justificativaBase} (Remanescente a Receber)`,
-            valor_original_rs: (row.valores.valor_venda_rs - row.valores.valor_pago_rs) - (row.baloes.reduce((acc, c) => acc + c.valor_rs, 0)),
+            valor_original_rs: (row.valores.valor_venda_rs - row.valores.valor_pago_rs) - (row.baloes.reduce((acc, c) => acc + c.valor_rs, 0)) - totalParcelasRs,
             status: 'PENDENTE',
             data_vencimento: null, // Sem vencimento fixo (mensais pulverizadas)
             empreendimento: row.empreendimento,
