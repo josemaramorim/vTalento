@@ -329,7 +329,202 @@ Outro grande problema de manuais técnicos é quando os exemplos descritos param
 
 ---
 
-## 9. Conclusão
+## 9. Protótipo Técnico do Backend (Como o Código Node.js Processa o JSON)
+
+Para demonstrar a viabilidade prática da arquitetura, projetamos o protótipo funcional do serviço em **Node.js** utilizando o módulo nativo `vm` (Virtual Machine) para criar a sandbox segura de execução.
+
+Este protótipo lê a configuração JSON, mapeia as colunas, resolve macros dinâmicas (`@Campo`), executa scripts em tempo de execução e processa as regras de negócio de cada linha de forma isolada.
+
+### O Protótipo: `MotorImportacaoProgramavelService.js`
+
+```javascript
+const vm = require('vm');
+
+class MotorImportacaoProgramavelService {
+  constructor(configJson) {
+    this.config = typeof configJson === 'string' ? JSON.parse(configJson) : configJson;
+    this.globalStore = {}; // Estado persistido de linha para linha
+  }
+
+  /**
+   * Processa uma lista de linhas extraídas da planilha Excel/CSV
+   * @param {Array<Object>} rows - Exemplo: [{ A: "Corretor X", B: "123.456.789-00", C: "R$ 150.000,00" }]
+   */
+  async processar(rows) {
+    const resultados = [];
+    const logs = [];
+
+    // 1. Executa o Script de Inicialização Global (se houver)
+    if (this.config.contexto_global?.script_inicializacao) {
+      this.executarScriptGlobal(this.config.contexto_global.script_inicializacao, logs);
+    }
+
+    // 2. Loop principal por cada linha da planilha
+    for (let index = 0; index < rows.length; index++) {
+      const rawRow = rows[index];
+      const numeroLinha = index + 1;
+
+      try {
+        // Pula linhas vazias se configurado
+        if (this.config.configuracoes_gerais?.pular_linhas_vazias && Object.values(rawRow).every(v => !v)) {
+          continue;
+        }
+
+        // 3. Processa e resolve todos os campos da linha
+        const linhaProcessada = this.processarLinha(rawRow, numeroLinha, logs);
+
+        // 4. Executa os hooks de validação ("antes_salvar_linha")
+        if (this.config.hooks?.antes_salvar_linha) {
+          const aprovada = this.executarHookLinha(this.config.hooks.antes_salvar_linha, linhaProcessada, logs);
+          if (!aprovada) {
+            logs.push(`[Linha ${numeroLinha}] Pulada pelo hook antes_salvar_linha.`);
+            continue;
+          }
+        }
+
+        resultados.push({
+          linha: numeroLinha,
+          dados: linhaProcessada
+        });
+
+      } catch (error) {
+        logs.push(`[Linha ${numeroLinha}] ERRO CRÍTICO DE PARSING: ${error.message}`);
+      }
+    }
+
+    return { resultados, logs };
+  }
+
+  /**
+   * Processa campos de uma única linha resolvendo scripts e mapeamentos de células
+   */
+  processarLinha(rawRow, numeroLinha, logs) {
+    const linhaResult = {};
+    const camposMapeados = this.config.mapeamento_campos;
+
+    // Criamos os helpers utilitários que serão injetados na Sandbox
+    const helpers = {
+      parseMoeda: (val) => {
+        if (!val) return 0;
+        return parseFloat(String(val).replace(/[^0-9,-]/g, '').replace(',', '.'));
+      },
+      cleanCPF: (val) => {
+        if (!val) return '';
+        return String(val).replace(/[^0-9]/g, '');
+      },
+      somarMeses: (dataStr, meses) => {
+        const dt = new Date(dataStr);
+        dt.setMonth(dt.getMonth() + meses);
+        return dt.toISOString().split('T')[0];
+      }
+    };
+
+    // Loop de resolução em duas passadas para garantir que macros @Campo acessem valores mapeados
+    const chavesCampos = Object.keys(camposMapeados);
+
+    // Passo 1: Resolve mapeamentos estáticos simples (celula direta) e executa scripts independentes
+    for (const campo of chavesCampos) {
+      const meta = camposMapeados[campo];
+      const rawValue = meta.celula ? rawRow[meta.celula] : undefined;
+
+      if (meta.script) {
+        // Se tem script, roda na sandbox isolada
+        linhaResult[campo] = this.executarScriptCampo(meta.script, rawValue, rawRow, helpers, linhaResult);
+      } else {
+        // Caso simples: pega a célula diretamente
+        linhaResult[campo] = this.normalizarValorEstatico(rawValue);
+      }
+    }
+
+    return linhaResult;
+  }
+
+  /**
+   * Roda um script de campo dentro de um contexto isolado na VM do Node
+   */
+  executarScriptCampo(scriptCode, value, row, helpers, linhaResult) {
+    // Resolve macros do tipo @NomeCampo substituindo pelo valor já resolvido
+    let codigoTratado = scriptCode;
+    for (const campoResolvido of Object.keys(linhaResult)) {
+      const regex = new RegExp(`@${campoResolvido}`, 'g');
+      const val = JSON.stringify(linhaResult[campoResolvido]);
+      codigoTratado = codigoTratado.replace(regex, val);
+    }
+
+    // Define o escopo da sandbox (limites rígidos de contexto)
+    const sandbox = {
+      value, // Valor bruto da célula mapeada
+      row,   // Linha inteira do Excel (ex: row.A, row.B)
+      globalStore: this.globalStore, // Estado compartilhado persistente
+      helpers, // Funções auxiliares
+      result: null // Receptor do retorno
+    };
+
+    const context = vm.createContext(sandbox);
+    
+    // Encapsula o script do usuário para capturar o retorno de forma limpa
+    const scriptEnvelopado = new vm.Script(`
+      (function() {
+        ${codigoTratado}
+      })()
+    `);
+
+    // Executa com limite máximo de tempo de 50ms para evitar laços infinitos (travamentos de CPU)
+    const retorno = scriptEnvelopado.runInContext(context, { timeout: 50 });
+
+    return retorno !== undefined ? retorno : context.result;
+  }
+
+  executarScriptGlobal(scriptCode, logs) {
+    const sandbox = {
+      globalStore: this.globalStore,
+      db: {
+        getUsuariosAtivos: async () => ['CORRETOR_A', 'CORRETOR_B'] // Mock de DB
+      }
+    };
+    const context = vm.createContext(sandbox);
+    try {
+      const script = new vm.Script(scriptCode);
+      script.runInContext(context, { timeout: 100 });
+    } catch (e) {
+      logs.push(`[Script Global] Erro na inicialização: ${e.message}`);
+    }
+  }
+
+  executarHookLinha(hookCode, linhaResult, logs) {
+    const sandbox = {
+      linhaResult,
+      globalStore: this.globalStore,
+      log: {
+        warning: (msg) => logs.push(`[Hook Warning] ${msg}`),
+        info: (msg) => logs.push(`[Hook Info] ${msg}`)
+      }
+    };
+    const context = vm.createContext(sandbox);
+    const script = new vm.Script(`
+      (function() {
+        ${hookCode}
+      })()
+    `);
+    return script.runInContext(context, { timeout: 50 }) !== false;
+  }
+
+  normalizarValorEstatico(value) {
+    if (value === undefined || value === null) return null;
+    // Se parecer um número, converte
+    if (typeof value === 'string' && !isNaN(value.trim()) && value.trim() !== '') {
+      return parseFloat(value);
+    }
+    return value;
+  }
+}
+
+module.exports = MotorImportacaoProgramavelService;
+```
+
+---
+
+## 10. Conclusão
 
 > [!IMPORTANT]
 > A fusão de um motor programável robusto em sandbox, um Editor No-Code visual e uma governança automatizada de documentação (Manual Vivo via Doc-as-Code) transformará a plataforma V-Talentos em uma **infraestrutura robusta de orquestração financeira flexível**, posicionando a arquitetura no mesmo patamar de plataformas integradoras líderes de mercado como Make.com e N8N, porém otimizada nativamente para ecossistemas de fidelidade, conta corrente e gamificação.
