@@ -193,20 +193,20 @@ class ImportacaoService {
     };
   }
 
-  // Faz lookup do corretor por Nome ou campo Identificador Extra (prioridade)
-  async _buscarCorretor(empresa_id, nome, creci, identificadorExtraColunaVal = null) {
-    // 1. Se identificador extra estiver mapeado e tiver valor na linha, priorizar busca exata (Nome + Identificador)
-    if (identificadorExtraColunaVal) {
-      const idVal = String(identificadorExtraColunaVal).trim().toUpperCase();
+  // Faz lookup do corretor por Nome ou ID Profissional (creci) como identificador de alta prioridade
+  // Tarefa 22.8: o `creci` (ID Profissional / Matrícula) unifica o papel antes dividido entre
+  // `corretor_creci` e `identificador_extra_coluna` — agora é o lookup de maior precisão.
+  async _buscarCorretor(empresa_id, nome, creci) {
+    // 1. Busca de alta precisão pelo ID Profissional (cpf, email ou identificador_extra do parceiro)
+    if (creci) {
+      const idVal = String(creci).trim().toUpperCase();
       const idValLimpo = this._limparCPF(idVal);
 
       const candidatos = await db('GamUsuario')
         .where({ empresa_id, perfil: 'CORRETOR' })
         .where(function() {
-          // Busca exata pelo identificador no CPF, Email, Nome ou no campo Identificador Extra
           this.whereRaw('UPPER(cpf) = ?', [idVal])
               .orWhereRaw('UPPER(email) = ?', [idVal])
-              .orWhereRaw('UPPER(nome) = ?', [idVal])
               .orWhereRaw('UPPER(identificador_extra) = ?', [idVal]);
 
           if (idValLimpo && idValLimpo.length === 11) {
@@ -215,31 +215,16 @@ class ImportacaoService {
         });
 
       if (candidatos.length > 0) {
-        // Se houver múltiplos candidatos com o identificador correspondente, filtra pelo nome se coincidir
         if (nome) {
           const nomeBusca = String(nome).trim().toUpperCase();
           const matchExato = candidatos.find(c => String(c.nome).trim().toUpperCase() === nomeBusca);
           if (matchExato) return matchExato;
         }
-        return candidatos[0]; // Retorna o primeiro encontrado
+        return candidatos[0];
       }
     }
 
-    // 2. Tentar buscar por CRECI se estiver presente (fallback legado de creci)
-    if (creci) {
-      const c = String(creci).trim().toUpperCase();
-      const corretor = await db('GamUsuario')
-        .where({ empresa_id, perfil: 'CORRETOR' })
-        .where(function() {
-          this.whereRaw('UPPER(cpf) = ?', [c])
-              .orWhereRaw('UPPER(nome) = ?', [c])
-              .orWhereRaw('UPPER(identificador_extra) = ?', [c]);
-        })
-        .first();
-      if (corretor) return corretor;
-    }
-
-    // 3. Tentar por CPF (se o identificador se parecer com CPF)
+    // 2. Tentar por CPF (se o nome se parecer com CPF)
     const cpfLimpo = this._limparCPF(nome);
     if (cpfLimpo.length === 11) {
       const corretor = await db('GamUsuario')
@@ -249,11 +234,9 @@ class ImportacaoService {
       if (corretor) return corretor;
     }
 
-    // 4. Tentar por Nome (Case-Insensitive)
+    // 3. Tentar por Nome (Case-Insensitive) — com detecção de ambiguidade
     if (nome) {
       const nomeBusca = String(nome).trim().toUpperCase();
-      
-      // Detecção de ambiguidade: verifica se há múltiplos corretores com o mesmo nome na mesma empresa
       const corretoresComNome = await db('GamUsuario')
         .where({ empresa_id, perfil: 'CORRETOR' })
         .andWhereRaw('UPPER(nome) = ?', [nomeBusca]);
@@ -261,7 +244,6 @@ class ImportacaoService {
       if (corretoresComNome.length === 1) {
         return corretoresComNome[0];
       } else if (corretoresComNome.length > 1) {
-        // Ambiguidade! Retornamos uma marcação especial informando que há candidatos
         return {
           ambiguous: true,
           candidatos: corretoresComNome.map(c => ({ id: c.id, nome: c.nome, email: c.email, cpf: c.cpf }))
@@ -473,10 +455,7 @@ class ImportacaoService {
         continue;
       }
 
-      const idCol = perfil.identificador_extra_coluna ? String(perfil.identificador_extra_coluna).trim().toUpperCase() : null;
-      const rawIdentificadorExtra = idCol && headerIndices[idCol] !== undefined ? row[headerIndices[idCol]] : null;
-
-      const corretor = await this._buscarCorretor(empresa_id, rawCorretor, rawCreci, rawIdentificadorExtra);
+      const corretor = await this._buscarCorretor(empresa_id, rawCorretor, rawCreci);
       const isAmbiguous = corretor && corretor.ambiguous;
 
       const valorVendaRs = this._parseMoeda(rawValorVenda);
@@ -534,7 +513,6 @@ class ImportacaoService {
         linha: cabecalho0Based + 2 + i, // 1-based no arquivo original
         corretor_nome_planilha: rawCorretor,
         corretor_creci_planilha: rawCreci,
-        identificador_extra_planilha: rawIdentificadorExtra,
         empreendimento: rawEmpreendimento || 'Desconhecido',
         unidade: rawUnidade || 'Geral',
         cliente_nome: rawCliente || 'Não Informado',

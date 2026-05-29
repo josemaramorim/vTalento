@@ -94,7 +94,8 @@ Para garantir a continuidade perfeita e o alinhamento do projeto, a IA deve segu
 | **DESENVOLVIMENTO** | ✅ Concluído | Fase 5: Importação Avançada e Redesign | `develop` | Motor de importação em 3 etapas com persistência (Upload, Preview, Confirm), suporte a campos extras customizáveis e `identificador_extra` (CRECI/CPF) no `GamUsuario` e `PerfilImportacao`. Testes backend atualizados e rodando com sucesso. |
 | **DESENVOLVIMENTO** | ✅ Concluído | Ajustes Ad Hoc (Movimentações UI) | `develop` | Adicionado Modal premium de confirmação no fim da importação. Modificado o Grid de Movimentações da Equipe para focar em `Data Vencimento` e `Data Compensação`, incluindo filtro de Status e Modal Rico de Detalhes de Lançamento. |
 | **DESENVOLVIMENTO** | ✅ Concluído | Fase 6: Fator Dinâmico e Baixa em Lote | `develop` | Fator de conversão dinâmico na importação (com suporte a formatos de datas em balões) e nova tela de Baixa em Lote para liquidação em massa retroativa. Scripts retroativos executados. |
-| **DESENVOLVIMENTO** | 🚧 Em Andamento | Fase 7: Terminologia Agnóstica e Motor Recebíveis | `feature/fase7-agnostic-receivables` | Substituir nomenclaturas imobiliárias no Importador por termos universais e implementar o motor de importação duplo (Contratos com Parcelas x Conciliação FIFO de Baixas). |
+| **DESENVOLVIMENTO** | ✅ Concluído | Fase 7: Terminologia Agnóstica e Motor Recebíveis | `develop` | Terminologia agnóstica, motor FIFO de conciliação, gerador de parcelas fixas, campos de parcelamento no perfil e testes unitários (22.1–22.7) 100% concluídos. |
+| **DESENVOLVIMENTO** | 🚧 Em Andamento | Tarefa 22.8: Unificação `identificador_extra_coluna` | `feature/refactor-unify-identificador` | Refactor para unificar campo redundante `identificador_extra_coluna` com `corretor_creci` do `mapeamento_json`, elevando sua prioridade na busca e removendo a seção duplicada do modal. |
 
 ---
 

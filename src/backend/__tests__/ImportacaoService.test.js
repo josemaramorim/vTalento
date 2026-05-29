@@ -155,8 +155,15 @@ describe('ImportacaoService', () => {
           return queryBuilder;
         }
         if (table === 'GamUsuario') {
-          queryBuilder.first.mockResolvedValue(mockCorretor);
-          return queryBuilder;
+          // creci lookup returns array (high-priority path)
+          const arrayQb = Promise.resolve([mockCorretor]);
+          arrayQb.where = jest.fn().mockReturnThis();
+          arrayQb.whereRaw = jest.fn().mockReturnThis();
+          arrayQb.orWhereRaw = jest.fn().mockReturnThis();
+          arrayQb.andWhereRaw = jest.fn().mockReturnThis();
+          arrayQb.first = jest.fn().mockResolvedValue(mockCorretor);
+          arrayQb.update = jest.fn().mockResolvedValue(1);
+          return arrayQb;
         }
         return db;
       });
@@ -266,7 +273,16 @@ describe('ImportacaoService', () => {
       db.mockImplementation((table) => {
         const qb = { where: jest.fn().mockReturnThis(), andWhereRaw: jest.fn().mockReturnThis(), orderBy: jest.fn().mockReturnThis(), orderByRaw: jest.fn().mockReturnThis(), first: jest.fn(), insert: jest.fn().mockResolvedValue([1]), update: jest.fn().mockResolvedValue(1) };
         if (table === 'GamConfigImportacao') { qb.first.mockResolvedValue(mockPerfil); return qb; }
-        if (table === 'GamUsuario') { qb.first.mockResolvedValue(mockCorretor); return qb; }
+        if (table === 'GamUsuario') {
+          const arrayQb = Promise.resolve([mockCorretor]);
+          arrayQb.where = jest.fn().mockReturnThis();
+          arrayQb.whereRaw = jest.fn().mockReturnThis();
+          arrayQb.orWhereRaw = jest.fn().mockReturnThis();
+          arrayQb.andWhereRaw = jest.fn().mockReturnThis();
+          arrayQb.first = jest.fn().mockResolvedValue(mockCorretor);
+          arrayQb.update = jest.fn().mockResolvedValue(1);
+          return arrayQb;
+        }
         if (table === 'GamTransacao') {
           const promiseQb = Promise.resolve(mockTransacoesPendentes);
           promiseQb.where = jest.fn().mockReturnThis();
@@ -377,8 +393,14 @@ describe('ImportacaoService', () => {
           return queryBuilder;
         }
         if (table === 'GamUsuario') {
-          queryBuilder.first.mockResolvedValue(mockCorretor);
-          return queryBuilder;
+          const arrayQb = Promise.resolve([mockCorretor]);
+          arrayQb.where = jest.fn().mockReturnThis();
+          arrayQb.whereRaw = jest.fn().mockReturnThis();
+          arrayQb.orWhereRaw = jest.fn().mockReturnThis();
+          arrayQb.andWhereRaw = jest.fn().mockReturnThis();
+          arrayQb.first = jest.fn().mockResolvedValue(mockCorretor);
+          arrayQb.update = jest.fn().mockResolvedValue(1);
+          return arrayQb;
         }
         if (table === 'GamTransacao') {
           const qb = Promise.resolve(mockTransacoesCalculadas);
