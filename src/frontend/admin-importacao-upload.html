@@ -338,6 +338,18 @@
                 </div>
             </div>
 
+            <!-- ═══ SELETOR DE MODO (ABAS) ═══ -->
+            <div class="mode-selector" style="display: flex; gap: 15px; margin-bottom: 25px;">
+                <button type="button" id="tabContratos" class="btn active" style="flex: 1; padding: 15px; font-size: 1.05rem; border-radius: var(--radius-sm); border: 1px solid var(--accent-primary); background: rgba(212,175,55,0.15); color: var(--accent-primary); font-weight: bold; transition: all 0.3s; text-align: left;">
+                    <div style="font-size: 1.15rem; margin-bottom: 4px;">📄 Passo 1: Novos Contratos</div>
+                    <div style="font-size: 0.8rem; font-weight: normal; opacity: 0.8;">Gera saldo e cria parcelas futuras PENDENTES.</div>
+                </button>
+                <button type="button" id="tabBaixas" class="btn" style="flex: 1; padding: 15px; font-size: 1.05rem; border-radius: var(--radius-sm); border: 1px solid var(--glass-border); background: rgba(255,255,255,0.02); color: var(--text-secondary); transition: all 0.3s; text-align: left;">
+                    <div style="font-size: 1.15rem; margin-bottom: 4px;">💰 Passo 2: Baixa de Recebimentos</div>
+                    <div style="font-size: 0.8rem; font-weight: normal; opacity: 0.8;">Lê valores pagos e liquida saldos pendentes via FIFO.</div>
+                </button>
+            </div>
+
             <!-- ═══ GRID PRINCIPAL ═══ -->
             <div class="page-grid">
                 <!-- COLUNA ESQUERDA: Seleção de Perfil -->
@@ -549,6 +561,7 @@
         let selectedFileBase64 = null;
         let selectedFileName = '';
         let editPerfilId = null;
+        let currentMode = 'CONTRATOS';
 
         // Restore state from sessionStorage if returning from Preview
         (function restoreState() {
@@ -574,6 +587,45 @@
         const btnSugestao = document.getElementById('btnSugestaoMapeamento');
         const usaIaCheckbox = document.getElementById('usaIaCheckbox');
         const perfilModal = document.getElementById('perfilModal');
+        const tabContratos = document.getElementById('tabContratos');
+        const tabBaixas = document.getElementById('tabBaixas');
+
+        // ═══════════════════════ MODO DE IMPORTAÇÃO ═══════════════════════
+        function setMode(mode) {
+            currentMode = mode;
+            sessionStorage.setItem('@VTalentos:importMode', mode);
+            
+            if (mode === 'CONTRATOS') {
+                tabContratos.classList.add('active');
+                tabContratos.style.borderColor = 'var(--accent-primary)';
+                tabContratos.style.background = 'rgba(212,175,55,0.15)';
+                tabContratos.style.color = 'var(--accent-primary)';
+
+                tabBaixas.classList.remove('active');
+                tabBaixas.style.borderColor = 'var(--glass-border)';
+                tabBaixas.style.background = 'rgba(255,255,255,0.02)';
+                tabBaixas.style.color = 'var(--text-secondary)';
+                
+            } else {
+                tabBaixas.classList.add('active');
+                tabBaixas.style.borderColor = 'var(--accent-primary)';
+                tabBaixas.style.background = 'rgba(212,175,55,0.15)';
+                tabBaixas.style.color = 'var(--accent-primary)';
+
+                tabContratos.classList.remove('active');
+                tabContratos.style.borderColor = 'var(--glass-border)';
+                tabContratos.style.background = 'rgba(255,255,255,0.02)';
+                tabContratos.style.color = 'var(--text-secondary)';
+            }
+        }
+
+        tabContratos.addEventListener('click', () => setMode('CONTRATOS'));
+        tabBaixas.addEventListener('click', () => setMode('BAIXAS'));
+
+        // Initialize mode
+        const savedMode = sessionStorage.getItem('@VTalentos:importMode');
+        if (savedMode) setMode(savedMode);
+        else setMode('CONTRATOS');
 
         // ═══════════════════════ PERFIS CRUD ═══════════════════════
         async function loadPerfis() {
