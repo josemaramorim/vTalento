@@ -484,27 +484,30 @@ class ImportacaoService {
       const talentosDisponiveis = Math.floor(valorPagoRs / fatorConversao);
       const talentosAReceber = totalTalentos - talentosDisponiveis;
 
-      // Balões
-      const baloesValores = {
-        balao_datas_raw: getVal('balao_datas'),
-        balao_valor_raw: getVal('balao_valor'),
-        balao_qtd_raw: getVal('balao_qtd')
-      };
-      const baloesCalculados = this._parseBaloes(baloesValores, perfil.separador_multiplo, fatorConversao, perfil.formato_data_balao);
-      const somaBaloesTalentos = baloesCalculados.reduce((acc, curr) => acc + curr.valor_talentos, 0);
+      let baloesCalculados = [];
+      let parcelasCalculadas = [];
 
-      // Parcelas
       const getValByName = (colNameInFile) => {
         if (!colNameInFile) return null;
         const colIdx = headerIndices[String(colNameInFile).trim().toUpperCase()];
         return colIdx !== undefined ? row[colIdx] : null;
       };
       
-      const rawParcelaQtd = getValByName(perfil.parcela_qtd);
-      const rawParcelaValor = getValByName(perfil.parcela_valor);
-      const rawParcelaData = getValByName(perfil.parcela_data_inicio);
-
-      const parcelasCalculadas = this._parseParcelas(rawParcelaQtd, rawParcelaValor, rawParcelaData, perfil.formato_data_balao, fatorConversao);
+      if (modo !== 'BAIXAS') {
+        const baloesValores = {
+          balao_datas_raw: getValByName(perfil.balao_datas),
+          balao_valor_raw: getValByName(perfil.balao_valor),
+          balao_qtd_raw: getValByName(perfil.balao_qtd)
+        };
+        baloesCalculados = this._parseBaloes(baloesValores, perfil.separador_multiplo, fatorConversao, perfil.formato_data_balao);
+        
+        const rawParcelaQtd = getValByName(perfil.parcela_qtd);
+        const rawParcelaValor = getValByName(perfil.parcela_valor);
+        const rawParcelaData = getValByName(perfil.parcela_data_inicio);
+        parcelasCalculadas = this._parseParcelas(rawParcelaQtd, rawParcelaValor, rawParcelaData, perfil.formato_data_balao, fatorConversao);
+      }
+      
+      const somaBaloesTalentos = baloesCalculados.reduce((acc, curr) => acc + curr.valor_talentos, 0);
       const somaParcelasTalentos = parcelasCalculadas.reduce((acc, curr) => acc + curr.valor_talentos, 0);
 
       // Extração de campos extras configurados no perfil
@@ -598,120 +601,207 @@ class ImportacaoService {
         const justificativaBase = `Importação - ${row.empreendimento} ${row.unidade} - Cliente: ${row.cliente_nome}`;
         const dadosExtrasStr = row.dados_extras ? JSON.stringify(row.dados_extras) : null;
 
-        // 1. Criar transação COMPENSADA para os Talentos já pagos (disponíveis)
-        if (row.valores.talentos_disponiveis > 0) {
-          await trx('GamTransacao').insert({
-            id: transacaoId,
-            empresa_id,
-            usuario_id: corretorId,
-            admin_id: admin_id || null,
-            valor: row.valores.talentos_disponiveis,
-            tipo: 'CREDITO',
-            origem: 'IMPORTACAO',
-            justificativa: `${justificativaBase} (Compensado/Entrada)`,
-            valor_original_rs: row.valores.valor_pago_rs,
-            status: 'COMPENSADO',
-            data_vencimento: null,
-            empreendimento: row.empreendimento,
-            unidade: row.unidade,
-            contato_cliente: row.cliente_nome,
-            origem_id: `row-${row.linha}-compensado`,
-            dados_extras: dadosExtrasStr,
-            data_compensacao: trx.fn.now(),
-            created_at: trx.fn.now()
-          });
-          transacoesCriadas++;
-        }
+        if (modo === 'BAIXAS') {
+          let saldoPagarTalentos = row.valores.talentos_disponiveis;
+          if (saldoPagarTalentos <= 0) continue;
 
-        // 2. Criar transações PENDENTES para os Balões Futuros
-        let totalBaloesTalentos = 0;
-        for (let idxB = 0; idxB < row.baloes.length; idxB++) {
-          const bal = row.baloes[idxB];
-          totalBaloesTalentos += bal.valor_talentos;
+          // Busca as transacoes pendentes do corretor
+          const pendentes = await trx('GamTransacao')
+            .where({ empresa_id, usuario_id: corretorId, status: 'PENDENTE' })
+            .orderByRaw('data_vencimento IS NULL ASC, data_vencimento ASC, created_at ASC');
+          
+          for (const pend of pendentes) {
+            if (saldoPagarTalentos <= 0) break;
 
-          const balTransacaoId = crypto.randomUUID();
-          await trx('GamTransacao').insert({
-            id: balTransacaoId,
-            empresa_id,
-            usuario_id: corretorId,
-            admin_id: admin_id || null,
-            valor: bal.valor_talentos,
-            tipo: 'CREDITO',
-            origem: 'IMPORTACAO',
-            justificativa: `${justificativaBase} (Balão ${idxB + 1}/${row.baloes.length})`,
-            valor_original_rs: bal.valor_rs,
-            status: 'PENDENTE',
-            data_vencimento: bal.data_vencimento ? bal.data_vencimento.toISOString() : null,
-            empreendimento: row.empreendimento,
-            unidade: row.unidade,
-            contato_cliente: row.cliente_nome,
-            origem_id: `row-${row.linha}-balao-${idxB + 1}`,
-            dados_extras: dadosExtrasStr,
-            data_compensacao: null,
-            created_at: trx.fn.now()
-          });
-          transacoesCriadas++;
-        }
-
-        // 2.5 Criar transações PENDENTES para as Parcelas Fixas
-        let totalParcelasTalentos = 0;
-        let totalParcelasRs = 0;
-        if (row.parcelas && Array.isArray(row.parcelas)) {
-          for (let idxP = 0; idxP < row.parcelas.length; idxP++) {
-            const par = row.parcelas[idxP];
-            totalParcelasTalentos += par.valor_talentos;
-            totalParcelasRs += par.valor_rs;
-
-            const parTransacaoId = crypto.randomUUID();
+            if (saldoPagarTalentos >= pend.valor) {
+              // Paga a transação inteira
+              await trx('GamTransacao')
+                .where({ id: pend.id })
+                .update({
+                  status: 'COMPENSADO',
+                  data_compensacao: trx.fn.now(),
+                  justificativa: `${pend.justificativa} (Liquidado via Planilha)`
+                });
+              saldoPagarTalentos -= pend.valor;
+              transacoesCriadas++;
+            } else {
+              // Pagamento parcial: Atualiza a pendente subtraindo o valor
+              await trx('GamTransacao')
+                .where({ id: pend.id })
+                .update({
+                  valor: pend.valor - saldoPagarTalentos,
+                  valor_original_rs: pend.valor_original_rs ? (pend.valor_original_rs * ((pend.valor - saldoPagarTalentos) / pend.valor)) : null
+                });
+              
+              // Cria uma COMPENSADA para a porção paga
+              const parTransacaoId = crypto.randomUUID();
+              await trx('GamTransacao').insert({
+                id: parTransacaoId,
+                empresa_id: pend.empresa_id,
+                usuario_id: pend.usuario_id,
+                admin_id: admin_id || null,
+                valor: saldoPagarTalentos,
+                tipo: 'CREDITO',
+                origem: 'IMPORTACAO',
+                justificativa: `${pend.justificativa} (Baixa Parcial)`,
+                valor_original_rs: pend.valor_original_rs ? (pend.valor_original_rs * (saldoPagarTalentos / pend.valor)) : null,
+                status: 'COMPENSADO',
+                data_vencimento: pend.data_vencimento,
+                empreendimento: pend.empreendimento,
+                unidade: pend.unidade,
+                contato_cliente: pend.contato_cliente,
+                origem_id: `row-${row.linha}-baixa-parcial`,
+                dados_extras: pend.dados_extras,
+                data_compensacao: trx.fn.now(),
+                created_at: trx.fn.now()
+              });
+              
+              saldoPagarTalentos = 0;
+              transacoesCriadas++;
+            }
+          }
+          
+          // Se ainda sobrou saldoPagarTalentos, cria uma transação de crédito avulsa
+          if (saldoPagarTalentos > 0) {
+            const extraTransacaoId = crypto.randomUUID();
             await trx('GamTransacao').insert({
-              id: parTransacaoId,
+              id: extraTransacaoId,
               empresa_id,
               usuario_id: corretorId,
               admin_id: admin_id || null,
-              valor: par.valor_talentos,
+              valor: saldoPagarTalentos,
               tipo: 'CREDITO',
               origem: 'IMPORTACAO',
-              justificativa: `${justificativaBase} (Parcela ${idxP + 1}/${row.parcelas.length})`,
-              valor_original_rs: par.valor_rs,
-              status: 'PENDENTE',
-              data_vencimento: par.data_vencimento ? par.data_vencimento.toISOString() : null,
+              justificativa: `Baixa via Planilha - Recebimento Avulso`,
+              valor_original_rs: row.valores.valor_pago_rs,
+              status: 'COMPENSADO',
+              data_vencimento: null,
               empreendimento: row.empreendimento,
               unidade: row.unidade,
               contato_cliente: row.cliente_nome,
-              origem_id: `row-${row.linha}-parcela-${idxP + 1}`,
+              origem_id: `row-${row.linha}-baixa-avulsa`,
+              dados_extras: dadosExtrasStr,
+              data_compensacao: trx.fn.now(),
+              created_at: trx.fn.now()
+            });
+            transacoesCriadas++;
+          }
+        } else {
+          // 1. Criar transação COMPENSADA para os Talentos já pagos (disponíveis)
+          if (row.valores.talentos_disponiveis > 0) {
+            await trx('GamTransacao').insert({
+              id: transacaoId,
+              empresa_id,
+              usuario_id: corretorId,
+              admin_id: admin_id || null,
+              valor: row.valores.talentos_disponiveis,
+              tipo: 'CREDITO',
+              origem: 'IMPORTACAO',
+              justificativa: `${justificativaBase} (Compensado/Entrada)`,
+              valor_original_rs: row.valores.valor_pago_rs,
+              status: 'COMPENSADO',
+              data_vencimento: null,
+              empreendimento: row.empreendimento,
+              unidade: row.unidade,
+              contato_cliente: row.cliente_nome,
+              origem_id: `row-${row.linha}-compensado`,
+              dados_extras: dadosExtrasStr,
+              data_compensacao: trx.fn.now(),
+              created_at: trx.fn.now()
+            });
+            transacoesCriadas++;
+          }
+
+          // 2. Criar transações PENDENTES para os Balões Futuros
+          let totalBaloesTalentos = 0;
+          for (let idxB = 0; idxB < row.baloes.length; idxB++) {
+            const bal = row.baloes[idxB];
+            totalBaloesTalentos += bal.valor_talentos;
+
+            const balTransacaoId = crypto.randomUUID();
+            await trx('GamTransacao').insert({
+              id: balTransacaoId,
+              empresa_id,
+              usuario_id: corretorId,
+              admin_id: admin_id || null,
+              valor: bal.valor_talentos,
+              tipo: 'CREDITO',
+              origem: 'IMPORTACAO',
+              justificativa: `${justificativaBase} (Balão ${idxB + 1}/${row.baloes.length})`,
+              valor_original_rs: bal.valor_rs,
+              status: 'PENDENTE',
+              data_vencimento: bal.data_vencimento ? bal.data_vencimento.toISOString() : null,
+              empreendimento: row.empreendimento,
+              unidade: row.unidade,
+              contato_cliente: row.cliente_nome,
+              origem_id: `row-${row.linha}-balao-${idxB + 1}`,
               dados_extras: dadosExtrasStr,
               data_compensacao: null,
               created_at: trx.fn.now()
             });
             transacoesCriadas++;
           }
-        }
 
-        // 3. Criar transação PENDENTE genérica para o saldo remanescente a receber (ex: parcelas pulverizadas sem data)
-        const saldoRemanescenteAReceber = row.valores.talentos_a_receber - totalBaloesTalentos - totalParcelasTalentos;
-        if (saldoRemanescenteAReceber > 0) {
-          const remTransacaoId = crypto.randomUUID();
-          await trx('GamTransacao').insert({
-            id: remTransacaoId,
-            empresa_id,
-            usuario_id: corretorId,
-            admin_id: admin_id || null,
-            valor: saldoRemanescenteAReceber,
-            tipo: 'CREDITO',
-            origem: 'IMPORTACAO',
-            justificativa: `${justificativaBase} (Remanescente a Receber)`,
-            valor_original_rs: (row.valores.valor_venda_rs - row.valores.valor_pago_rs) - (row.baloes.reduce((acc, c) => acc + c.valor_rs, 0)) - totalParcelasRs,
-            status: 'PENDENTE',
-            data_vencimento: null, // Sem vencimento fixo (mensais pulverizadas)
-            empreendimento: row.empreendimento,
-            unidade: row.unidade,
-            contato_cliente: row.cliente_nome,
-            origem_id: `row-${row.linha}-remanescente`,
-            dados_extras: dadosExtrasStr,
-            data_compensacao: null,
-            created_at: trx.fn.now()
-          });
-          transacoesCriadas++;
+          // 2.5 Criar transações PENDENTES para as Parcelas Fixas
+          let totalParcelasTalentos = 0;
+          let totalParcelasRs = 0;
+          if (row.parcelas && Array.isArray(row.parcelas)) {
+            for (let idxP = 0; idxP < row.parcelas.length; idxP++) {
+              const par = row.parcelas[idxP];
+              totalParcelasTalentos += par.valor_talentos;
+              totalParcelasRs += par.valor_rs;
+
+              const parTransacaoId = crypto.randomUUID();
+              await trx('GamTransacao').insert({
+                id: parTransacaoId,
+                empresa_id,
+                usuario_id: corretorId,
+                admin_id: admin_id || null,
+                valor: par.valor_talentos,
+                tipo: 'CREDITO',
+                origem: 'IMPORTACAO',
+                justificativa: `${justificativaBase} (Parcela ${idxP + 1}/${row.parcelas.length})`,
+                valor_original_rs: par.valor_rs,
+                status: 'PENDENTE',
+                data_vencimento: par.data_vencimento ? par.data_vencimento.toISOString() : null,
+                empreendimento: row.empreendimento,
+                unidade: row.unidade,
+                contato_cliente: row.cliente_nome,
+                origem_id: `row-${row.linha}-parcela-${idxP + 1}`,
+                dados_extras: dadosExtrasStr,
+                data_compensacao: null,
+                created_at: trx.fn.now()
+              });
+              transacoesCriadas++;
+            }
+          }
+
+          // 3. Criar transação PENDENTE genérica para o saldo remanescente a receber
+          const saldoRemanescenteAReceber = row.valores.talentos_a_receber - totalBaloesTalentos - totalParcelasTalentos;
+          if (saldoRemanescenteAReceber > 0) {
+            const remTransacaoId = crypto.randomUUID();
+            await trx('GamTransacao').insert({
+              id: remTransacaoId,
+              empresa_id,
+              usuario_id: corretorId,
+              admin_id: admin_id || null,
+              valor: saldoRemanescenteAReceber,
+              tipo: 'CREDITO',
+              origem: 'IMPORTACAO',
+              justificativa: `${justificativaBase} (Remanescente a Receber)`,
+              valor_original_rs: (row.valores.valor_venda_rs - row.valores.valor_pago_rs) - (row.baloes.reduce((acc, c) => acc + c.valor_rs, 0)) - totalParcelasRs,
+              status: 'PENDENTE',
+              data_vencimento: null,
+              empreendimento: row.empreendimento,
+              unidade: row.unidade,
+              contato_cliente: row.cliente_nome,
+              origem_id: `row-${row.linha}-remanescente`,
+              dados_extras: dadosExtrasStr,
+              data_compensacao: null,
+              created_at: trx.fn.now()
+            });
+            transacoesCriadas++;
+          }
         }
       }
 

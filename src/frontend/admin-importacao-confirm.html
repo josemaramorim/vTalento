@@ -302,7 +302,8 @@
                     body: JSON.stringify({
                         fileBase64: importState.fileBase64,
                         perfil_id: importState.perfilId,
-                        resolucoes: importState.resolucoes || {}
+                        resolucoes: importState.resolucoes || {},
+                        modo: sessionStorage.getItem('@VTalentos:importMode') || 'CONTRATOS'
                     })
                 });
 

@@ -258,7 +258,7 @@
                 const res = await fetch(`${API_BASE}/preview`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                    body: JSON.stringify({ fileBase64: importState.fileBase64, perfil_id: importState.perfilId })
+                    body: JSON.stringify({ fileBase64: importState.fileBase64, perfil_id: importState.perfilId, modo: sessionStorage.getItem('@VTalentos:importMode') || 'CONTRATOS' })
                 });
 
                 const contentType = res.headers.get('content-type') || '';
