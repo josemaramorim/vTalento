@@ -25,7 +25,7 @@ class ImportacaoService {
     return perfil;
   }
 
-  async criarPerfil(empresa_id, { nome_perfil, mapeamento_json, separador_multiplo = '|', linha_cabecalho = 3, identificador_extra_coluna = null, campos_extras = null }) {
+  async criarPerfil(empresa_id, { nome_perfil, mapeamento_json, separador_multiplo = '|', linha_cabecalho = 3, identificador_extra_coluna = null, campos_extras = null, fator_conversao = 100, formato_data_balao = 'DD/MM/YYYY' }) {
     if (!nome_perfil || !mapeamento_json) {
       throw new Error('Nome do perfil e mapeamento são obrigatórios');
     }
@@ -43,6 +43,8 @@ class ImportacaoService {
       linha_cabecalho,
       identificador_extra_coluna,
       campos_extras: camposExtrasStr,
+      fator_conversao,
+      formato_data_balao,
       created_at: db.fn.now(),
       updated_at: db.fn.now()
     });
@@ -50,7 +52,7 @@ class ImportacaoService {
     return { id, nome_perfil };
   }
 
-  async atualizarPerfil(empresa_id, id, { nome_perfil, mapeamento_json, separador_multiplo = '|', linha_cabecalho = 3, identificador_extra_coluna = null, campos_extras = null }) {
+  async atualizarPerfil(empresa_id, id, { nome_perfil, mapeamento_json, separador_multiplo = '|', linha_cabecalho = 3, identificador_extra_coluna = null, campos_extras = null, fator_conversao = 100, formato_data_balao = 'DD/MM/YYYY' }) {
     if (!nome_perfil || !mapeamento_json) {
       throw new Error('Nome do perfil e mapeamento são obrigatórios');
     }
@@ -67,6 +69,8 @@ class ImportacaoService {
         linha_cabecalho,
         identificador_extra_coluna,
         campos_extras: camposExtrasStr,
+        fator_conversao,
+        formato_data_balao,
         updated_at: db.fn.now()
       });
 
