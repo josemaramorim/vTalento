@@ -128,13 +128,46 @@ class ImportacaoController {
     try {
       const { fileBase64, perfil_id, resolucoes, modo } = req.body;
       const empresa_id = req.empresa_id;
-      const admin_id = req.usuario_id; // Injetado pelo TenantMiddleware / Autenticação
+      const admin_id = req.usuario_id;
 
       if (!fileBase64 || !perfil_id) {
         return res.status(400).json({ error: 'Os campos fileBase64 e perfil_id são obrigatórios' });
       }
 
       const result = await ImportacaoService.confirmarImportacao(empresa_id, admin_id, fileBase64, perfil_id, resolucoes || {}, modo || 'CONTRATOS');
+      return res.json(result);
+    } catch (err) {
+      return res.status(400).json({ error: err.message });
+    }
+  }
+
+  async previewImportacaoProgramavel(req, res) {
+    try {
+      const { fileBase64, perfil_id } = req.body;
+      const empresa_id = req.empresa_id;
+
+      if (!fileBase64 || !perfil_id) {
+        return res.status(400).json({ error: 'Os campos fileBase64 e perfil_id são obrigatórios' });
+      }
+
+      const result = await ImportacaoService.previewImportacaoProgramavel(empresa_id, fileBase64, perfil_id);
+      return res.json(result);
+    } catch (err) {
+      return res.status(400).json({ error: err.message });
+    }
+  }
+
+  async confirmarImportacaoProgramavel(req, res) {
+    try {
+      const { fileBase64, perfil_id, resolucoes } = req.body;
+      const empresa_id = req.empresa_id;
+      const admin_id = req.usuario_id;
+
+      if (!fileBase64 || !perfil_id) {
+        return res.status(400).json({ error: 'Os campos fileBase64 e perfil_id são obrigatórios' });
+      }
+
+      const result = await ImportacaoService.confirmarImportacaoProgramavel(empresa_id, admin_id, fileBase64, perfil_id, resolucoes || {});
       return res.json(result);
     } catch (err) {
       return res.status(400).json({ error: err.message });

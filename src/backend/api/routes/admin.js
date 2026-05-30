@@ -11,7 +11,7 @@ const routes = Router();
 // Todas as rotas administrativas precisam de Tenant + Admin Middleware
 routes.use(tenantMiddleware, adminMiddleware);
 
-// Tarefa 12.1, 12.2, 12.3 — FASE 5 — Gestão de Usuários
+// FASE 5 — Gestão de Usuários
 routes.get('/usuarios', UsuarioController.listAdmin);
 routes.post('/usuarios', UsuarioController.create);
 routes.put('/usuarios/:id', UsuarioController.update);
@@ -51,6 +51,8 @@ routes.delete('/importacao/perfis/:id', ImportacaoController.deletarPerfil);
 routes.post('/importacao/preview', ImportacaoController.previewImportacao);
 routes.post('/importacao/sugerir-mapeamento', ImportacaoController.sugerirMapeamento);
 routes.post('/importacao/confirm', ImportacaoController.confirmarImportacao);
+routes.post('/importacao/programavel/preview', ImportacaoController.previewImportacaoProgramavel);
+routes.post('/importacao/programavel/confirm', ImportacaoController.confirmarImportacaoProgramavel);
 
 // Endpoints da Vitrine de Prêmios (CRUD Admin)
 routes.get('/premios', PremioController.listAdmin);
@@ -58,10 +60,10 @@ routes.post('/premios', PremioController.create);
 routes.put('/premios/:id', PremioController.update);
 routes.delete('/premios/:id', PremioController.delete);
 
-// Tarefa 11.4 — FASE 4.9 — Painel Admin de Resgates (specs/09-VITRINE-DE-PREMIOS.md Seção 6)
+// Painel Admin de Resgates
 routes.get('/resgates', PremioController.listAllResgatesAdmin);
 
-// Faturamento SaaS para Inquilino (FASE 8 / Tarefa 15.8)
+// Faturamento SaaS para Inquilino
 const BillingController = require('../controllers/BillingController');
 routes.get('/billing/status', BillingController.getStatus);
 routes.get('/billing/faturas', BillingController.getFaturas);
@@ -72,4 +74,3 @@ routes.post('/billing/faturas', BillingController.criarFaturaAdicional);
 routes.delete('/billing/faturas/:id', BillingController.cancelarFatura);
 
 module.exports = routes;
-

@@ -22,6 +22,7 @@ A proposta deste **Motor Programável baseado em JSON** é transformar a importa
 | **Curva de Aprendizado**| Baixíssima (arrastar campos / auto-sugestão). | Média-Alta (necessita conhecimento básico de JSON/JS). |
 | **Transformação de Dados**| Apenas conversões simples (fator, delimitador de string).| Modificações ilimitadas (conversões, regex, loops, condicionais). |
 | **Lógica de Negócio** | Rígida (regras fixas de saldo/balão/FIFO). | Flexível (pode decidir o status, fracionamento e regras dinâmicas).|
+| **Onboarding de Novos Clientes** | ⚠️ Cada novo layout de planilha exige intervenção manual do time de implantação para criar/ajustar perfis. | ✅ O time de implantação configura o JSON uma única vez e qualquer variação futura do cliente pode ser ajustada sem tocar no código da plataforma. |
 | **Uso Ideal** | Empresas com planilhas padronizadas e limpas. | Clientes enterprise com ERPs legados ou regras ad-hoc. |
 
 ---
@@ -46,8 +47,11 @@ Para simplificar a experiência e suportar desde mapeamentos ultra-diretos até 
   "contexto_global": {
     "script_inicializacao": "
       // Roda uma vez antes de iniciar o loop de linhas
+      // NOTA: O vm nativo do Node NÃO suporta async/await.
+      // Para buscar dados externos, use o globalStore pré-populado
+      // pelo serviço antes de instanciar o motor (injeção explícita).
       globalStore.totalProcessado = 0;
-      globalStore.usuariosAtivos = await db.getUsuariosAtivos();
+      globalStore.fatorDolar = 5.25; // Valores externos são injetados pelo orquestrador
     "
   },
   "mapeamento_campos": {
@@ -88,10 +92,11 @@ Para simplificar a experiência e suportar desde mapeamentos ultra-diretos até 
       "script": "
         // Exemplo de enriquecimento complexo: Comando de FOR/LOOP
         // Cria múltiplas parcelas com base em dados de outras células!
-        // Acesso direto às colunas através do objeto `row` ou valores de campos já mapeados `@NomeParceiro`
+        // Use o objeto `row` para acessar colunas diretamente.
+        // Use {{NomeCampo}} para referenciar valores já processados nesta linha.
         
         let parcelas = [];
-        let valorTotal = parseFloat(row.E); // Coluna E: Valor Total Comissão
+        let valorTotal = helpers.parseMoeda(row.E); // Coluna E: usa helper para R$ 1.500,00
         let qtdParcelas = parseInt(row.F) || 1; // Coluna F: Qtd Parcelas
         let dataInicio = new Date(row.G); // Coluna G: Vencimento Inicial
         
@@ -107,8 +112,8 @@ Para simplificar a experiência e suportar desde mapeamentos ultra-diretos até 
             valor: valorParcela,
             data_vencimento: dataVencimento.toISOString().split('T')[0],
             dados_extras: {
-              parcela_numero: `${i + 1} de ${qtdParcelas}`,
-              categoria_original: @CategoriaParceiro
+              parcela_numero: (i + 1) + ' de ' + qtdParcelas,
+              categoria_original: '{{CategoriaParceiro}}' // Macro de referência cruzada
             }
           });
         }
@@ -141,17 +146,19 @@ Abaixo, descrevemos o fluxo de execução interna que o backend executaria ao re
 graph TD
     A[Upload Planilha & JSON] --> B[Validação de Sintaxe JSON]
     B --> C[Execução do Contexto Global / Inicialização]
-    C --> D[Loop por Linha da Planilha]
-    D --> E[Injetar Variáveis na Sandbox: row, value, globalStore, helpers]
+    C --> D{Ainda há linhas?}
+    D -- Sim --> E[Injetar Variáveis na Sandbox: row, value, globalStore, helpers]
     E --> F{Tem Script no Campo?}
-    F -- Sim --> G[Executar Script na Sandbox vm2/isolated-vm]
-    F -- Não --> H[Retornar Valor Bruto da Célula Mapeada]
-    G --> I[Aplicar Hooks de Linha e Validação]
+    F -- Sim --> G[Executar Script na Sandbox - timeout 50ms]
+    F -- Não --> H[Retornar Valor Bruto da Célula]
+    G --> I[Resolver Macros e Aplicar Hooks de Linha]
     H --> I
     I --> J{Linha Aprovada?}
-    J -- Sim --> K[Registrar Transação no Preview / Array de Persistência]
-    J -- Não --> L[Registrar Log de Alerta / Ignorar Linha]
-    K --> M[Fim do Loop - Mostrar Preview para o Usuário]
+    J -- Sim --> K[Acumular no Array de Resultados]
+    J -- Não --> L[Registrar Log de Alerta - Pular Linha]
+    K --> D
+    L --> D
+    D -- Não há mais linhas --> M[Retornar resultados + logs para Preview]
 ```
 
 ### 4.1. Ambiente Isolado (Sandbox)
@@ -160,13 +167,13 @@ Como o administrador pode digitar códigos Javascript arbitrários, executar iss
 Para mitigar isso de forma profissional, o motor utiliza o módulo nativo `vm` do Node.js ou a biblioteca `isolated-vm` (altamente recomendada):
 
 1. **Timeout Rígido:** Cada script de linha tem um limite de tempo máximo (ex: `50ms`). Se o script entrar em loop infinito (`while(true)`), a sandbox interrompe a execução com erro imediato.
-2. **Contexto Limitado:** O script não possui acesso a variáveis de sistema (`process`, `require`, `fs`, `global`).
+2. **Contexto Limitado:** O script não possui acesso a variáveis de sistema (`process`, `require`, `fs`, `global`). Não há suporte a `async/await` no contexto de VM (dados externos devem ser pré-carregados no `globalStore` antes da execução pelo orquestrador do serviço).
 3. **Escopo Controlado:** Apenas dados controlados são fornecidos como entrada:
    - `value`: O valor da célula daquela coluna específica.
    - `row`: Um objeto contendo os valores de todas as colunas da linha atual (ex: `{ A: "Corretor X", B: "123.456...", C: 150000.00 }`).
-   - `globalStore`: Um objeto compartilhado persistido entre as linhas para acumular dados (ex: contadores).
-   - `@NomeDoCampo`: Macros dinâmicas que resgatam o resultado de outros campos processados na mesma linha.
-   - `helpers`: Funções pré-compiladas injetadas pelo sistema para ajudar no parser (ex: `helpers.parseMoeda("R$ 1.500,00")` $\rightarrow$ `1500.00`).
+   - `globalStore`: Um objeto compartilhado persistido entre as linhas para acumular dados (ex: contadores, taxas de câmbio pré-carregadas).
+   - `{{NomeDoCampo}}`: Macros de referência cruzada para resgatar o valor de outros campos processados na mesma linha. Usam delimitadores `{{}}` para evitar colisões com nomes de variáveis JavaScript e substituições em cascata acidentais.
+   - `helpers`: Funções pré-compiladas injetadas pelo sistema para ajudar no parser (ex: `helpers.parseMoeda("R$ 1.500,00")` $\rightarrow$ `1500.00`, `helpers.cleanCPF("123.456.789-00")` $\rightarrow$ `12345678900`).
 
 ---
 
@@ -405,8 +412,20 @@ class MotorImportacaoProgramavelService {
     // Criamos os helpers utilitários que serão injetados na Sandbox
     const helpers = {
       parseMoeda: (val) => {
-        if (!val) return 0;
-        return parseFloat(String(val).replace(/[^0-9,-]/g, '').replace(',', '.'));
+        if (val === null || val === undefined || val === '') return 0;
+        // Suporta: "R$ 1.500,00", "1500,00", "1.500.000,00", "1500.00" (formato americano)
+        let str = String(val);
+        // Remove símbolos de moeda e espaços
+        str = str.replace(/[R$\s]/g, '');
+        // Detecta formato brasileiro (vírgula como decimal, ponto como milhar)
+        if (str.match(/^-?[\d.]+,[\d]{2}$/)) {
+          str = str.replace(/\./g, '').replace(',', '.');
+        } else {
+          // Assume formato numérico simples ou americano
+          str = str.replace(/,/g, '');
+        }
+        const parsed = parseFloat(str);
+        return isNaN(parsed) ? 0 : parsed;
       },
       cleanCPF: (val) => {
         if (!val) return '';
@@ -443,10 +462,16 @@ class MotorImportacaoProgramavelService {
    * Roda um script de campo dentro de um contexto isolado na VM do Node
    */
   executarScriptCampo(scriptCode, value, row, helpers, linhaResult) {
-    // Resolve macros do tipo @NomeCampo substituindo pelo valor já resolvido
+    // Resolve macros do tipo {{NomeCampo}} substituindo pelo valor já resolvido.
+    // Usamos delimitadores {{ }} em vez de @Campo para evitar:
+    //   1) Colisões com nomes de variáveis JS (ex: @new, @if)
+    //   2) Regex com caracteres especiais em nomes de campos
+    //   3) Substituições em cascata se um valor contiver outra macro
     let codigoTratado = scriptCode;
     for (const campoResolvido of Object.keys(linhaResult)) {
-      const regex = new RegExp(`@${campoResolvido}`, 'g');
+      // Escapa o nome para uso seguro em regex (ex: campo com ponto ou parêntese)
+      const nomeEscapado = campoResolvido.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(`\\{\\{${nomeEscapado}\\}\\}`, 'g');
       const val = JSON.stringify(linhaResult[campoResolvido]);
       codigoTratado = codigoTratado.replace(regex, val);
     }

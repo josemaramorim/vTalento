@@ -487,5 +487,59 @@ Esta fase permite que o administrador da empresa (`ADMIN_EMPRESA`) gerencie a id
 - [x] **Tarefa 22.5 (Backend):** Desenvolver método no `ImportacaoService` exclusivo para conciliação de Baixas. O método deve utilizar FIFO (First-In, First-Out) nas transações `PENDENTES` do corretor e liquidar total ou parcialmente os valores usando os pagamentos lidos da planilha (Passo 2 - Importação de Baixas).
 - [x] **Tarefa 22.6 (Testes):** Testes unitários do Gerador de Parcelas mensais no Backend.
 - [x] **Tarefa 22.7 (Testes):** Testes unitários para o motor de liquidação FIFO (conciliação parcial e total em cascata).
-- [x] **Tarefa 22.8 (Refactor/Limpeza):** Unificar os campos `identificador_extra_coluna` (em `GamConfigImportacao`) e `corretor_creci` (em `mapeamento_json`) em um único campo de mapeamento. O `ID Profissional / Matrícula` (`corretor_creci`) assume o papel de identificador de alta precisão. A seção "Identificador Extra (Opcional)" é removida do modal HTML. A coluna `identificador_extra_coluna` é mantida no banco (nullable) mas deixa de ser populada e lida pelo service, garantindo retrocompatibilidade com perfis existentes. O `_buscarCorretor` é atualizado para usar o `creci` como lookup de alta prioridade (antes do fallback por nome).
+- [x] **Tarefa 22.8 (Refactor/Limpeza):** Unificar os campos `identificador_extra_coluna` (em `GamConfigImportacao`) e `corretor_creci` (em `mapeamento_json`) em um único campo de mapeamento. O `ID Profissional / Matrícula` (`creci`) assume o papel de identificador de alta precisão. A seção "Identificador Extra (Opcional)" é removida do modal HTML. A coluna `identificador_extra_coluna` é mantida no banco (nullable) mas deixa de ser populada e lida pelo service, garantindo retrocompatibilidade com perfis existentes. O `_buscarCorretor` é atualizado para usar o `creci` como lookup de alta prioridade (antes do fallback por nome).
+
+---
+
+## FASE 15: Motor de Importação Programável (Baseado em JSON e Sandbox)
+
+### História 23: Interpretador Programável em Sandbox (`vm` do Node.js)
+*Como arquiteto, quero um motor de importação programável que execute scripts JS arbitrários em ambiente seguro (Sandbox) de forma isolada, permitindo transformações de dados de alta complexidade.*
+
+- [x] **Tarefa 23.1 (Backend):** Criar o serviço `src/backend/core/services/MotorImportacaoProgramavelService.js` com suporte a execução isolada em VM, timeouts contra loops infinitos, resolução de macros `{{NomeCampo}}`, helpers nativos e hooks procedurais de linha.
+- [x] **Tarefa 23.2 (Testes):** Criar suíte de testes unitários `src/backend/__tests__/MotorImportacaoProgramavelService.test.js` para validar a estabilidade da sandbox, parse de moedas robusto, segurança de macros e hooks.
+
+### História 24: Persistência de Transações e Resolução Dinâmica de Usuários via JSON
+*Como administrador avançado, quero que a esteira de dados grave transações mapeadas dinamicamente, permitindo múltiplos lançamentos de parcelamento ou recebíveis e associando automaticamente aos consultores.*
+
+- [x] **Tarefa 24.1 (Backend):** Criar os endpoints de preview e confirmação da importação programável `/api/admin/importacao/programavel/preview` e `/api/admin/importacao/programavel/confirm` no `ImportacaoController.js` e registrá-los no `admin.js`.
+- [x] **Tarefa 24.2 (Backend):** Implementar o resolvedor dinâmico de `usuario_id` com o lookup priorizado no banco de dados e sinalização reativa de ambiguidades e candidatos.
+- [x] **Tarefa 24.3 (Backend):** Suportar persistência transacional em lote para arrays dinâmicos de parcelamento gerados na sandbox.
+- [x] **Tarefa 24.4 (Testes):** Desenvolver testes de integração `src/backend/__tests__/ImportacaoProgramavelController.test.js` cobrindo o fluxo completo da API com Supertest.
+
+### História 25: Editor Visual de Autoria No-Code e Depurador de Fluxo (Frontend)
+*Como administrador, quero um painel premium de autoria para criar perfis programáveis por meio de caixas visuais ou Monaco Editor, acompanhado de logs reativos de simulação em tempo real.*
+
+- [x] **Tarefa 25.1 (Frontend):** Desenvolver `src/frontend/admin-importacao-programavel.html` contendo o editor de código Monaco Editor via CDN, simulação lateral reativa com console de logs da sandbox e inputs visuais para mapeamento.
+- [x] **Tarefa 25.2 (Frontend):** Renderizar a árvore visual simplificada (flowchart) da esteira de dados conectando colunas aos outputs do banco via React Flow / Litegraph.js.
+- [x] **Tarefa 25.3 (Frontend):** Integrar o redirecionamento e atalhos de acesso à importação programável a partir do dashboard principal e da tela de upload clássica.
+
+### História 26: Manual de Autoria Vivo e CI/CD Doc-as-Code
+*Como administrador e dev, quero um manual interativo integrado no Git, com testes automáticos de exemplos e validação em hooks do Git para garantir que o manual nunca fique desatualizado.*
+
+- [x] **Tarefa 26.1 (Docs):** Elaborar o manual de sintaxe e autoria `/docs/motor-importacao-manual.md` com explicações do JSON, helpers, e múltiplos scripts práticos de exemplo.
+- [x] **Tarefa 26.2 (Testes):** Criar `src/backend/__tests__/DocExamples.test.js` para varrer e testar automaticamente os exemplos do manual Markdown contra a sandbox.
+- [x] **Tarefa 26.3 (Governança):** Atualizar `src/backend/infra/scripts/preCommitValidator.js` para bloquear commits se o código do motor mudar sem diff correspondente no manual `/docs/motor-importacao-manual.md` (Governança Doc-as-Code).
+
+---
+
+## FASE 16: Expansão do Editor Visual No-Code (Nós de Sanitização e Alertas Webhook)
+
+### História 27: Nó Sanitizador de Texto (`text_sanitizer`)
+*Como administrador no-code, quero um bloco visual que limpe, formate e trate textos de forma simples na interface sem precisar escrever códigos JS.*
+
+- [x] **Tarefa 27.1 (Frontend):** Adicionar o botão do nó `🔤 Sanitizador de Texto` na barra lateral de nós disponíveis.
+- [x] **Tarefa 27.2 (Frontend):** Adicionar as regras de estilos CSS (.node-variant-text_sanitizer) com bordas azuis e cabeçalho gradiente.
+- [x] **Tarefa 27.3 (Frontend):** Implementar a renderização visual do card no canvas com uma porta de entrada `in` e uma de saída `out`.
+- [x] **Tarefa 27.4 (Frontend):** Desenvolver o painel de propriedades para configurar a regra selecionada (UPPERCASE, lowercase, trim, clean) e o nome do campo resultante.
+- [x] **Tarefa 27.5 (Frontend):** Adaptar `compileFlowchartToJSON` e `parseJSONToFlowchart` para converter bidirecionalmente a sanitização em scripts estruturados de mapeamento e vice-versa.
+
+### História 28: Nó de Envio de Alertas Webhook (`webhook_alert`)
+*Como administrador, quero um bloco terminal que envie notificações/alertas de webhook (Slack/Teams) sempre que uma linha for processada pelo motor programável.*
+
+- [x] **Tarefa 28.1 (Frontend):** Adicionar o botão do nó `🔔 Enviar Webhook/Alerta` na barra lateral do editor.
+- [x] **Tarefa 28.2 (Frontend):** Adicionar as regras de estilos CSS (.node-variant-webhook_alert) com bordas laranjas e cabeçalho gradiente.
+- [x] **Tarefa 28.3 (Frontend):** Implementar a renderização visual do card terminal com uma porta de entrada `in`.
+- [x] **Tarefa 28.4 (Frontend):** Desenvolver o painel de propriedades para configurar a URL do webhook e o corpo da mensagem com suporte a macros `{{campo}}`.
+- [/] **Tarefa 28.5 (Frontend):** Adaptar `compileFlowchartToJSON` e `parseJSONToFlowchart` para converter o webhook em hooks ou configurações gerais de envio de alertas de forma bidirecional.
 

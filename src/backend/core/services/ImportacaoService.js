@@ -1,6 +1,7 @@
 const db = require('../../infra/db');
 const crypto = require('crypto');
 const xlsx = require('xlsx');
+const MotorImportacaoProgramavelService = require('./MotorImportacaoProgramavelService');
 
 class ImportacaoService {
   async listarPerfis(empresa_id) {
@@ -93,7 +94,7 @@ class ImportacaoService {
       .del();
 
     if (!deleted) {
-      throw new Error('Perfil nÃ£o encontrado para exclusÃ£o');
+      throw new Error('Perfil não encontrado para exclusão');
     }
     return { success: true };
   }
@@ -101,7 +102,6 @@ class ImportacaoService {
   // Analisa uma string base64 de planilha e retorna as linhas brutas
   _lerPlanilhaBase64(fileBase64) {
     try {
-      // Remove header data URI se presente (ex: data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,...)
       const base64Clean = fileBase64.replace(/^data:.*?;base64,/, "");
       const workbook = xlsx.read(base64Clean, { type: 'base64' });
       const sheetName = workbook.SheetNames[0];
@@ -142,16 +142,16 @@ class ImportacaoService {
 
   _guessMapeamento(headers) {
     const patterns = {
-      corretor_identificador: ['corretor', 'nome corretor', 'cpf', 'corretor responsavel', 'corretor identificador', 'corretor responsÃ¡vel'],
+      corretor_identificador: ['corretor', 'nome corretor', 'cpf', 'corretor responsavel', 'corretor identificador', 'corretor responsável'],
       corretor_creci: ['creci', 'registro profissional', 'creci corretor'],
       valor_venda: ['valor venda', 'valor total', 'total venda', 'venda r$', 'valor da venda'],
       valor_pago: ['valor pago', 'pago atual', 'valor pago atual', 'valor recebido', 'valor recebido r$'],
       empreendimento: ['empreendimento', 'empreendimento unidade', 'empreendimento / unidade'],
-      unidade: ['unidade', 'imovel', 'imÃ³vel'],
+      unidade: ['unidade', 'imovel', 'imóvel'],
       cliente_nome: ['cliente', 'nome cliente', 'nome do cliente', 'comprador'],
-      balao_valor: ['balao valor', 'balÃ£o valor', 'valor balao', 'valor balÃ£o', 'valor reforco', 'valor reforÃ§o'],
-      balao_datas: ['balao datas', 'balÃ£o datas', 'datas balao', 'datas balÃ£o', 'datas reforco', 'datas reforÃ§o'],
-      balao_qtd: ['balao qtd', 'balÃ£o qtd', 'qtde balao', 'qtde balÃ£o', 'quantidade baloes', 'quantidade balÃµes', 'qtd reforco', 'qtd reforÃ§o']
+      balao_valor: ['balao valor', 'balão valor', 'valor balao', 'valor balão', 'valor reforco', 'valor reforço'],
+      balao_datas: ['balao datas', 'balão datas', 'datas balao', 'datas balão', 'datas reforco', 'datas reforço'],
+      balao_qtd: ['balao qtd', 'balão qtd', 'qtde balao', 'qtde balão', 'quantidade baloes', 'quantidade balões', 'qtd reforco', 'qtd reforço']
     };
 
     const sugestoes = {};
@@ -166,19 +166,19 @@ class ImportacaoService {
 
   async sugerirMapeamento(empresa_id, fileBase64, { linha_cabecalho = 1, usa_ia = false } = {}) {
     if (!fileBase64) {
-      throw new Error('O campo fileBase64 Ã© obrigatÃ³rio');
+      throw new Error('O campo fileBase64 é obrigatório');
     }
 
     const rawRows = this._lerPlanilhaBase64(fileBase64);
     const cabecalho0Based = Math.max(0, parseInt(linha_cabecalho, 10) - 1 || 0);
 
     if (rawRows.length <= cabecalho0Based) {
-      throw new Error('A planilha estÃ¡ vazia ou a linha do cabeÃ§alho estÃ¡ fora dos limites');
+      throw new Error('A planilha está vazia ou a linha do cabeçalho está fora dos limites');
     }
 
     const headers = rawRows[cabecalho0Based];
     if (!headers || !Array.isArray(headers)) {
-      throw new Error('CabeÃ§alho da planilha nÃ£o localizado na linha configurada');
+      throw new Error('Cabeçalho da planilha não localizado na linha configurada');
     }
 
     const colunasDetectadas = headers.map(h => (h === null || h === undefined ? '' : String(h).trim()));
@@ -193,11 +193,7 @@ class ImportacaoService {
     };
   }
 
-  // Faz lookup do corretor por Nome ou ID Profissional (creci) como identificador de alta prioridade
-  // Tarefa 22.8: o `creci` (ID Profissional / Matrícula) unifica o papel antes dividido entre
-  // `corretor_creci` e `identificador_extra_coluna` — agora é o lookup de maior precisão.
   async _buscarCorretor(empresa_id, nome, creci) {
-    // 1. Busca de alta precisão pelo ID Profissional (cpf, email ou identificador_extra do parceiro)
     if (creci) {
       const idVal = String(creci).trim().toUpperCase();
       const idValLimpo = this._limparCPF(idVal);
@@ -224,7 +220,6 @@ class ImportacaoService {
       }
     }
 
-    // 2. Tentar por CPF (se o nome se parecer com CPF)
     const cpfLimpo = this._limparCPF(nome);
     if (cpfLimpo.length === 11) {
       const corretor = await db('GamUsuario')
@@ -234,7 +229,6 @@ class ImportacaoService {
       if (corretor) return corretor;
     }
 
-    // 3. Tentar por Nome (Case-Insensitive) — com detecção de ambiguidade
     if (nome) {
       const nomeBusca = String(nome).trim().toUpperCase();
       const corretoresComNome = await db('GamUsuario')
@@ -254,23 +248,18 @@ class ImportacaoService {
     return null;
   }
 
-  // Parser de valores numÃ©ricos
   _parseMoeda(valor) {
     if (valor === undefined || valor === null) return 0;
     if (typeof valor === 'number') return valor;
     
-    // Se for string, limpa pontuaÃ§Ã£o de moeda brasileira/americana
     let str = String(valor).trim();
     if (!str) return 0;
     
-    // Remove "R$", espaÃ§os, etc.
     str = str.replace(/R\$\s*/g, '');
     
-    // Se contiver vÃ­rgula e ponto, ex: 1.000,50 -> 1000.50
     if (str.includes('.') && str.includes(',')) {
       str = str.replace(/\./g, '').replace(',', '.');
     } else if (str.includes(',')) {
-      // Se contiver apenas vÃ­rgula, ex: 1000,50 -> 1000.50
       str = str.replace(',', '.');
     }
     
@@ -278,7 +267,6 @@ class ImportacaoService {
     return isNaN(num) ? 0 : num;
   }
 
-  // Processa as datas e valores de balÃµes futuros
   _parseBaloes(rowValores, separador, fatorConversao = 100, formatoData = 'DD/MM/YYYY') {
     const { balao_datas_raw, balao_valor_raw, balao_qtd_raw } = rowValores;
     
@@ -291,14 +279,14 @@ class ImportacaoService {
       
     if (datas.length === 0) return [];
     
-    const valorUnitarioRs = this._parseMoeda(balao_valor_raw); // Alterado: Assume que a planilha informa o valor de CADA balão, e não o total
+    const valorUnitarioRs = this._parseMoeda(balao_valor_raw);
     const valorUnitarioTalentos = Math.floor(valorUnitarioRs / fatorConversao);
     
     return datas.map(dataStr => {
       let dataVencimento = null;
       
       if (formatoData === 'DD/MM/YYYY' || formatoData === 'MM/DD/YYYY') {
-        const partes = dataStr.split(/[\/\-\.]/); // suporta /, -, .
+        const partes = dataStr.split(/[\/\-\.]/);
         if (partes.length === 3) {
           if (formatoData === 'DD/MM/YYYY') {
             dataVencimento = new Date(parseInt(partes[2], 10), parseInt(partes[1], 10) - 1, parseInt(partes[0], 10));
@@ -322,7 +310,6 @@ class ImportacaoService {
     });
   }
 
-  // Gera N parcelas fixas com vencimentos mensais sequenciais
   _parseParcelas(rawQtd, rawValorRs, rawDataInicio, formatoData, fatorConversao = 100) {
     const qtd = parseInt(rawQtd, 10);
     if (isNaN(qtd) || qtd <= 0) return [];
@@ -352,7 +339,7 @@ class ImportacaoService {
     }
 
     if (!dataInicio || isNaN(dataInicio.getTime())) {
-      dataInicio = new Date(); // fallback
+      dataInicio = new Date();
     }
 
     const valorUnitarioTalentos = Math.floor(valorUnitarioRs / fatorConversao);
@@ -375,19 +362,19 @@ class ImportacaoService {
   async previewImportacao(empresa_id, fileBase64, perfil_id, modo = 'CONTRATOS') {
     const perfil = await this.obterPerfil(empresa_id, perfil_id);
     if (!perfil) {
-      throw new Error('Perfil de importaÃ§Ã£o nÃ£o encontrado');
+      throw new Error('Perfil de importação não encontrado');
     }
 
     const rawRows = this._lerPlanilhaBase64(fileBase64);
     const cabecalho0Based = Math.max(0, perfil.linha_cabecalho - 1);
     
     if (rawRows.length <= cabecalho0Based) {
-      throw new Error('A planilha estÃ¡ vazia ou a linha do cabeÃ§alho estÃ¡ fora dos limites');
+      throw new Error('A planilha está vazia ou a linha do cabeçalho está fora dos limites');
     }
 
     const headers = rawRows[cabecalho0Based];
     if (!headers || !Array.isArray(headers)) {
-      throw new Error('CabeÃ§alho da planilha nÃ£o localizado na linha configurada');
+      throw new Error('Cabeçalho da planilha não localizado na linha configurada');
     }
 
     const headerIndices = {};
@@ -397,7 +384,6 @@ class ImportacaoService {
 
     const mapeamento = perfil.mapeamento_json;
     
-    // Mapeia chaves para facilitar a extraÃ§Ã£o
     const fieldsToExtract = {
       corretor_identificador: String(mapeamento.corretor_identificador || '').trim().toUpperCase(),
       corretor_creci: String(mapeamento.corretor_creci || '').trim().toUpperCase(),
@@ -411,7 +397,6 @@ class ImportacaoService {
       balao_qtd: String(mapeamento.balao_qtd || '').trim().toUpperCase()
     };
 
-    // Valida se as colunas essenciais mapeadas existem no arquivo
     let colunasObrigatorias = ['corretor_identificador', 'valor_pago'];
     if (modo !== 'BAIXAS') {
       colunasObrigatorias.push('valor_venda', 'empreendimento');
@@ -432,7 +417,6 @@ class ImportacaoService {
 
     for (let i = 0; i < dataRows.length; i++) {
       const row = dataRows[i];
-      // Pula linhas vazias
       if (!row || row.length === 0 || row.every(val => val === null || val === '')) {
         continue;
       }
@@ -450,7 +434,6 @@ class ImportacaoService {
       const rawUnidade = getVal('unidade');
       const rawCliente = getVal('cliente_nome');
 
-      // Pula linhas de Totais, Legendas ou sem corretor
       if (!rawCorretor || String(rawCorretor).trim() === '' || String(rawCorretor).trim().toUpperCase() === 'TOTAIS' || (rawCliente && String(rawCliente).trim().toUpperCase() === 'TOTAIS')) {
         continue;
       }
@@ -489,11 +472,7 @@ class ImportacaoService {
         const rawParcelaData = getValByName(perfil.parcela_data_inicio);
         parcelasCalculadas = this._parseParcelas(rawParcelaQtd, rawParcelaValor, rawParcelaData, perfil.formato_data_balao, fatorConversao);
       }
-      
-      const somaBaloesTalentos = baloesCalculados.reduce((acc, curr) => acc + curr.valor_talentos, 0);
-      const somaParcelasTalentos = parcelasCalculadas.reduce((acc, curr) => acc + curr.valor_talentos, 0);
 
-      // Extração de campos extras configurados no perfil
       const dadosExtras = {
         fator_conversao_utilizado: fatorConversao
       };
@@ -510,7 +489,7 @@ class ImportacaoService {
       }
 
       resultadoRows.push({
-        linha: cabecalho0Based + 2 + i, // 1-based no arquivo original
+        linha: cabecalho0Based + 2 + i,
         corretor_nome_planilha: rawCorretor,
         corretor_creci_planilha: rawCreci,
         empreendimento: rawEmpreendimento || 'Desconhecido',
@@ -546,11 +525,9 @@ class ImportacaoService {
   async confirmarImportacao(empresa_id, admin_id, fileBase64, perfil_id, resolucoes = {}, modo = 'CONTRATOS') {
     const preview = await this.previewImportacao(empresa_id, fileBase64, perfil_id, modo);
 
-    // Aplicar resolucões manuais de ambiguidade (admin escolheu o corretor correto)
     for (const row of preview.linhas) {
       const resolucaoId = resolucoes[row.linha];
       if (resolucaoId && (!row.corretor_encontrado || row.ambiguous)) {
-        // Verifica se o corretor existe no tenant
         const corretor = await db('GamUsuario')
           .where({ id: resolucaoId, empresa_id, perfil: 'CORRETOR' })
           .first();
@@ -565,7 +542,6 @@ class ImportacaoService {
       }
     }
 
-    // Recalcular inconsistências após resolucões
     const inconsistenciasRestantes = preview.linhas.filter(r => !r.corretor_encontrado).length;
     if (inconsistenciasRestantes > 0) {
       throw new Error(`Existem ${inconsistenciasRestantes} corretores não localizados ou com nomes ambíguos no sistema. Cadastre-os ou resolva-os antes de efetuar a importação definitiva.`);
@@ -587,7 +563,6 @@ class ImportacaoService {
           let saldoPagarTalentos = row.valores.talentos_disponiveis;
           if (saldoPagarTalentos <= 0) continue;
 
-          // Busca as transacoes pendentes do corretor
           const pendentes = await trx('GamTransacao')
             .where({ empresa_id, usuario_id: corretorId, status: 'PENDENTE' })
             .orderByRaw('data_vencimento IS NULL ASC, data_vencimento ASC, created_at ASC');
@@ -596,7 +571,6 @@ class ImportacaoService {
             if (saldoPagarTalentos <= 0) break;
 
             if (saldoPagarTalentos >= pend.valor) {
-              // Paga a transação inteira
               await trx('GamTransacao')
                 .where({ id: pend.id })
                 .update({
@@ -607,7 +581,6 @@ class ImportacaoService {
               saldoPagarTalentos -= pend.valor;
               transacoesCriadas++;
             } else {
-              // Pagamento parcial: Atualiza a pendente subtraindo o valor
               await trx('GamTransacao')
                 .where({ id: pend.id })
                 .update({
@@ -615,7 +588,6 @@ class ImportacaoService {
                   valor_original_rs: pend.valor_original_rs ? (pend.valor_original_rs * ((pend.valor - saldoPagarTalentos) / pend.valor)) : null
                 });
               
-              // Cria uma COMPENSADA para a porção paga
               const parTransacaoId = crypto.randomUUID();
               await trx('GamTransacao').insert({
                 id: parTransacaoId,
@@ -643,7 +615,6 @@ class ImportacaoService {
             }
           }
           
-          // Se ainda sobrou saldoPagarTalentos, cria uma transação de crédito avulsa
           if (saldoPagarTalentos > 0) {
             const extraTransacaoId = crypto.randomUUID();
             await trx('GamTransacao').insert({
@@ -669,7 +640,6 @@ class ImportacaoService {
             transacoesCriadas++;
           }
         } else {
-          // 1. Criar transação COMPENSADA para os Talentos já pagos (disponíveis)
           if (row.valores.talentos_disponiveis > 0) {
             await trx('GamTransacao').insert({
               id: transacaoId,
@@ -694,7 +664,6 @@ class ImportacaoService {
             transacoesCriadas++;
           }
 
-          // 2. Criar transações PENDENTES para os Balões Futuros
           let totalBaloesTalentos = 0;
           for (let idxB = 0; idxB < row.baloes.length; idxB++) {
             const bal = row.baloes[idxB];
@@ -724,7 +693,6 @@ class ImportacaoService {
             transacoesCriadas++;
           }
 
-          // 2.5 Criar transações PENDENTES para as Parcelas Fixas
           let totalParcelasTalentos = 0;
           let totalParcelasRs = 0;
           if (row.parcelas && Array.isArray(row.parcelas)) {
@@ -758,7 +726,6 @@ class ImportacaoService {
             }
           }
 
-          // 3. Criar transação PENDENTE genérica para o saldo remanescente a receber
           const saldoRemanescenteAReceber = row.valores.talentos_a_receber - totalBaloesTalentos - totalParcelasTalentos;
           if (saldoRemanescenteAReceber > 0) {
             const remTransacaoId = crypto.randomUUID();
@@ -787,9 +754,7 @@ class ImportacaoService {
         }
       }
 
-      // 4. Recalcular e atualizar saldos de todos os corretores afetados no banco de dados
       for (const corretorId of corretoresAfetados) {
-        // Soma todas as transaÃ§Ãµes COMPENSADAS de crÃ©dito, subtrai dÃ©bitos manuais
         const transacoesDoCorretor = await trx('GamTransacao')
           .where({ usuario_id: corretorId });
 
@@ -801,7 +766,299 @@ class ImportacaoService {
           if (t.status === 'COMPENSADO') {
             if (t.tipo === 'CREDITO') novoDisponivel += valorNum;
             else if (t.tipo === 'DEBITO') novoDisponivel -= valorNum;
-            else if (t.tipo === 'ESTORNO') novoDisponivel += valorNum; // Estorno adiciona/subtrai direto baseado no sinal
+            else if (t.tipo === 'ESTORNO') novoDisponivel += valorNum;
+          } else if (t.status === 'PENDENTE') {
+            if (t.tipo === 'CREDITO') novoAReceber += valorNum;
+            else if (t.tipo === 'DEBITO') novoAReceber -= valorNum;
+          }
+        });
+
+        await trx('GamUsuario')
+          .where({ id: corretorId })
+          .update({
+            saldo_disponivel: Math.max(0, novoDisponivel),
+            saldo_a_receber: Math.max(0, novoAReceber),
+            updated_at: trx.fn.now()
+          });
+      }
+
+      return {
+        sucesso: true,
+        total_vendas_processadas: preview.total_linhas,
+        transacoes_criadas: transacoesCriadas,
+        corretores_atualizados: corretoresAfetados.size
+      };
+    });
+
+    return resultadoProcessado;
+  }
+
+  async previewImportacaoProgramavel(empresa_id, fileBase64, perfil_id) {
+    const perfil = await this.obterPerfil(empresa_id, perfil_id);
+    if (!perfil) {
+      throw new Error('Perfil de importação não encontrado');
+    }
+
+    const rawRows = this._lerPlanilhaBase64(fileBase64);
+    const cabecalho0Based = Math.max(0, perfil.linha_cabecalho - 1);
+    
+    if (rawRows.length <= cabecalho0Based) {
+      throw new Error('A planilha está vazia ou a linha do cabeçalho está fora dos limites');
+    }
+
+    const headers = rawRows[cabecalho0Based];
+    if (!headers || !Array.isArray(headers)) {
+      throw new Error('Cabeçalho da planilha não localizado na linha configurada');
+    }
+
+    const mappedRows = [];
+    const dataRows = rawRows.slice(cabecalho0Based + 1);
+    
+    for (const row of dataRows) {
+      if (!row || row.length === 0 || row.every(val => val === null || val === '')) {
+        continue;
+      }
+      
+      const mappedRow = {};
+      row.forEach((cellVal, idx) => {
+        const letter = String.fromCharCode(65 + idx);
+        mappedRow[letter] = cellVal;
+      });
+      mappedRows.push(mappedRow);
+    }
+
+    const motor = new MotorImportacaoProgramavelService(perfil.mapeamento_json);
+    const { resultados, logs } = await motor.processar(mappedRows);
+
+    const resultadoRows = [];
+    for (const res of resultados) {
+      const linhaResult = res.dados;
+      const numeroLinha = cabecalho0Based + 2 + (res.linha - 1);
+
+      let resolvedNome = '';
+      let resolvedCreci = '';
+
+      const nomeKeys = ['parceiro', 'consultor', 'nome', 'corretor', 'nome_consultor', 'nome_parceiro', 'colaborador'];
+      for (const key of Object.keys(linhaResult)) {
+        if (nomeKeys.includes(key.toLowerCase().trim())) {
+          resolvedNome = String(linhaResult[key] || '');
+          break;
+        }
+      }
+
+      const creciKeys = ['creci', 'idprofissional', 'id_profissional', 'cpf', 'matricula', 'email', 'identificadorextra', 'identificador_extra', 'documento'];
+      for (const key of Object.keys(linhaResult)) {
+        const normalizedKey = key.toLowerCase().replace(/[^a-z0-9]/g, '');
+        if (creciKeys.includes(normalizedKey)) {
+          resolvedCreci = String(linhaResult[key] || '');
+          break;
+        }
+      }
+
+      const corretor = await this._buscarCorretor(empresa_id, resolvedNome, resolvedCreci);
+      const isAmbiguous = corretor && corretor.ambiguous;
+
+      resultadoRows.push({
+        linha: numeroLinha,
+        dados: linhaResult,
+        corretor_encontrado: !!corretor && !isAmbiguous,
+        corretor_id: (corretor && !isAmbiguous) ? corretor.id : null,
+        corretor_nome_sistema: (corretor && !isAmbiguous) ? corretor.nome : null,
+        corretor_email_sistema: (corretor && !isAmbiguous) ? corretor.email : null,
+        ambiguous: !!isAmbiguous,
+        candidatos: isAmbiguous ? corretor.candidatos : []
+      });
+    }
+
+    const colunasDetectadas = headers.map(h => (h === null || h === undefined ? '' : String(h).trim()));
+
+    return {
+      total_linhas: resultadoRows.length,
+      colunas_detectadas: colunasDetectadas,
+      linhas: resultadoRows,
+      logs,
+      inconsistencias: resultadoRows.filter(r => !r.corretor_encontrado).length
+    };
+  }
+
+  async confirmarImportacaoProgramavel(empresa_id, admin_id, fileBase64, perfil_id, resolucoes = {}) {
+    const preview = await this.previewImportacaoProgramavel(empresa_id, fileBase64, perfil_id);
+
+    for (const row of preview.linhas) {
+      const resolucaoId = resolucoes[row.linha];
+      if (resolucaoId && (!row.corretor_encontrado || row.ambiguous)) {
+        const corretor = await db('GamUsuario')
+          .where({ id: resolucaoId, empresa_id, perfil: 'CORRETOR' })
+          .first();
+        if (corretor) {
+          row.corretor_encontrado = true;
+          row.ambiguous = false;
+          row.corretor_id = corretor.id;
+          row.corretor_nome_sistema = corretor.nome;
+          row.corretor_email_sistema = corretor.email;
+          row.candidatos = [];
+        }
+      }
+    }
+
+    const inconsistenciasRestantes = preview.linhas.filter(r => !r.corretor_encontrado).length;
+    if (inconsistenciasRestantes > 0) {
+      throw new Error(`Existem ${inconsistenciasRestantes} parceiros não localizados ou com nomes ambíguos no sistema. Cadastre-os ou resolva-os antes de efetuar a importação definitiva.`);
+    }
+
+    const resultadoProcessado = await db.transaction(async (trx) => {
+      let transacoesCriadas = 0;
+      const corretoresAfetados = new Set();
+
+      for (const row of preview.linhas) {
+        const corretorId = row.corretor_id;
+        corretoresAfetados.add(corretorId);
+
+        const linhaResult = row.dados;
+        const justificativaBase = `Importação Programável - Linha ${row.linha}`;
+        const dadosExtrasStr = JSON.stringify(linhaResult);
+
+        let transacoes = [];
+        const transacoesKeys = ['transacoes', 'transacoes_geradas', 'transacoesgeradas', 'movimentacoes'];
+        
+        for (const key of Object.keys(linhaResult)) {
+          if (transacoesKeys.includes(key.toLowerCase().trim())) {
+            const val = linhaResult[key];
+            if (Array.isArray(val)) {
+              transacoes = val;
+            } else if (typeof val === 'object' && val !== null) {
+              transacoes = [val];
+            }
+            break;
+          }
+        }
+
+        if (transacoes.length === 0) {
+          let valor = 0;
+          const valorKeys = ['valor', 'valortalentos', 'valor_talentos', 'valorpontos', 'valor_pontos'];
+          for (const key of Object.keys(linhaResult)) {
+            const norm = key.toLowerCase().replace(/[^a-z]/g, '');
+            if (valorKeys.includes(norm)) {
+              valor = parseFloat(linhaResult[key] || 0);
+              break;
+            }
+          }
+
+          if (valor === 0) {
+            for (const key of Object.keys(linhaResult)) {
+              const val = linhaResult[key];
+              if (typeof val === 'number') {
+                valor = val;
+                break;
+              }
+            }
+          }
+
+          let tipo = 'CREDITO';
+          if (linhaResult.tipo) tipo = String(linhaResult.tipo).toUpperCase();
+
+          let status = 'COMPENSADO';
+          if (linhaResult.status) status = String(linhaResult.status).toUpperCase();
+
+          let data_vencimento = null;
+          const vencKeys = ['datavencimento', 'data_vencimento', 'vencimento', 'data'];
+          for (const key of Object.keys(linhaResult)) {
+            const norm = key.toLowerCase().replace(/[^a-z0-9]/g, '');
+            if (vencKeys.includes(norm)) {
+              data_vencimento = linhaResult[key] ? String(linhaResult[key]) : null;
+              break;
+            }
+          }
+
+          let valor_original_rs = null;
+          const origKeys = ['valororiginal', 'valor_original', 'valor_original_rs', 'valorvenda', 'valor_venda'];
+          for (const key of Object.keys(linhaResult)) {
+            const norm = key.toLowerCase().replace(/[^a-z0-9]/g, '');
+            if (origKeys.includes(norm)) {
+              valor_original_rs = parseFloat(linhaResult[key] || 0);
+              break;
+            }
+          }
+
+          const empreendimento = linhaResult.empreendimento || linhaResult.produto || linhaResult.servico || 'Geral';
+          const unidade = linhaResult.unidade || linhaResult.contrato || linhaResult.ref_contrato || 'Geral';
+          const contato_cliente = linhaResult.cliente || linhaResult.cliente_nome || linhaResult.contato_cliente || 'Não Informado';
+
+          transacoes.push({
+            valor,
+            tipo,
+            status,
+            data_vencimento,
+            valor_original_rs,
+            empreendimento,
+            unidade,
+            contato_cliente,
+            justificativa: linhaResult.justificativa || linhaResult.descricao || justificativaBase
+          });
+        }
+
+        for (const t of transacoes) {
+          const transacaoId = crypto.randomUUID();
+          const tStatus = String(t.status || 'PENDENTE').toUpperCase();
+          const tTipo = String(t.tipo || 'CREDITO').toUpperCase();
+          
+          let dtVenc = null;
+          if (t.data_vencimento || t.vencimento) {
+            const rawDt = t.data_vencimento || t.vencimento;
+            if (rawDt instanceof Date) {
+              dtVenc = rawDt.toISOString();
+            } else if (typeof rawDt === 'string' && rawDt.trim() !== '') {
+              if (rawDt.includes('/')) {
+                const partes = rawDt.split('/');
+                if (partes.length === 3) {
+                  const d = new Date(parseInt(partes[2], 10), parseInt(partes[1], 10) - 1, parseInt(partes[0], 10));
+                  if (!isNaN(d.getTime())) dtVenc = d.toISOString();
+                }
+              }
+              if (!dtVenc) {
+                const d = new Date(rawDt);
+                if (!isNaN(d.getTime())) dtVenc = d.toISOString();
+              }
+            }
+          }
+
+          await trx('GamTransacao').insert({
+            id: transacaoId,
+            empresa_id,
+            usuario_id: corretorId,
+            admin_id: admin_id || null,
+            valor: parseFloat(t.valor || t.valor_talentos || 0),
+            tipo: tTipo,
+            origem: 'IMPORTACAO',
+            justificativa: t.justificativa || t.descricao || justificativaBase,
+            valor_original_rs: t.valor_original_rs ? parseFloat(t.valor_original_rs) : null,
+            status: tStatus,
+            data_vencimento: dtVenc,
+            empreendimento: t.empreendimento || 'Geral',
+            unidade: t.unidade || 'Geral',
+            contato_cliente: t.contato_cliente || 'Não Informado',
+            origem_id: `row-${row.linha}-prog`,
+            dados_extras: dadosExtrasStr,
+            data_compensacao: tStatus === 'COMPENSADO' ? trx.fn.now() : null,
+            created_at: trx.fn.now()
+          });
+          transacoesCriadas++;
+        }
+      }
+
+      for (const corretorId of corretoresAfetados) {
+        const transacoesDoCorretor = await trx('GamTransacao')
+          .where({ usuario_id: corretorId });
+
+        let novoDisponivel = 0;
+        let novoAReceber = 0;
+
+        transacoesDoCorretor.forEach(t => {
+          const valorNum = parseFloat(t.valor);
+          if (t.status === 'COMPENSADO') {
+            if (t.tipo === 'CREDITO') novoDisponivel += valorNum;
+            else if (t.tipo === 'DEBITO') novoDisponivel -= valorNum;
+            else if (t.tipo === 'ESTORNO') novoDisponivel += valorNum;
           } else if (t.status === 'PENDENTE') {
             if (t.tipo === 'CREDITO') novoAReceber += valorNum;
             else if (t.tipo === 'DEBITO') novoAReceber -= valorNum;
@@ -830,4 +1087,3 @@ class ImportacaoService {
 }
 
 module.exports = new ImportacaoService();
-

@@ -1,0 +1,2258 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>V-TALENTOS | Editor de Importação Programável & No-Code</title>
+    <meta name="description" content="Editor avançado de perfil programável e simulador de esteira de dados para o V-Talentos.">
+    <link rel="stylesheet" href="assets/css/style.css">
+    <style>
+        /* ═══════════════════════ LAYOUT E TABS ═══════════════════════ */
+        .editor-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 25px;
+            margin-top: 20px;
+        }
+        @media(min-width: 1200px) {
+            .editor-grid {
+                grid-template-columns: 1.1fr 0.9fr;
+            }
+        }
+        
+        .editor-tabs {
+            display: flex;
+            gap: 10px;
+            border-bottom: 1px solid var(--glass-border);
+            padding-bottom: 12px;
+            margin-bottom: 20px;
+        }
+        .editor-tab {
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            color: var(--text-secondary);
+            background: rgba(255,255,255,0.02);
+            border: 1px solid var(--glass-border);
+            transition: all 0.3s ease;
+        }
+        .editor-tab.active {
+            background: linear-gradient(135deg, rgba(212,175,55,0.15), rgba(212,175,55,0.05));
+            color: var(--accent-primary);
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 15px rgba(212,175,55,0.08);
+        }
+
+        /* ═══════════════════════ CONSOLE DE LOGS ═══════════════════════ */
+        .terminal-console {
+            background: #0d0e12;
+            border: 1px solid #1f2330;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: 'Consolas', 'Courier New', Courier, monospace;
+            font-size: 0.8rem;
+            color: #a9b2c3;
+            height: 250px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.8);
+        }
+        .terminal-line {
+            line-height: 1.4;
+            white-space: pre-wrap;
+            border-left: 2px solid transparent;
+            padding-left: 8px;
+        }
+        .terminal-line.info { color: #61afef; border-color: #61afef; }
+        .terminal-line.warning { color: #e5c07b; border-color: #e5c07b; }
+        .terminal-line.error { color: #f44336; border-color: #f44336; }
+        .terminal-line.global { color: #c678dd; border-color: #c678dd; }
+
+        /* ═══════════════════════ FLOW CHART (VISUAL NODES) ═══════════════════════ */
+        .flow-canvas {
+            height: 160px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--glass-border);
+            background: rgba(255,255,255,0.01);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.1);
+        }
+        .flow-node {
+            background: var(--bg-card);
+            border: 1px solid var(--glass-border);
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            z-index: 2;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            align-items: center;
+        }
+        .flow-node.active { border-color: var(--accent-primary); box-shadow: 0 0 15px rgba(212,175,55,0.15); }
+        .flow-node.success { border-color: var(--success); }
+        .flow-node.target { border-color: var(--success); }
+        .flow-connector {
+            width: 30px;
+            height: 2px;
+            background: var(--glass-border);
+            position: relative;
+            z-index: 1;
+        }
+        .flow-connector::after {
+            content: '➔';
+            position: absolute;
+            right: -8px;
+            top: -7px;
+            color: var(--glass-border);
+            font-size: 0.75rem;
+        }
+
+        /* ═══════════════════════ UPLOAD/PREVIEW ═══════════════════════ */
+        .sim-upload-area {
+            border: 1px dashed var(--glass-border);
+            border-radius: var(--radius-sm);
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            background: rgba(255,255,255,0.01);
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+        .sim-upload-area:hover {
+            border-color: var(--accent-primary);
+            background: rgba(212,175,55,0.02);
+        }
+        .sim-upload-area.has-file {
+            border-color: var(--success);
+            background: rgba(46,204,113,0.02);
+        }
+
+        /* ═══════════════════════ BADGES & WARNINGS ═══════════════════════ */
+        .preview-badge {
+            font-size: 0.65rem;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 20px;
+        }
+        .preview-badge.success { background: rgba(46,204,113,0.15); color: var(--success); }
+        .preview-badge.warning { background: rgba(243,156,18,0.15); color: var(--warning); }
+                .preview-badge.error { background: rgba(231,76,60,0.15); color: var(--error); }
+
+        /* ═══════════════════════ FLOW CHART PREMIUM STYLES ═══════════════════════ */
+        .flow-node-card {
+            position: absolute;
+            background: rgba(18, 20, 28, 0.85);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            padding: 0;
+            width: 220px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            user-select: none;
+            z-index: 10;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .flow-node-card.selected {
+            outline: 2px solid var(--accent-primary) !important;
+            box-shadow: 0 0 20px rgba(212,175,55,0.25) !important;
+        }
+        .flow-node-card-header {
+            padding: 8px 12px;
+            border-top-left-radius: 9px;
+            border-top-right-radius: 9px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #fff;
+            cursor: move;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .flow-node-card-body {
+            padding: 10px 12px;
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .flow-port {
+            width: 10px;
+            height: 10px;
+            background: #fff;
+            border: 2px solid #555;
+            border-radius: 50%;
+            position: absolute;
+            cursor: crosshair;
+            z-index: 12;
+            transition: transform 0.2s, background-color 0.2s;
+        }
+        .flow-port:hover {
+            transform: scale(1.4);
+            background-color: var(--accent-primary);
+            border-color: #fff;
+        }
+        .flow-port.input {
+            left: -6px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        .flow-port.output {
+            right: -6px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        /* Specific ports for multiple rows */
+        .flow-port-row {
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 4px 0;
+            font-size: 0.68rem;
+        }
+        .flow-port-row-port {
+            width: 8px;
+            height: 8px;
+            background: #fff;
+            border: 2px solid #555;
+            border-radius: 50%;
+            cursor: crosshair;
+            position: absolute;
+            z-index: 12;
+            transition: transform 0.2s, background-color 0.2s;
+        }
+        .flow-port-row-port:hover {
+            transform: scale(1.4);
+            background-color: var(--accent-primary);
+            border-color: #fff;
+        }
+        .flow-port-row-port.input {
+            left: -14px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        .flow-port-row-port.output {
+            right: -14px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        
+        /* Node visual variants */
+        .node-variant-excel_input { border: 1.5px solid #2d7ff9; box-shadow: 0 0 15px rgba(45,127,249,0.15); }
+        .node-variant-excel_input .flow-node-card-header { background: linear-gradient(90deg, #2d7ff9, #1c52b0); }
+        .node-variant-script_node { border: 1.5px solid #9b51e0; box-shadow: 0 0 15px rgba(155,81,224,0.15); }
+        .node-variant-script_node .flow-node-card-header { background: linear-gradient(90deg, #9b51e0, #692ca8); }
+        .node-variant-ifelse_node { border: 1.5px solid #e22b7a; box-shadow: 0 0 15px rgba(226,43,122,0.15); }
+        .node-variant-ifelse_node .flow-node-card-header { background: linear-gradient(90deg, #e22b7a, #9e144f); }
+        .node-variant-loop_node { border: 1.5px solid #f39c12; box-shadow: 0 0 15px rgba(243,156,18,0.15); }
+        .node-variant-loop_node .flow-node-card-header { background: linear-gradient(90deg, #f39c12, #b87103); }
+        .node-variant-save_node { border: 1.5px solid #2ecc71; box-shadow: 0 0 15px rgba(46,204,113,0.15); }
+        .node-variant-save_node .flow-node-card-header { background: linear-gradient(90deg, #2ecc71, #157f43); }
+        .node-variant-text_sanitizer { border: 1.5px solid #3498db; box-shadow: 0 0 15px rgba(52,152,219,0.15); }
+        .node-variant-text_sanitizer .flow-node-card-header { background: linear-gradient(90deg, #3498db, #1d6fa5); }
+        .node-variant-webhook_alert { border: 1.5px solid #e67e22; box-shadow: 0 0 15px rgba(230,126,34,0.15); }
+        .node-variant-webhook_alert .flow-node-card-header { background: linear-gradient(90deg, #e67e22, #d35400); }
+
+        /* Fullscreen & minimizing visual editor behaviors */
+        .fullscreen-workspace {
+            position: fixed !important;
+            top: 0;
+            left: 0;
+            width: 100vw !important;
+            height: 100vh !important;
+            z-index: 99999 !important;
+            background: #0d0e15 !important;
+            padding: 25px !important;
+            box-sizing: border-box;
+            overflow-y: auto !important;
+        }
+        
+        /* Properties edit panel container */
+        #nodePropsPanel {
+            max-height: 600px !important;
+            overflow-y: auto !important;
+            transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease !important;
+        }
+        
+        #nodePropsPanel.minimized-panel {
+            max-height: 48px !important;
+            overflow: hidden !important;
+        }
+        
+        #nodePropsPanel.minimized-panel #propsFormContent {
+            opacity: 0 !important;
+            pointer-events: none;
+        }
+        
+        /* Grabbing cursors for panning canvas */
+        .flow-workspace-grabbing {
+            cursor: grabbing !important;
+        }
+
+        /* ═══════════════════════ GRID LAYOUTS & COMPONENTES ═══════════════════════ */
+        .form-mini-row {
+            display: grid !important;
+            grid-template-columns: 3fr 1fr 1fr !important;
+            gap: 15px !important;
+            margin-bottom: 20px !important;
+            align-items: end !important;
+        }
+        @media (max-width: 768px) {
+            .form-mini-row {
+                grid-template-columns: 1fr !important;
+                gap: 12px !important;
+            }
+        }
+
+        /* ═══════════════════════ PREMIUM INPUTS & SELECT DROPDOWNS ═══════════════════════ */
+        .form-control, select.form-control {
+            background: rgba(255, 255, 255, 0.03) !important;
+            border: 1px solid var(--glass-border) !important;
+            color: var(--text-primary) !important;
+            border-radius: var(--radius-sm) !important;
+            outline: none !important;
+            transition: all 0.3s ease !important;
+            font-family: var(--font-main) !important;
+            padding: 8px 12px !important;
+            box-sizing: border-box !important;
+        }
+        
+        .form-control:focus, select.form-control:focus {
+            border-color: var(--accent-primary) !important;
+            background: rgba(255, 255, 255, 0.08) !important;
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.25) !important;
+        }
+
+        /* Premium customized Select styling with gold dropdown arrow */
+        select.form-control {
+            appearance: none !important;
+            -webkit-appearance: none !important;
+            -moz-appearance: none !important;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23D4AF37' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
+            background-repeat: no-repeat !important;
+            background-position: right 12px center !important;
+            background-size: 14px !important;
+            padding-right: 36px !important;
+            cursor: pointer !important;
+        }
+
+        /* Styling for option tags inside dropdowns */
+        select.form-control option {
+            background-color: #1a1a2e !important;
+            color: #ffffff !important;
+            padding: 10px !important;
+        }
+        
+        /* Smooth micro-animations for interactive form fields */
+        .form-control:hover, select.form-control:hover {
+            border-color: rgba(212, 175, 55, 0.4) !important;
+            background: rgba(255, 255, 255, 0.05) !important;
+        }
+
+        /* ═══════════════════════ BUTTONS PREMIUM STYLE ═══════════════════════ */
+        .btn, .btn-advance {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 20px;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid var(--glass-border) !important;
+            font-family: var(--font-main);
+            text-decoration: none;
+            background: rgba(255, 255, 255, 0.03);
+            color: var(--text-primary);
+            outline: none;
+        }
+
+        .btn:hover:not(:disabled), .btn-advance:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.08) !important;
+            border-color: rgba(212, 175, 55, 0.5) !important;
+            color: var(--accent-primary) !important;
+            box-shadow: 0 0 12px rgba(212, 175, 55, 0.15);
+            transform: translateY(-1px);
+        }
+
+        .btn:active:not(:disabled), .btn-advance:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .btn:disabled, .btn-advance:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            pointer-events: none;
+            background: rgba(255, 255, 255, 0.02) !important;
+            border-color: var(--glass-border) !important;
+            color: var(--text-secondary) !important;
+            box-shadow: none !important;
+        }
+
+        /* btn-primary override for premium golden look */
+        .btn-primary, .btn-advance:not(:disabled) {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary)) !important;
+            color: #0d0e15 !important;
+            border: 1px solid rgba(212, 175, 55, 0.4) !important;
+            font-weight: 700;
+            box-shadow: 0 4px 15px rgba(240, 165, 0, 0.25);
+        }
+
+        .btn-primary:hover:not(:disabled), .btn-advance:not(:disabled):hover {
+            background: linear-gradient(135deg, var(--accent-secondary), #ffffff) !important;
+            border-color: #ffffff !important;
+            color: #0d0e15 !important;
+            box-shadow: 0 6px 20px rgba(240, 165, 0, 0.4);
+        }
+
+        /* btn-danger override for premium destructive look */
+        .btn-danger {
+            background: rgba(231, 76, 60, 0.15) !important;
+            border: 1px solid rgba(231, 76, 60, 0.3) !important;
+            color: var(--error) !important;
+        }
+        .btn-danger:hover:not(:disabled) {
+            background: rgba(231, 76, 60, 0.3) !important;
+            border-color: var(--error) !important;
+            color: #ffffff !important;
+            box-shadow: 0 0 10px rgba(231, 76, 60, 0.3) !important;
+        }
+
+        /* Destructive button overrides for background-styled red buttons */
+        .btn[style*="rgba(231,76,60"]:hover:not(:disabled),
+        .btn[style*="error"]:hover:not(:disabled),
+        #btnDeleteNode:hover:not(:disabled),
+        #btnExcluir:hover:not(:disabled) {
+            background: rgba(231, 76, 60, 0.25) !important;
+            border-color: var(--error) !important;
+            color: #ffffff !important;
+            box-shadow: 0 0 12px rgba(231, 76, 60, 0.25) !important;
+        }
+
+        #btnTogglePropsPanel {
+            transition: transform 0.2s ease !important;
+        }
+        #btnTogglePropsPanel:hover {
+            transform: scale(1.2);
+            color: var(--text-primary);
+        }
+
+        /* ═══════════════════════ STACKING CONTEXT & FULLSCREEN CONTROL ═══════════════════════ */
+        body.has-fullscreen {
+            overflow: hidden !important;
+        }
+        body.has-fullscreen .form-card.glass {
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            filter: none !important;
+            transform: none !important;
+            z-index: auto !important;
+            box-shadow: none !important;
+        }
+        body.has-fullscreen .editor-grid > section:first-of-type {
+            z-index: 99998 !important;
+            position: relative !important;
+        }
+        .fullscreen-workspace #btnMaximizeWorkspace {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary)) !important;
+            color: #0d0e15 !important;
+            font-weight: 700 !important;
+            border-color: #ffffff !important;
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.4) !important;
+        }
+        .fullscreen-workspace #flowWorkspaceCanvas {
+            min-height: 700px !important;
+            height: 75vh !important;
+        }
+
+        /* ═══════════════════════ CUSTOM CONFIRM MODAL ═══════════════════════ */
+        .confirm-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(10, 11, 16, 0.85);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 1000000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.25s ease;
+        }
+        .confirm-modal-card {
+            background: rgba(20, 22, 33, 0.95);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6), 0 0 25px rgba(212, 175, 55, 0.15);
+            border-radius: 16px;
+            padding: 25px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            transform: scale(0.9);
+            transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+            color: var(--text-primary);
+        }
+        .confirm-modal-overlay.active {
+            opacity: 1;
+        }
+        .confirm-modal-overlay.active .confirm-modal-card {
+            transform: scale(1);
+        }
+        .confirm-modal-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--accent-primary);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .confirm-modal-message {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+        .confirm-modal-actions {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+    </style>
+</head>
+<body data-theme="dark">
+    <div class="app-layout">
+        <aside class="sidebar">
+            <div class="logo">V-<span>TALENTOS</span></div>
+            <nav id="navLinks" style="display: flex; flex-direction: column; gap: 15px;"></nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="header" id="appHeader"></header>
+
+            <div class="editor-grid">
+                <!-- PAINEL ESQUERDO: AUTORIA & EDITOR -->
+                <section class="form-card glass">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3 style="font-size: 1.1rem; color: var(--text-primary);">🛠️ Perfil de Autoria</h3>
+                        <div style="display: flex; gap: 8px;">
+                            <select id="perfilSelector" class="form-control" style="width: 200px; padding: 6px 12px; margin-bottom:0; font-size: 0.85rem;">
+                                <option value="" disabled selected>Selecionar Perfil...</option>
+                            </select>
+                            <button id="btnNovo" class="btn" style="background: rgba(255,255,255,0.04); color: var(--accent-primary); font-size:0.8rem; padding: 6px 12px;">+ NOVO</button>
+                        </div>
+                    </div>
+
+                    <div class="form-mini-row">
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label style="font-size:0.75rem;">Nome do Perfil</label>
+                            <input type="text" id="perfilNomeInput" class="form-control" placeholder="Ex: Programável Enterprise" style="padding: 8px 12px; font-size: 0.85rem;">
+                        </div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label style="font-size:0.75rem;">Linha Cabeçalho</label>
+                            <input type="number" id="linhaCabecalhoInput" class="form-control" value="1" min="1" style="padding: 8px 12px; font-size: 0.85rem;">
+                        </div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label style="font-size:0.75rem;">Separador Lista</label>
+                            <input type="text" id="separadorInput" class="form-control" value=";" style="padding: 8px 12px; font-size: 0.85rem;">
+                        </div>
+                    </div>
+
+                    <!-- TABS DO EDITOR -->
+                    <div class="editor-tabs">
+                        <div class="editor-tab active" id="tabCode">💻 EDITOR JSON & SCRIPTS</div>
+                        <div class="editor-tab" id="tabVisual">🗺️ MAPA DE FLUXO CONCEITUAL</div>
+                    </div>
+
+                    <!-- CONTEÚDO TABS -->
+                    <div id="codeView">
+                        <div id="monacoContainer" style="height: 480px; border-radius: 8px; border: 1px solid var(--glass-border); overflow: hidden; background: #1e1e1e; margin-bottom: 20px;"></div>
+                    </div>
+
+                    <div id="visualView" style="display: none; min-height: 580px; height: auto; position: relative;">
+                        <div style="display: grid; grid-template-columns: 180px 1fr; gap: 15px; min-height: 580px; height: auto;">
+                            <!-- SIDEBAR TOOLBOX -->
+                            <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 10px;">
+                                <strong style="font-size: 0.72rem; color: var(--accent-primary); letter-spacing: 0.5px; text-transform: uppercase;">Nós Disponíveis</strong>
+                                <div class="toolbox-item" data-type="script_node" style="padding: 10px; border-radius: 6px; border: 1px dashed rgba(155,81,224,0.3); background: rgba(155,81,224,0.05); font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 8px; color: #fff;">
+                                    <span>💻</span> Bloco Código (JS)
+                                </div>
+                                <div class="toolbox-item" data-type="ifelse_node" style="padding: 10px; border-radius: 6px; border: 1px dashed rgba(226,43,122,0.3); background: rgba(226,43,122,0.05); font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 8px; color: #fff;">
+                                    <span>🔀</span> Condicional Se
+                                </div>
+                                <div class="toolbox-item" data-type="loop_node" style="padding: 10px; border-radius: 6px; border: 1px dashed rgba(243,156,18,0.3); background: rgba(243,156,18,0.05); font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 8px; color: #fff;">
+                                    <span>🔁</span> Repetição Loop
+                                </div>
+                                <div class="toolbox-item" data-type="text_sanitizer" style="padding: 10px; border-radius: 6px; border: 1px dashed rgba(52,152,219,0.3); background: rgba(52,152,219,0.05); font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 8px; color: #fff;">
+                                    <span>🔤</span> Sanitizador Texto
+                                </div>
+                                <div class="toolbox-item" data-type="webhook_alert" style="padding: 10px; border-radius: 6px; border: 1px dashed rgba(230,126,34,0.3); background: rgba(230,126,34,0.05); font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 8px; color: #fff;">
+                                    <span>🔔</span> Webhook / Alerta
+                                </div>
+                                <div style="margin-top: auto; font-size: 0.65rem; color: var(--text-secondary); line-height: 1.3;">
+                                    💡 <strong>Modelador Visual:</strong> Clique para adicionar blocos ao canvas. Clique em um conector de saída e arraste um cabo até um conector de entrada para criar caminhos. O JSON sincroniza em tempo real!
+                                </div>
+                            </div>
+                            
+                            <!-- GRID CANVAS WORKSPACE -->
+                            <div style="display: flex; flex-direction: column; gap: 15px; min-height: 700px; height: auto;">
+                                <div id="flowWorkspaceCanvas" style="flex: 1; min-height: 580px; border-radius: 8px; border: 1px solid var(--glass-border); overflow: hidden; background-color: #0c0d12; background-image: radial-gradient(rgba(255,255,255,0.06) 1.2px, transparent 0); background-size: 24px 24px; position: relative; cursor: grab;">
+                                    <!-- FLOATING ACTION CONTROLS -->
+                                    <div style="position: absolute; top: 12px; right: 12px; z-index: 100; display: flex; gap: 8px;">
+                                        <button id="btnResetPan" class="btn" style="background: rgba(18,20,28,0.7); border: 1px solid var(--glass-border); color: var(--accent-primary); font-size: 0.72rem; padding: 5px 10px; border-radius: 6px; cursor: pointer; transition: all 0.3s;" title="Centralizar Diagrama">🎯 Centralizar</button>
+                                        <button id="btnMaximizeWorkspace" class="btn" style="background: rgba(18,20,28,0.7); border: 1px solid var(--glass-border); color: var(--accent-primary); font-size: 0.72rem; padding: 5px 10px; border-radius: 6px; cursor: pointer; transition: all 0.3s;" title="Maximizar Área de Trabalho">🖥️ Tela Cheia</button>
+                                    </div>
+
+                                    <!-- SVG & NODES VIEWPORT WRAPPER (Allows panning everything together) -->
+                                    <div id="flowWorkspaceViewport" style="position: absolute; top:0; left:0; width:100%; height:100%; transform-origin: 0 0; transform: translate(0px, 0px);">
+                                        <!-- SVG CONNECTION LAYER -->
+                                        <svg id="flowConnectionsSvg" style="position: absolute; top:0; left:0; width:4000px; height:4000px; pointer-events: none; z-index: 1;">
+                                        </svg>
+                                        <!-- RENDERED NODES AREA -->
+                                        <div id="flowNodesContainer" style="position: absolute; top:0; left:0; width:4000px; height:4000px; pointer-events: auto; z-index: 2;"></div>
+                                    </div>
+                                </div>
+
+                                <!-- PROP EDIT PANEL (Collapsible) -->
+                                <div id="nodePropsPanel" style="background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); border-radius: 8px; padding: 15px; display: none; position: relative;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                        <div id="propsHeaderToggle" style="display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none;" title="Minimizar / Expandir Painel">
+                                            <button id="btnTogglePropsPanel" style="background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 0.85rem; padding: 0; pointer-events: none;">➖</button>
+                                            <h4 id="propsNodeTitle" style="font-size: 0.85rem; color: var(--accent-primary); margin:0;">Propriedades do Nó</h4>
+                                        </div>
+                                        <button id="btnDeleteNode" class="btn" style="background: rgba(231,76,60,0.15); border:1px solid rgba(231,76,60,0.3); color: var(--error); padding: 3px 10px; font-size: 0.7rem;">Excluir Nó</button>
+                                    </div>
+                                    <div id="propsFormContent" style="transition: opacity 0.2s;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FOOTER ACTIONS -->
+                    <div style="display: flex; justify-content: space-between; border-top: 1px solid var(--glass-border); padding-top: 15px; margin-top: 20px;">
+                        <button id="btnExcluir" class="btn" style="background: rgba(231,76,60,0.1); border:1px solid rgba(231,76,60,0.2); color: var(--error); padding: 10px 20px;" disabled>EXCLUIR PERFIL</button>
+                        <button id="btnSalvar" class="btn btn-primary" style="padding: 10px 30px;">SALVAR PERFIL</button>
+                    </div>
+                </section>
+
+                <!-- PAINEL DIREITO: SIMULAÇÃO E PREVIEW EM TEMPO REAL -->
+                <section class="form-card glass">
+                    <h3 style="font-size: 1.1rem; color: var(--text-primary); margin-bottom: 20px;">🔬 Simulador Lateral (Hot-Preview)</h3>
+
+                    <!-- AREA DE UPLOAD DA PLANILHA MODELO -->
+                    <div class="sim-upload-area" id="simUploadArea">
+                        <div style="font-size: 1.8rem; color: var(--accent-primary); margin-bottom: 8px;">📊</div>
+                        <strong id="simUploadText" style="font-size: 0.85rem; color: var(--text-primary);">Arrastar Planilha Modelo ou Clique aqui</strong>
+                        <p style="font-size: 0.72rem; color: var(--text-secondary); margin-top: 4px;">Carregue uma planilha para testar as regras do seu script em tempo real</p>
+                        <input type="file" id="simFileInput" accept=".xlsx,.xls,.csv" style="display: none;">
+                    </div>
+
+                    <!-- TABS DOS RESULTADOS -->
+                    <div class="editor-tabs">
+                        <div class="editor-tab active" id="tabPreview">🔍 TABELA RESULTANTE</div>
+                        <div class="editor-tab" id="tabTerminal">📺 TERMINAL DE LOGS</div>
+                    </div>
+
+                    <!-- TABELA DE RESULTADOS -->
+                    <div id="previewTabContent" style="height: 380px; overflow-y: auto; border: 1px solid var(--glass-border); border-radius: 8px; background: rgba(0,0,0,0.1); padding: 10px; margin-bottom: 20px;">
+                        <div id="previewEmptyState" style="text-align: center; color: var(--text-secondary); padding-top: 100px; font-size: 0.85rem;">
+                            Carregue uma planilha modelo e clique em <strong style="color: var(--accent-primary);">SIMULAR</strong> para visualizar o extrato processado.
+                        </div>
+                        <div id="previewTableContainer" style="display: none;">
+                            <div class="table-responsive">
+                                <table style="font-size: 0.8rem;">
+                                    <thead>
+                                        <tr>
+                                            <th>Linha</th>
+                                            <th>Dados Resolvidos</th>
+                                            <th>Consultor</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="previewTableBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TERMINAL DE LOGS -->
+                    <div id="terminalTabContent" style="display: none; margin-bottom: 20px;">
+                        <div class="terminal-console" id="terminalConsole">
+                            <div class="terminal-line global">Terminal Virtual de Logs Inicializado. Prontidão de Execução...</div>
+                        </div>
+                    </div>
+
+                    <button id="btnSimular" class="btn-advance" style="width: 100%; font-weight:700;" disabled>⚡ INICIAR SIMULAÇÃO EM TEMPO REAL</button>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- CARREGAR SCRIPTS BASE -->
+    <script src="assets/js/auth.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.39.0/min/vs/loader.min.js"></script>
+    <script>
+        // ═══════════════════════ MONACO SETUP ═══════════════════════
+        let editorInstance = null;
+        let selectedFileBase64 = null;
+        let selectedFileName = '';
+        let perfisCached = [];
+        let activePerfilId = null;
+
+        // Custom Premium Confirm Dialog (Alternative to native clash alert)
+        function showConfirm(title, message, isDestructive = false) {
+            return new Promise((resolve) => {
+                const overlay = document.createElement('div');
+                overlay.className = 'confirm-modal-overlay';
+                
+                const card = document.createElement('div');
+                card.className = 'confirm-modal-card';
+                
+                const titleEl = document.createElement('div');
+                titleEl.className = 'confirm-modal-title';
+                titleEl.innerHTML = `${isDestructive ? '💥' : '❓'} ${title}`;
+                
+                const msgEl = document.createElement('div');
+                msgEl.className = 'confirm-modal-message';
+                msgEl.textContent = message;
+                
+                const actions = document.createElement('div');
+                actions.className = 'confirm-modal-actions';
+                
+                const btnCancel = document.createElement('button');
+                btnCancel.className = 'btn';
+                btnCancel.style.padding = '8px 20px';
+                btnCancel.style.fontSize = '0.8rem';
+                btnCancel.textContent = 'Cancelar';
+                
+                const btnConfirm = document.createElement('button');
+                btnConfirm.className = isDestructive ? 'btn btn-danger' : 'btn btn-primary';
+                btnConfirm.style.padding = '8px 24px';
+                btnConfirm.style.fontSize = '0.8rem';
+                btnConfirm.style.fontWeight = '700';
+                btnConfirm.textContent = isDestructive ? 'Excluir' : 'Confirmar';
+                
+                actions.appendChild(btnCancel);
+                actions.appendChild(btnConfirm);
+                card.appendChild(titleEl);
+                card.appendChild(msgEl);
+                card.appendChild(actions);
+                overlay.appendChild(card);
+                document.body.appendChild(overlay);
+                
+                setTimeout(() => overlay.classList.add('active'), 10);
+                
+                const close = (result) => {
+                    overlay.classList.remove('active');
+                    setTimeout(() => {
+                        overlay.remove();
+                        resolve(result);
+                    }, 250);
+                };
+                
+                btnCancel.onclick = () => close(false);
+                btnConfirm.onclick = () => close(true);
+                overlay.onclick = (e) => {
+                    if (e.target === overlay) close(false);
+                };
+            });
+        }
+
+        const API_BASE = window.__API_BASE__ || 'http://localhost:3001/api/admin/importacao';
+        const token = localStorage.getItem('@VTalentos:token');
+
+        // Configuração de carregamento do Monaco
+        require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.39.0/min/vs' } });
+        require(['vs/editor/editor.main'], function () {
+            editorInstance = monaco.editor.create(document.getElementById('monacoContainer'), {
+                value: JSON.stringify({
+                    "versao_motor": "2.0",
+                    "configuracoes_gerais": {
+                        "linha_cabecalho": 1,
+                        "pular_linhas_vazias": true,
+                        "delimitador_lista": ";"
+                    },
+                    "contexto_global": {
+                        "script_inicializacao": "globalStore.fatorDolar = 5.25;"
+                    },
+                    "mapeamento_campos": {
+                        "NomeConsultor": {
+                            "celula": "A",
+                            "script": "return value.trim().toUpperCase();"
+                        },
+                        "IDProfissional": {
+                            "celula": "B",
+                            "script": "return helpers.cleanCPF(value);"
+                        },
+                        "ValorVenda": {
+                            "celula": "C",
+                            "script": "return helpers.parseMoeda(value);"
+                        },
+                        "ValorComissao": {
+                            "script": "let venda = helpers.parseMoeda('{{ValorVenda}}'); return venda * 0.05;"
+                        }
+                    },
+                    "hooks": {
+                        "antes_salvar_linha": "if (linhaResult.ValorVenda < 100) return false; return true;"
+                    }
+                }, null, 2),
+                language: 'json',
+                theme: 'vs-dark',
+                automaticLayout: true,
+                minimap: { enabled: false },
+                fontSize: 12
+            });
+        });
+
+        // ═══════════════════════ DOM NAVIGATION ═══════════════════════
+        const tabCode = document.getElementById('tabCode');
+        const tabVisual = document.getElementById('tabVisual');
+        const codeView = document.getElementById('codeView');
+        const visualView = document.getElementById('visualView');
+
+        tabCode.addEventListener('click', () => {
+            tabCode.classList.add('active');
+            tabVisual.classList.remove('active');
+            codeView.style.display = 'block';
+            visualView.style.display = 'none';
+        });
+
+        tabVisual.addEventListener('click', () => {
+            tabVisual.classList.add('active');
+            tabCode.classList.remove('active');
+            visualView.style.display = 'block';
+            codeView.style.display = 'none';
+        });
+
+        const tabPreview = document.getElementById('tabPreview');
+        const tabTerminal = document.getElementById('tabTerminal');
+        const previewTabContent = document.getElementById('previewTabContent');
+        const terminalTabContent = document.getElementById('terminalTabContent');
+
+        tabPreview.addEventListener('click', () => {
+            tabPreview.classList.add('active');
+            tabTerminal.classList.remove('active');
+            previewTabContent.style.display = 'block';
+            terminalTabContent.style.display = 'none';
+        });
+
+        tabTerminal.addEventListener('click', () => {
+            tabTerminal.classList.add('active');
+            tabPreview.classList.remove('active');
+            terminalTabContent.style.display = 'block';
+            previewTabContent.style.display = 'none';
+        });
+
+        // ═══════════════════════ SELEÇÃO DE PERFIS ═══════════════════════
+        const perfilSelector = document.getElementById('perfilSelector');
+        const btnNovo = document.getElementById('btnNovo');
+        const btnSalvar = document.getElementById('btnSalvar');
+        const btnExcluir = document.getElementById('btnExcluir');
+        const perfilNomeInput = document.getElementById('perfilNomeInput');
+        const linhaCabecalhoInput = document.getElementById('linhaCabecalhoInput');
+        const separadorInput = document.getElementById('separadorInput');
+
+        async function loadPerfis() {
+            try {
+                const res = await fetch(`${API_BASE}/perfis`, { headers: { 'Authorization': `Bearer ${token}` } });
+                const perfis = await res.json();
+                perfisCached = perfis;
+
+                perfilSelector.innerHTML = '<option value="" disabled selected>Selecionar Perfil...</option>';
+                perfis.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.id;
+                    opt.textContent = p.nome_perfil;
+                    perfilSelector.appendChild(opt);
+                });
+            } catch(e) {
+                showToast('Falha ao carregar perfis.', 'error');
+            }
+        }
+
+        perfilSelector.addEventListener('change', () => {
+            const id = perfilSelector.value;
+            const perfil = perfisCached.find(p => p.id === id);
+            if (perfil) {
+                activePerfilId = perfil.id;
+                perfilNomeInput.value = perfil.nome_perfil || '';
+                linhaCabecalhoInput.value = perfil.linha_cabecalho || 1;
+                separadorInput.value = perfil.separador_multiplo || ';';
+                
+                let valJson = perfil.mapeamento_json;
+                if (typeof valJson === 'string') {
+                    try { valJson = JSON.parse(valJson); } catch(e) {}
+                }
+                
+                if (editorInstance) {
+                    editorInstance.setValue(JSON.stringify(valJson, null, 2));
+                }
+                btnExcluir.disabled = false;
+                showToast('Perfil carregado com sucesso!', 'info');
+            }
+        });
+
+        btnNovo.addEventListener('click', () => {
+            activePerfilId = null;
+            perfilSelector.selectedIndex = 0;
+            perfilNomeInput.value = '';
+            linhaCabecalhoInput.value = 1;
+            separadorInput.value = ';';
+            if (editorInstance) {
+                editorInstance.setValue(JSON.stringify({
+                    "versao_motor": "2.0",
+                    "configuracoes_gerais": {
+                        "linha_cabecalho": 1,
+                        "pular_linhas_vazias": true,
+                        "delimitador_lista": ";"
+                    },
+                    "contexto_global": {
+                        "script_inicializacao": "// Escreva scripts globais aqui"
+                    },
+                    "mapeamento_campos": {
+                        "NomeConsultor": { "celula": "A" }
+                    }
+                }, null, 2));
+            }
+            btnExcluir.disabled = true;
+            showToast('Prontidão para cadastrar novo perfil.', 'info');
+        });
+
+        btnSalvar.addEventListener('click', async () => {
+            const nome = perfilNomeInput.value.trim();
+            if (!nome) { showToast('Defina o nome do perfil!', 'error'); return; }
+
+            let mapVal = '';
+            try {
+                mapVal = JSON.parse(editorInstance.getValue());
+            } catch(e) {
+                showToast('Erro de sintaxe JSON no editor! Verifique e corrija.', 'error');
+                return;
+            }
+
+            const body = {
+                nome_perfil: nome,
+                linha_cabecalho: parseInt(linhaCabecalhoInput.value, 10) || 1,
+                separador_multiplo: separadorInput.value,
+                mapeamento_json: mapVal
+            };
+
+            const isEdit = !!activePerfilId;
+            const url = isEdit ? `${API_BASE}/perfis/${activePerfilId}` : `${API_BASE}/perfis`;
+            const method = isEdit ? 'PUT' : 'POST';
+
+            try {
+                const res = await fetch(url, {
+                    method,
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify(body)
+                });
+                if (!res.ok) throw new Error('Erro ao persistir perfil');
+                showToast('Perfil salvo com sucesso!', 'success');
+                await loadPerfis();
+                if (!isEdit) {
+                    activePerfilId = null;
+                    perfilNomeInput.value = '';
+                }
+            } catch(e) {
+                showToast(e.message, 'error');
+            }
+        });
+
+        btnExcluir.addEventListener('click', async () => {
+            if (!activePerfilId) return;
+            const confirmExcluir = await showConfirm('Excluir Perfil', 'Deseja realmente excluir este perfil programável?', true);
+            if (!confirmExcluir) return;
+
+            try {
+                const res = await fetch(`${API_BASE}/perfis/${activePerfilId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!res.ok) throw new Error('Falha ao excluir');
+                showToast('Perfil excluído.', 'success');
+                activePerfilId = null;
+                perfilNomeInput.value = '';
+                perfilSelector.selectedIndex = 0;
+                await loadPerfis();
+            } catch(e) {
+                showToast(e.message, 'error');
+            }
+        });
+
+        // ═══════════════════════ UPLOAD & SIMULADOR ═══════════════════════
+        const simUploadArea = document.getElementById('simUploadArea');
+        const simFileInput = document.getElementById('simFileInput');
+        const btnSimular = document.getElementById('btnSimular');
+        const terminalConsole = document.getElementById('terminalConsole');
+        const previewTableContainer = document.getElementById('previewTableContainer');
+        const previewEmptyState = document.getElementById('previewEmptyState');
+        const previewTableBody = document.getElementById('previewTableBody');
+
+        simUploadArea.addEventListener('click', () => simFileInput.click());
+        simFileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                const file = e.target.files[0];
+                selectedFileName = file.name;
+                document.getElementById('simUploadText').textContent = `${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+                simUploadArea.classList.add('has-file');
+
+                const reader = new FileReader();
+                reader.onload = (evt) => {
+                    selectedFileBase64 = evt.target.result;
+                    btnSimular.disabled = false;
+                    showToast('Planilha modelo carregada.', 'success');
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        btnSimular.addEventListener('click', async () => {
+            if (!selectedFileBase64) return;
+            
+            let mapVal = '';
+            try {
+                mapVal = JSON.parse(editorInstance.getValue());
+            } catch(e) {
+                showToast('Erro de sintaxe JSON no editor! Simulação abortada.', 'error');
+                return;
+            }
+
+            try {
+                btnSimular.disabled = true;
+                btnSimular.textContent = 'EXECUTANDO SIMULAÇÃO...';
+
+                // Criamos um perfil temporário ou atualizamos o ativo antes de simular
+                // Para simplificar a simulação reativa de autoria, enviamos uma chamada especial
+                const res = await fetch(`${API_BASE}/programavel/preview`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({
+                        fileBase64: selectedFileBase64,
+                        // Para não exigir salvar, podemos criar um perfil dummy ou enviar o perfil de forma a simular na API
+                        // Mas como nossa API preview recebe perfil_id, salvamos temporariamente ou usamos o ativo.
+                        // Caso não tenha ativo, podemos criar um temporário na hora!
+                        perfil_id: activePerfilId || await autocreateTempPerfil(mapVal)
+                    })
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.error || 'Erro no processamento');
+                }
+
+                const data = await res.json();
+                renderSimulationResult(data);
+                showToast('Simulação executada com sucesso!', 'success');
+            } catch(e) {
+                showToast(e.message, 'error');
+            } finally {
+                btnSimular.disabled = false;
+                btnSimular.textContent = '⚡ INICIAR SIMULAÇÃO EM TEMPO REAL';
+            }
+        });
+
+        async function autocreateTempPerfil(mapeamento_json) {
+            const tempNome = `[TEMP] Simulação ${Date.now()}`;
+            const res = await fetch(`${API_BASE}/perfis`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({
+                    nome_perfil: tempNome,
+                    linha_cabecalho: parseInt(linhaCabecalhoInput.value, 10) || 1,
+                    separador_multiplo: separadorInput.value,
+                    mapeamento_json
+                })
+            });
+            if (!res.ok) throw new Error('Falha ao instanciar simulador temporário.');
+            const data = await res.json();
+            return data.id;
+        }
+
+        function renderSimulationResult(data) {
+            // Renderiza logs no terminal
+            terminalConsole.innerHTML = '';
+            
+            if (data.logs && data.logs.length > 0) {
+                data.logs.forEach(logLine => {
+                    const line = document.createElement('div');
+                    line.className = 'terminal-line';
+                    
+                    if (logLine.includes('[Error]')) {
+                        line.classList.add('error');
+                    } else if (logLine.includes('[Warning]')) {
+                        line.classList.add('warning');
+                    } else if (logLine.includes('[Global]')) {
+                        line.classList.add('global');
+                    } else {
+                        line.classList.add('info');
+                    }
+                    
+                    line.textContent = `> ${logLine}`;
+                    terminalConsole.appendChild(line);
+                });
+            } else {
+                terminalConsole.innerHTML = '<div class="terminal-line info">> Nenhum console log foi gerado pela Sandbox.</div>';
+            }
+
+            // Renderiza tabela resultante
+            previewEmptyState.style.display = 'none';
+            previewTableContainer.style.display = 'block';
+            previewTableBody.innerHTML = '';
+
+            data.linhas.forEach(row => {
+                const tr = document.createElement('tr');
+                
+                const badgeClass = row.corretor_encontrado ? 'success' : (row.ambiguous ? 'warning' : 'error');
+                const badgeText = row.corretor_encontrado ? 'OK' : (row.ambiguous ? 'AMBÍGUO' : 'NÃO ENCONTRADO');
+                const corretorText = row.corretor_encontrado ? row.corretor_nome_sistema : (row.ambiguous ? `Vários (${row.candidatos.length})` : '—');
+
+                tr.innerHTML = `
+                    <td>${row.linha}</td>
+                    <td><pre style="margin:0; font-size:0.75rem; color:#88c0d0;">${JSON.stringify(row.dados, null, 2)}</pre></td>
+                    <td>
+                        <strong>${row.dados.NomeConsultor || 'Sem Nome'}</strong><br>
+                        <span style="font-size:0.7rem; color:var(--text-secondary);">${row.dados.IDProfissional || 'Sem ID'}</span>
+                    </td>
+                    <td>
+                        <span class="preview-badge ${badgeClass}">${badgeText}</span><br>
+                        <span style="font-size:0.7rem; color:var(--text-secondary);">${corretorText}</span>
+                    </td>
+                `;
+                previewTableBody.appendChild(tr);
+            });
+            
+            // Alterna aba ativa para ver os logs ou resultados
+            tabPreview.click();
+        }
+
+        // ═══════════════════════ FLOWCHART ENGINE (n8n/Node-RED STYLE) ═══════════════════════
+        const flowchartData = {
+            nodes: [],
+            connections: [],
+            selectedNodeId: null,
+            draggedNodeId: null,
+            dragOffset: { x: 0, y: 0 },
+            connectingFrom: null, // { nodeId, portId, isOutput }
+            pan: { x: 0, y: 0 } // Estágio de translação do Viewport (Panning)
+        };
+
+        const flowNodesContainer = document.getElementById('flowNodesContainer');
+        const flowConnectionsSvg = document.getElementById('flowConnectionsSvg');
+        const nodePropsPanel = document.getElementById('nodePropsPanel');
+        const propsNodeTitle = document.getElementById('propsNodeTitle');
+        const propsFormContent = document.getElementById('propsFormContent');
+        const btnDeleteNode = document.getElementById('btnDeleteNode');
+
+        // Panning Canvas state
+        let isCanvasPanning = false;
+        let panStartPos = { x: 0, y: 0 };
+        let panStartOffset = { x: 0, y: 0 };
+
+        const flowWorkspaceCanvas = document.getElementById('flowWorkspaceCanvas');
+        const flowWorkspaceViewport = document.getElementById('flowWorkspaceViewport');
+
+        // 1. Panning Canvas listener (Click-and-drag panning supported on background)
+        flowWorkspaceCanvas.addEventListener('pointerdown', (e) => {
+            // Only pan if user clicks direct canvas, connections layer, or empty node container background
+            if (
+                e.target === flowWorkspaceCanvas || 
+                e.target === flowWorkspaceViewport || 
+                e.target.id === 'flowConnectionsSvg' || 
+                e.target.id === 'flowNodesContainer'
+            ) {
+                isCanvasPanning = true;
+                flowWorkspaceCanvas.classList.add('flow-workspace-grabbing');
+                panStartPos.x = e.clientX;
+                panStartPos.y = e.clientY;
+                panStartOffset.x = flowchartData.pan.x;
+                panStartOffset.y = flowchartData.pan.y;
+                e.preventDefault();
+            }
+        });
+
+        // 1.1 Mouse Wheel Panning (Standard premium wheel vertical/horizontal panning)
+        flowWorkspaceCanvas.addEventListener('wheel', (e) => {
+            // Prevent standard page scroll when mouse is hovering the interactive flowchart canvas
+            e.preventDefault();
+            
+            // Pan speed multiplier and boundary constraints to keep elements accessible
+            flowchartData.pan.x -= e.deltaX * 0.8;
+            flowchartData.pan.y -= e.deltaY * 0.8;
+            
+            flowchartData.pan.x = Math.min(200, Math.max(-3000, flowchartData.pan.x));
+            flowchartData.pan.y = Math.min(200, Math.max(-3000, flowchartData.pan.y));
+            
+            flowWorkspaceViewport.style.transform = `translate(${flowchartData.pan.x}px, ${flowchartData.pan.y}px)`;
+            renderConnections();
+        }, { passive: false });
+
+        // 2. Maximize Fullscreen workspace button handler
+        const btnMaximize = document.getElementById('btnMaximizeWorkspace');
+        btnMaximize.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isFull = visualView.classList.toggle('fullscreen-workspace');
+            
+            // Toggle body class to manage stacking context and disable body scrolling
+            if (isFull) {
+                document.body.classList.add('has-fullscreen');
+            } else {
+                document.body.classList.remove('has-fullscreen');
+            }
+            
+            btnMaximize.textContent = isFull ? '🗗 Sair da Tela Cheia' : '🖥️ Tela Cheia';
+            btnMaximize.setAttribute('title', isFull ? 'Sair da Tela Cheia' : 'Maximizar Área de Trabalho');
+            
+            // Adjust height based on mode
+            visualView.style.height = isFull ? '100vh' : 'auto';
+            
+            setTimeout(renderConnections, 200);
+        });
+
+        // 2.1 Listen to Escape key globally to exit fullscreen mode
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                const isFull = visualView.classList.contains('fullscreen-workspace');
+                if (isFull) {
+                    visualView.classList.remove('fullscreen-workspace');
+                    document.body.classList.remove('has-fullscreen');
+                    btnMaximize.textContent = '🖥️ Tela Cheia';
+                    btnMaximize.setAttribute('title', 'Maximizar Área de Trabalho');
+                    visualView.style.height = 'auto';
+                    setTimeout(renderConnections, 200);
+                    showToast('Visualização restaurada.', 'info');
+                }
+            }
+        });
+
+        // 3. Reset/Center Pan button handler
+        const btnResetPan = document.getElementById('btnResetPan');
+        btnResetPan.addEventListener('click', (e) => {
+            e.stopPropagation();
+            flowchartData.pan.x = 0;
+            flowchartData.pan.y = 0;
+            flowWorkspaceViewport.style.transform = `translate(0px, 0px)`;
+            renderConnections();
+            showToast('Visualização centralizada.', 'info');
+        });
+
+        // 4. Collapse / Minimize properties panel drawer handler
+        const propsHeaderToggle = document.getElementById('propsHeaderToggle');
+        const btnToggleProps = document.getElementById('btnTogglePropsPanel');
+        propsHeaderToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isMin = nodePropsPanel.classList.toggle('minimized-panel');
+            btnToggleProps.textContent = isMin ? '➕' : '➖';
+            propsHeaderToggle.setAttribute('title', isMin ? 'Expandir Painel' : 'Minimizar Painel');
+        });
+
+        // Render connection lines in SVG
+        function renderConnections() {
+            flowConnectionsSvg.innerHTML = '';
+            
+            // Render existing connections
+            flowchartData.connections.forEach(conn => {
+                const fromNode = flowchartData.nodes.find(n => n.id === conn.from);
+                const toNode = flowchartData.nodes.find(n => n.id === conn.to);
+                if (!fromNode || !toNode) return;
+
+                const fromPortEl = document.querySelector(`[data-node-id="${conn.from}"] [data-port-id="${conn.fromPort}"]`);
+                const toPortEl = document.querySelector(`[data-node-id="${conn.to}"] [data-port-id="${conn.toPort}"]`);
+                if (!fromPortEl || !toPortEl) return;
+
+                const canvasRect = document.getElementById('flowWorkspaceCanvas').getBoundingClientRect();
+                const fromRect = fromPortEl.getBoundingClientRect();
+                const toRect = toPortEl.getBoundingClientRect();
+
+                // Compensate relative coordinates by subtracting viewport translation (pan offset)
+                const x1 = (fromRect.left - canvasRect.left + 4) - flowchartData.pan.x;
+                const y1 = (fromRect.top - canvasRect.top + 4) - flowchartData.pan.y;
+                const x2 = (toRect.left - canvasRect.left + 4) - flowchartData.pan.x;
+                const y2 = (toRect.top - canvasRect.top + 4) - flowchartData.pan.y;
+
+                drawBezier(x1, y1, x2, y2, '#d4af37', conn);
+            });
+
+            // Render temporary connection line while dragging
+            if (flowchartData.connectingFrom) {
+                const fromPortEl = document.querySelector(`[data-node-id="${flowchartData.connectingFrom.nodeId}"] [data-port-id="${flowchartData.connectingFrom.portId}"]`);
+                if (fromPortEl) {
+                    const canvasRect = document.getElementById('flowWorkspaceCanvas').getBoundingClientRect();
+                    const fromRect = fromPortEl.getBoundingClientRect();
+                    
+                    // Subtract viewport pan offset
+                    const x1 = (fromRect.left - canvasRect.left + 4) - flowchartData.pan.x;
+                    const y1 = (fromRect.top - canvasRect.top + 4) - flowchartData.pan.y;
+                    
+                    const x2 = currentMousePos.x - flowchartData.pan.x;
+                    const y2 = currentMousePos.y - flowchartData.pan.y;
+                    
+                    drawBezier(x1, y1, x2, y2, '#9b51e0', null, true);
+                }
+            }
+        }
+
+        let currentMousePos = { x: 0, y: 0 };
+        document.getElementById('flowWorkspaceCanvas').addEventListener('pointermove', (e) => {
+            const rect = document.getElementById('flowWorkspaceCanvas').getBoundingClientRect();
+            currentMousePos.x = e.clientX - rect.left;
+            currentMousePos.y = e.clientY - rect.top;
+            if (flowchartData.connectingFrom) {
+                renderConnections();
+            }
+        });
+
+        function drawBezier(x1, y1, x2, y2, color, conn, isTemp = false) {
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            const dx = Math.abs(x2 - x1) * 0.5;
+            const d = `M ${x1} ${y1} C ${x1 + dx} ${y1}, ${x2 - dx} ${y2}, ${x2} ${y2}`;
+            
+            path.setAttribute('d', d);
+            path.setAttribute('stroke', color);
+            path.setAttribute('stroke-width', isTemp ? '2' : '3');
+            path.setAttribute('fill', 'none');
+            
+            if (!isTemp) {
+                path.setAttribute('style', 'cursor: pointer; pointer-events: stroke; filter: drop-shadow(0 0 4px rgba(212,175,55,0.4));');
+                path.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    const confirmDel = await showConfirm('Remover Conexão', 'Deseja realmente excluir esta conexão?', true);
+                    if (confirmDel) {
+                        flowchartData.connections = flowchartData.connections.filter(c => c !== conn);
+                        renderConnections();
+                        compileFlowchartToJSON();
+                    }
+                });
+            } else {
+                path.setAttribute('stroke-dasharray', '4 4');
+            }
+            
+            flowConnectionsSvg.appendChild(path);
+        }
+
+        // Add visual nodes to DOM
+        function renderNodes() {
+            flowNodesContainer.innerHTML = '';
+            flowchartData.nodes.forEach(node => {
+                const card = document.createElement('div');
+                card.className = `flow-node-card node-variant-${node.type}`;
+                if (flowchartData.selectedNodeId === node.id) {
+                    card.classList.add('selected');
+                }
+                card.style.left = `${node.x}px`;
+                card.style.top = `${node.y}px`;
+                card.setAttribute('data-node-id', node.id);
+
+                let headerTitle = '';
+                let bodyHtml = '';
+                let portsHtml = '';
+
+                if (node.type === 'excel_input') {
+                    headerTitle = `📥 Entrada Planilha`;
+                    bodyHtml = `
+                        <div style="font-weight:700; color:#fff; font-size:0.65rem;">Colunas (Excel Row Input)</div>
+                        <div style="display:flex; flex-direction:column; gap:4px; margin-top:4px;">
+                            ${node.data.columns.map(col => `
+                                <div class="flow-port-row" style="padding-left: 10px;">
+                                    <span>${col.letter}: ${col.label} (${col.type})</span>
+                                    <div class="flow-port-row-port output" data-port-id="col_${col.letter}" style="background-color:#2d7ff9;"></div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                } else if (node.type === 'script_node') {
+                    headerTitle = `💻 Bloco Código JS (Script)`;
+                    bodyHtml = `
+                        <div style="color:#d4af37; font-weight:700; font-size:0.65rem;">Campo Destino: ${node.data.fieldName || '—'}</div>
+                        <div style="font-family:monospace; background:rgba(0,0,0,0.3); padding:4px; border-radius:4px; font-size:0.58rem; overflow:hidden; white-space:nowrap; text-overflow:ellipsis;">
+                            ${node.data.script ? node.data.script.replace(/</g, '&lt;').replace(/>/g, '&gt;') : '// escreva seu script'}
+                        </div>
+                    `;
+                    portsHtml = `
+                        <div class="flow-port input" data-port-id="in" style="background-color:#9b51e0;"></div>
+                        <div class="flow-port output" data-port-id="out" style="background-color:#9b51e0;"></div>
+                    `;
+                } else if (node.type === 'ifelse_node') {
+                    headerTitle = `🔀 Condicional Se (Hook)`;
+                    bodyHtml = `
+                        <div style="font-weight:700; color:#fff; font-size:0.65rem;">Validação de Linha</div>
+                        <div style="font-family:monospace; font-size:0.58rem; background:rgba(0,0,0,0.3); padding:4px; border-radius:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                            ${node.data.script || 'return true;'}
+                        </div>
+                    `;
+                    portsHtml = `
+                        <div class="flow-port input" data-port-id="in" style="background-color:#e22b7a;"></div>
+                    `;
+                } else if (node.type === 'loop_node') {
+                    headerTitle = `🔁 Repetição Loop`;
+                    bodyHtml = `
+                        <div style="font-size:0.65rem;">Gerador de Parcelas</div>
+                        <div style="color:#fff; font-weight:700; font-size:0.65rem;">Nome Loop: ${node.data.itemName || 'Parcelas'}</div>
+                    `;
+                    portsHtml = `
+                        <div class="flow-port input" data-port-id="in" style="background-color:#f39c12;"></div>
+                        <div class="flow-port output" data-port-id="out" style="background-color:#f39c12;"></div>
+                    `;
+                } else if (node.type === 'text_sanitizer') {
+                    headerTitle = `🔤 Sanitizador de Texto`;
+                    bodyHtml = `
+                        <div style="color:#3498db; font-weight:700; font-size:0.65rem;">Campo Destino: ${node.data.fieldName || '—'}</div>
+                        <div style="font-size:0.68rem; color:#fff; background:rgba(0,0,0,0.3); padding:4px; border-radius:4px; margin-top:4px;">
+                            Regra: <strong>${node.data.regra ? node.data.regra.toUpperCase() : 'UPPERCASE'}</strong>
+                        </div>
+                    `;
+                    portsHtml = `
+                        <div class="flow-port input" data-port-id="in" style="background-color:#3498db;"></div>
+                        <div class="flow-port output" data-port-id="out" style="background-color:#3498db;"></div>
+                    `;
+                } else if (node.type === 'webhook_alert') {
+                    headerTitle = `🔔 Enviar Webhook/Alerta`;
+                    bodyHtml = `
+                        <div style="color:#e67e22; font-weight:700; font-size:0.65rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">URL: ${node.data.webhookUrl || '—'}</div>
+                        <div style="font-family:monospace; background:rgba(0,0,0,0.3); padding:4px; border-radius:4px; font-size:0.58rem; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; margin-top:4px;">
+                            Msg: ${node.data.mensagem || '—'}
+                        </div>
+                    `;
+                    portsHtml = `
+                        <div class="flow-port input" data-port-id="in" style="background-color:#e67e22;"></div>
+                    `;
+                } else if (node.type === 'save_node') {
+                    headerTitle = `💾 Gravar Transação`;
+                    bodyHtml = `
+                        <div style="font-weight:700; color:#fff; font-size:0.65rem;">Destino: GamTransacao</div>
+                        <div style="display:flex; flex-direction:column; gap:4px; margin-top:4px;">
+                            ${node.data.destFields.map(field => `
+                                <div class="flow-port-row" style="padding-right: 10px; text-align:right;">
+                                    <div class="flow-port-row-port input" data-port-id="field_${field.name}" style="background-color:#2ecc71;"></div>
+                                    <span>${field.label}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                }
+
+                card.innerHTML = `
+                    <div class="flow-node-card-header">
+                        <span>${headerTitle}</span>
+                    </div>
+                    <div class="flow-node-card-body">
+                        ${bodyHtml}
+                    </div>
+                    ${portsHtml}
+                `;
+
+                // Add pointer dragging behavior to node header
+                const header = card.querySelector('.flow-node-card-header');
+                header.addEventListener('pointerdown', (e) => {
+                    e.stopPropagation();
+                    flowchartData.draggedNodeId = node.id;
+                    flowchartData.selectedNodeId = node.id;
+                    
+                    const rect = card.getBoundingClientRect();
+                    // Keep dragging precise by removing translated offset
+                    flowchartData.dragOffset.x = e.clientX - rect.left;
+                    flowchartData.dragOffset.y = e.clientY - rect.top;
+                    
+                    document.querySelectorAll('.flow-node-card').forEach(el => el.classList.remove('selected'));
+                    card.classList.add('selected');
+                    
+                    showNodeProperties(node);
+                });
+
+                // Set port click drawing behavior
+                card.querySelectorAll('.flow-port, .flow-port-row-port').forEach(port => {
+                    port.addEventListener('pointerdown', (e) => {
+                        e.stopPropagation();
+                        const portId = port.getAttribute('data-port-id');
+                        const isOutput = port.classList.contains('output');
+                        
+                        flowchartData.connectingFrom = {
+                            nodeId: node.id,
+                            portId: portId,
+                            isOutput: isOutput
+                        };
+                    });
+
+                    port.addEventListener('pointerup', (e) => {
+                        e.stopPropagation();
+                        if (flowchartData.connectingFrom) {
+                            const fromNode = flowchartData.connectingFrom.nodeId;
+                            const fromPort = flowchartData.connectingFrom.portId;
+                            const isFromOutput = flowchartData.connectingFrom.isOutput;
+                            
+                            const toPort = port.getAttribute('data-port-id');
+                            const isToOutput = port.classList.contains('output');
+
+                            // Allow connecting output of one node to input of another node
+                            if (fromNode !== node.id && isFromOutput !== isToOutput) {
+                                // Add connection
+                                const source = isFromOutput ? fromNode : node.id;
+                                const sourcePort = isFromOutput ? fromPort : toPort;
+                                const target = isFromOutput ? node.id : fromNode;
+                                const targetPort = isFromOutput ? toPort : fromPort;
+
+                                // Prevent duplicate connections on same target port
+                                flowchartData.connections = flowchartData.connections.filter(c => !(c.to === target && c.toPort === targetPort));
+                                
+                                flowchartData.connections.push({
+                                    from: source,
+                                    fromPort: sourcePort,
+                                    to: target,
+                                    toPort: targetPort
+                                });
+
+                                compileFlowchartToJSON();
+                            }
+                            flowchartData.connectingFrom = null;
+                            renderConnections();
+                        }
+                    });
+                });
+
+                // Select node on body click
+                card.addEventListener('pointerdown', (e) => {
+                    e.stopPropagation();
+                    flowchartData.selectedNodeId = node.id;
+                    document.querySelectorAll('.flow-node-card').forEach(el => el.classList.remove('selected'));
+                    card.classList.add('selected');
+                    showNodeProperties(node);
+                });
+
+                flowNodesContainer.appendChild(card);
+            });
+
+            renderConnections();
+        }
+
+        // Global mouse handlers for drag positioning
+        document.addEventListener('pointermove', (e) => {
+            if (isCanvasPanning) {
+                // Adjust translation offset
+                const dx = e.clientX - panStartPos.x;
+                const dy = e.clientY - panStartPos.y;
+                flowchartData.pan.x = panStartOffset.x + dx;
+                flowchartData.pan.y = panStartOffset.y + dy;
+                flowWorkspaceViewport.style.transform = `translate(${flowchartData.pan.x}px, ${flowchartData.pan.y}px)`;
+                renderConnections();
+            } else if (flowchartData.draggedNodeId) {
+                const node = flowchartData.nodes.find(n => n.id === flowchartData.draggedNodeId);
+                if (node) {
+                    const canvasRect = document.getElementById('flowWorkspaceCanvas').getBoundingClientRect();
+                    
+                    // Subtract pan offset so node tracks the pointer precisely intranslated viewport space
+                    let newX = (e.clientX - canvasRect.left - flowchartData.dragOffset.x) - flowchartData.pan.x;
+                    let newY = (e.clientY - canvasRect.top - flowchartData.dragOffset.y) - flowchartData.pan.y;
+                    
+                    // Constrain within panned space
+                    newX = Math.max(10, Math.min(3800, newX));
+                    newY = Math.max(10, Math.min(3800, newY));
+
+                    node.x = newX;
+                    node.y = newY;
+                    
+                    const cardEl = document.querySelector(`[data-node-id="${node.id}"]`);
+                    if (cardEl) {
+                        cardEl.style.left = `${newX}px`;
+                        cardEl.style.top = `${newY}px`;
+                    }
+                    renderConnections();
+                }
+            }
+        });
+
+        document.addEventListener('pointerup', () => {
+            isCanvasPanning = false;
+            flowWorkspaceCanvas.classList.remove('flow-workspace-grabbing');
+            flowchartData.draggedNodeId = null;
+            if (flowchartData.connectingFrom) {
+                flowchartData.connectingFrom = null;
+                renderConnections();
+            }
+        });
+
+        // Add node by clicking sidebar toolbox item
+        document.querySelectorAll('.toolbox-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const type = item.getAttribute('data-type');
+                addNodeToCanvas(type);
+            });
+        });
+
+        function addNodeToCanvas(type) {
+            const id = `node_${type}_${Date.now().toString().slice(-4)}`;
+            let newNode = {
+                id,
+                type,
+                x: 260 + Math.random() * 50,
+                y: 100 + Math.random() * 50,
+                data: {}
+            };
+
+            if (type === 'script_node') {
+                newNode.title = 'Bloco Código';
+                newNode.data = {
+                    fieldName: 'CampoCustomizado',
+                    script: `// Escreva um script JS com retornos usando value ou row\n// Use macros com duas chaves, exemplo: {{ValorVenda}}\nlet venda = helpers.parseMoeda('{{ValorVenda}}');\nreturn venda * 0.10;`
+                };
+            } else if (type === 'ifelse_node') {
+                newNode.title = 'Condicional Se';
+                newNode.data = {
+                    script: `if (linhaResult.ValorVenda < 100) {\n  log.warning('Filtrando comissão inferior a 100 reais');\n  return false;\n}\nreturn true;`
+                };
+            } else if (type === 'loop_node') {
+                newNode.title = 'Repetição Loop';
+                newNode.data = {
+                    itemName: 'Parcelas'
+                };
+            } else if (type === 'text_sanitizer') {
+                newNode.title = 'Sanitizador de Texto';
+                newNode.data = {
+                    fieldName: 'CampoSanitizado',
+                    regra: 'uppercase'
+                };
+            } else if (type === 'webhook_alert') {
+                newNode.title = 'Enviar Webhook/Alerta';
+                newNode.data = {
+                    webhookUrl: 'https://hooks.slack.com/services/...',
+                    mensagem: 'Importação realizada com sucesso para o consultor {{NomeConsultor}}!'
+                };
+            } else if (type === 'excel_input' || type === 'save_node') {
+                showToast('Só é permitido ter uma Entrada e uma Saída no grafo.', 'warning');
+                return;
+            }
+
+            flowchartData.nodes.push(newNode);
+            renderNodes();
+            showNodeProperties(newNode);
+            compileFlowchartToJSON();
+        }
+
+        // Selected Node properties config panel render
+        function showNodeProperties(node) {
+            // Expand the panel automatically if it was minimized
+            nodePropsPanel.classList.remove('minimized-panel');
+            const btnToggle = document.getElementById('btnTogglePropsPanel');
+            if (btnToggle) {
+                btnToggle.textContent = '➖';
+            }
+            const headerToggle = document.getElementById('propsHeaderToggle');
+            if (headerToggle) {
+                headerToggle.setAttribute('title', 'Minimizar Painel');
+            }
+
+            nodePropsPanel.style.display = 'block';
+            propsNodeTitle.textContent = `Configuração: ${node.title || node.id}`;
+            propsFormContent.innerHTML = '';
+            
+            // Can't delete Excel input or Save destination nodes
+            btnDeleteNode.style.display = (node.type === 'excel_input' || node.type === 'save_node') ? 'none' : 'block';
+
+            btnDeleteNode.onclick = async () => {
+                const confirmDel = await showConfirm('Remover Nó', 'Deseja realmente remover este nó e suas conexões?', true);
+                if (confirmDel) {
+                    flowchartData.nodes = flowchartData.nodes.filter(n => n.id !== node.id);
+                    flowchartData.connections = flowchartData.connections.filter(c => c.from !== node.id && c.to !== node.id);
+                    nodePropsPanel.style.display = 'none';
+                    flowchartData.selectedNodeId = null;
+                    renderNodes();
+                    compileFlowchartToJSON();
+                }
+            };
+
+            if (node.type === 'excel_input') {
+                // Render columns configurations
+                propsFormContent.innerHTML = `
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+                        <div>
+                            <label style="font-size:0.7rem; color:var(--text-secondary);">Linha do Cabeçalho</label>
+                            <input type="number" id="propExcelLine" class="form-control" style="font-size:0.8rem; padding:4px 8px; margin:0;" value="${node.data.linhaCabecalho || 1}">
+                        </div>
+                        <div>
+                            <label style="font-size:0.7rem; color:var(--text-secondary);">Separador de Lista</label>
+                            <input type="text" id="propExcelDelim" class="form-control" style="font-size:0.8rem; padding:4px 8px; margin:0;" value="${node.data.delimitadorLista || ';'}">
+                        </div>
+                    </div>
+                    <div style="font-size:0.72rem; margin-bottom:8px; font-weight:700;">Colunas da Planilha:</div>
+                    <div id="propColsList" style="display:flex; flex-direction:column; gap:5px; max-height:120px; overflow-y:auto; margin-bottom:10px;">
+                        ${node.data.columns.map((c, i) => `
+                            <div style="display:flex; gap:5px; align-items:center;">
+                                <input type="text" class="form-control prop-col-letter" style="width:40px; text-align:center; padding:3px; font-size:0.75rem; margin:0;" value="${c.letter}">
+                                <input type="text" class="form-control prop-col-label" style="flex:1; padding:3px; font-size:0.75rem; margin:0;" value="${c.label}">
+                                <select class="form-control prop-col-type" style="width:80px; padding:3px; font-size:0.75rem; margin:0;">
+                                    <option value="String" ${c.type === 'String' ? 'selected' : ''}>String</option>
+                                    <option value="Currency" ${c.type === 'Currency' ? 'selected' : ''}>Moeda</option>
+                                    <option value="Date" ${c.type === 'Date' ? 'selected' : ''}>Data</option>
+                                    <option value="Int" ${c.type === 'Int' ? 'selected' : ''}>Inteiro</option>
+                                </select>
+                                <button class="btn btn-danger btn-remove-col" style="padding:2px 8px; font-size:0.7rem;" data-index="${i}">x</button>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <button id="btnAddCol" class="btn" style="background:rgba(255,255,255,0.05); color:var(--accent-primary); width:100%; padding:5px; font-size:0.75rem;">+ Adicionar Coluna</button>
+                `;
+
+                // Set event listeners for Excel Column adding/editing
+                document.getElementById('propExcelLine').addEventListener('change', (e) => {
+                    node.data.linhaCabecalho = parseInt(e.target.value, 10) || 1;
+                    compileFlowchartToJSON();
+                });
+                document.getElementById('propExcelDelim').addEventListener('change', (e) => {
+                    node.data.delimitadorLista = e.target.value || ';';
+                    compileFlowchartToJSON();
+                });
+
+                document.getElementById('btnAddCol').onclick = () => {
+                    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+                    const nextLetter = letters[node.data.columns.length] || 'X';
+                    node.data.columns.push({
+                        letter: nextLetter,
+                        label: `Coluna_${nextLetter}`,
+                        type: 'String'
+                    });
+                    renderNodes();
+                    showNodeProperties(node);
+                    compileFlowchartToJSON();
+                };
+
+                propsFormContent.querySelectorAll('.btn-remove-col').forEach(btn => {
+                    btn.onclick = () => {
+                        const idx = parseInt(btn.getAttribute('data-index'), 10);
+                        node.data.columns.splice(idx, 1);
+                        renderNodes();
+                        showNodeProperties(node);
+                        compileFlowchartToJSON();
+                    };
+                });
+
+                // Sync typing values back to the columns array
+                propsFormContent.querySelectorAll('.prop-col-letter, .prop-col-label, .prop-col-type').forEach(el => {
+                    el.addEventListener('change', () => {
+                        const letterInputs = propsFormContent.querySelectorAll('.prop-col-letter');
+                        const labelInputs = propsFormContent.querySelectorAll('.prop-col-label');
+                        const typeSelects = propsFormContent.querySelectorAll('.prop-col-type');
+
+                        node.data.columns = Array.from(letterInputs).map((inp, idx) => ({
+                            letter: inp.value.toUpperCase(),
+                            label: labelInputs[idx].value,
+                            type: typeSelects[idx].value
+                        }));
+                        renderNodes();
+                        compileFlowchartToJSON();
+                    });
+                });
+
+            } else if (node.type === 'script_node') {
+                propsFormContent.innerHTML = `
+                    <div style="margin-bottom:10px;">
+                        <label style="font-size:0.7rem; color:var(--text-secondary);">Nome do Campo de Saída</label>
+                        <input type="text" id="propScriptField" class="form-control" style="font-size:0.8rem; padding:4px 8px; margin:0;" value="${node.data.fieldName || ''}">
+                    </div>
+                    <div>
+                        <label style="font-size:0.7rem; color:var(--text-secondary);">Código Javascript Customizado (N8N Style)</label>
+                        <textarea id="propScriptArea" class="form-control" style="font-family:monospace; font-size:0.75rem; height:150px; margin:0; line-height:1.4; padding:8px; background:#1e1e1e; border:1px solid #333; color:#fff;" rows="6">${node.data.script || ''}</textarea>
+                        <div style="font-size:0.6rem; color:var(--text-secondary); margin-top:4px;">
+                            💡 Escreva um bloco funcional. Use <code>value</code> para ler a célula de entrada, <code>helpers.parseMoeda(val)</code>, <code>helpers.cleanCPF(val)</code> e macros com duas chaves <code>{{CPF}}</code> para referenciar outros campos calculados.
+                        </div>
+                    </div>
+                `;
+
+                document.getElementById('propScriptField').addEventListener('change', (e) => {
+                    node.data.fieldName = e.target.value.trim();
+                    renderNodes();
+                    compileFlowchartToJSON();
+                });
+
+                document.getElementById('propScriptArea').addEventListener('change', (e) => {
+                    node.data.script = e.target.value;
+                    renderNodes();
+                    compileFlowchartToJSON();
+                });
+
+            } else if (node.type === 'ifelse_node') {
+                propsFormContent.innerHTML = `
+                    <div>
+                        <label style="font-size:0.7rem; color:var(--text-secondary);">Código de Validação Hook (antes_salvar_linha)</label>
+                        <textarea id="propIfElseArea" class="form-control" style="font-family:monospace; font-size:0.75rem; height:150px; margin:0; background:#1e1e1e; color:#fff;" rows="6">${node.data.script || ''}</textarea>
+                        <div style="font-size:0.6rem; color:var(--text-secondary); margin-top:4px;">
+                            💡 Retorne <code>false</code> para descartar a linha inteira da importação, ou <code>true</code> para validar e persistir.
+                        </div>
+                    </div>
+                `;
+
+                document.getElementById('propIfElseArea').addEventListener('change', (e) => {
+                    node.data.script = e.target.value;
+                    renderNodes();
+                    compileFlowchartToJSON();
+                });
+
+            } else if (node.type === 'loop_node') {
+                propsFormContent.innerHTML = `
+                    <div style="margin-bottom:10px;">
+                        <label style="font-size:0.7rem; color:var(--text-secondary);">Variável/Nome do Loop</label>
+                        <input type="text" id="propLoopItem" class="form-control" style="font-size:0.8rem; padding:4px 8px; margin:0;" value="${node.data.itemName || ''}">
+                    </div>
+                `;
+
+                document.getElementById('propLoopItem').addEventListener('change', (e) => {
+                    node.data.itemName = e.target.value.trim();
+                    renderNodes();
+                    compileFlowchartToJSON();
+                });
+            } else if (node.type === 'text_sanitizer') {
+                propsFormContent.innerHTML = `
+                    <div style="margin-bottom:10px;">
+                        <label style="font-size:0.7rem; color:var(--text-secondary);">Nome do Campo de Saída</label>
+                        <input type="text" id="propSanitizerField" class="form-control" style="font-size:0.8rem; padding:4px 8px; margin:0;" value="${node.data.fieldName || ''}">
+                    </div>
+                    <div style="margin-bottom:10px;">
+                        <label style="font-size:0.7rem; color:var(--text-secondary);">Regra de Sanitização de Texto</label>
+                        <select id="propSanitizerRegra" class="form-control" style="font-size:0.8rem; padding:4px 8px; margin:0;">
+                            <option value="uppercase" ${node.data.regra === 'uppercase' ? 'selected' : ''}>Tudo em Maiúsculo (UPPERCASE)</option>
+                            <option value="lowercase" ${node.data.regra === 'lowercase' ? 'selected' : ''}>Tudo em Minúsculo (lowercase)</option>
+                            <option value="trim" ${node.data.regra === 'trim' ? 'selected' : ''}>Remover Espaços Extras (trim)</option>
+                            <option value="clean" ${node.data.regra === 'clean' ? 'selected' : ''}>Limpar Caracteres Especiais (letras/números apenas)</option>
+                        </select>
+                    </div>
+                `;
+
+                document.getElementById('propSanitizerField').addEventListener('change', (e) => {
+                    node.data.fieldName = e.target.value.trim();
+                    renderNodes();
+                    compileFlowchartToJSON();
+                });
+
+                document.getElementById('propSanitizerRegra').addEventListener('change', (e) => {
+                    node.data.regra = e.target.value;
+                    renderNodes();
+                    compileFlowchartToJSON();
+                });
+            } else if (node.type === 'webhook_alert') {
+                propsFormContent.innerHTML = `
+                    <div style="margin-bottom:10px;">
+                        <label style="font-size:0.7rem; color:var(--text-secondary);">URL do Webhook (Slack / Teams / Custom API)</label>
+                        <input type="text" id="propWebhookUrl" class="form-control" style="font-size:0.8rem; padding:4px 8px; margin:0;" value="${node.data.webhookUrl || ''}">
+                    </div>
+                    <div style="margin-bottom:10px;">
+                        <label style="font-size:0.7rem; color:var(--text-secondary);">Mensagem customizada do Alerta (Suporta macros com chaves duplas {{campo}})</label>
+                        <textarea id="propWebhookMsg" class="form-control" style="font-family:monospace; font-size:0.75rem; height:80px; margin:0; line-height:1.4; padding:8px; background:#1e1e1e; border:1px solid #333; color:#fff;" rows="3">${node.data.mensagem || ''}</textarea>
+                    </div>
+                `;
+
+                document.getElementById('propWebhookUrl').addEventListener('change', (e) => {
+                    node.data.webhookUrl = e.target.value.trim();
+                    renderNodes();
+                    compileFlowchartToJSON();
+                });
+
+                document.getElementById('propWebhookMsg').addEventListener('change', (e) => {
+                    node.data.mensagem = e.target.value;
+                    renderNodes();
+                    compileFlowchartToJSON();
+                });
+            } else if (node.type === 'save_node') {
+                const fields = node.data?.destFields || [
+                    { name: 'NomeConsultor', label: 'Nome Consultor (Nome)' },
+                    { name: 'IDProfissional', label: 'CPF / ID (Documento)' },
+                    { name: 'ValorVenda', label: 'Valor Comissão (ValorVenda)' },
+                    { name: 'ValorComissao', label: 'Fator Conversão (ValorComissao)' }
+                ];
+                propsFormContent.innerHTML = `
+                    <div style="margin-bottom: 10px;">
+                        <div style="font-size:0.75rem; font-weight:700; color:var(--accent-primary); margin-bottom:8px;">💾 Persistência em Banco de Dados</div>
+                        <p style="font-size:0.72rem; color:var(--text-secondary); margin-bottom:12px; line-height:1.4;">
+                            Este é o nó terminal de gravação de dados. Ele insere todas as transações processadas e validadas no banco de dados, especificamente na tabela <code>GamTransacao</code>.
+                        </p>
+                        <div style="font-size:0.72rem; font-weight:700; margin-bottom:8px; color:#fff;">Status de Conexão dos Campos:</div>
+                        <div style="display:flex; flex-direction:column; gap:6px;">
+                            ${fields.map(field => {
+                                const conn = flowchartData.connections.find(c => c.to === node.id && c.toPort === `field_${field.name}`);
+                                const sourceNodeName = conn ? conn.from.replace('node_', '').toUpperCase() : '';
+                                const connText = conn ? `🔌 Conectado ao nó <strong>${sourceNodeName}</strong>` : `⚠️ Desconectado (Usará valor nulo)`;
+                                return `
+                                    <div style="background:rgba(255,255,255,0.01); border:1px solid var(--glass-border); padding:8px; border-radius:6px; transition: all 0.3s;">
+                                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                                            <span style="font-size:0.72rem; font-weight:600; color:#fff;">${field.label}</span>
+                                            <span style="font-size:0.62rem; font-family:monospace; color:var(--text-secondary);">${field.name}</span>
+                                        </div>
+                                        <div style="font-size:0.68rem; color:${conn ? 'var(--success)' : 'var(--warning)'}; margin-top:4px; display: flex; align-items: center; gap: 4px;">
+                                            ${connText}
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // Bidirectional Compiling: Flowchart Model ➔ Monaco Editor JSON
+        // Resolves variables/macros like {{NomeCampo}} automatically
+        function compileFlowchartToJSON() {
+            if (!editorInstance) return;
+
+            const inputNode = flowchartData.nodes.find(n => n.type === 'excel_input');
+            const saveNode = flowchartData.nodes.find(n => n.type === 'save_node');
+            const ifElseNode = flowchartData.nodes.find(n => n.type === 'ifelse_node');
+
+            let compiled = {
+                versao_motor: "2.0",
+                configuracoes_gerais: {
+                    linha_cabecalho: inputNode ? inputNode.data.linhaCabecalho : 1,
+                    pular_linhas_vazias: true,
+                    delimitador_lista: inputNode ? inputNode.data.delimitadorLista : ";"
+                },
+                mapeamento_campos: {},
+                hooks: {}
+            };
+
+            // Compile hooks
+            if (ifElseNode && ifElseNode.data.script) {
+                compiled.hooks.antes_salvar_linha = ifElseNode.data.script;
+            }
+
+            // Compile field mappings by tracing backwards from save node inputs
+            if (saveNode) {
+                saveNode.data.destFields.forEach(field => {
+                    const conn = flowchartData.connections.find(c => c.to === saveNode.id && c.toPort === `field_${field.name}`);
+                    if (conn) {
+                        const sourceNode = flowchartData.nodes.find(n => n.id === conn.from);
+                        if (sourceNode) {
+                            if (sourceNode.type === 'excel_input') {
+                                // Direct cell mapping
+                                const colLetter = conn.fromPort.replace('col_', '');
+                                compiled.mapeamento_campos[field.name] = {
+                                    celula: colLetter
+                                };
+                            } else if (sourceNode.type === 'script_node') {
+                                // Script mapped cell
+                                // Trace back further from the script input port to get the column letter
+                                const scriptConn = flowchartData.connections.find(c => c.to === sourceNode.id && c.toPort === 'in');
+                                let cellLetter = '';
+                                if (scriptConn) {
+                                    const colNode = flowchartData.nodes.find(n => n.id === scriptConn.from);
+                                    if (colNode && colNode.type === 'excel_input') {
+                                        cellLetter = scriptConn.fromPort.replace('col_', '');
+                                    }
+                                }
+
+                                compiled.mapeamento_campos[field.name] = {
+                                    celula: cellLetter || undefined,
+                                    script: sourceNode.data.script
+                                };
+                            } else if (sourceNode.type === 'text_sanitizer') {
+                                const sanitizerConn = flowchartData.connections.find(c => c.to === sourceNode.id && c.toPort === 'in');
+                                let cellLetter = '';
+                                if (sanitizerConn) {
+                                    const colNode = flowchartData.nodes.find(n => n.id === sanitizerConn.from);
+                                    if (colNode && colNode.type === 'excel_input') {
+                                        cellLetter = sanitizerConn.fromPort.replace('col_', '');
+                                    }
+                                }
+
+                                let ruleScript = 'return value.trim().toUpperCase();';
+                                if (sourceNode.data.regra === 'lowercase') {
+                                    ruleScript = 'return value.trim().toLowerCase();';
+                                } else if (sourceNode.data.regra === 'trim') {
+                                    ruleScript = 'return value.trim();';
+                                } else if (sourceNode.data.regra === 'clean') {
+                                    ruleScript = 'return value.replace(/[^a-zA-Z0-9\\s]/g, "");';
+                                }
+
+                                compiled.mapeamento_campos[field.name] = {
+                                    celula: cellLetter || undefined,
+                                    script: ruleScript
+                                };
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Compile webhook configs if present
+            const webhookNode = flowchartData.nodes.find(n => n.type === 'webhook_alert');
+            if (webhookNode && webhookNode.data.webhookUrl) {
+                compiled.configuracoes_gerais.webhook_notificacao = {
+                    url: webhookNode.data.webhookUrl,
+                    mensagem: webhookNode.data.mensagem
+                };
+            }
+
+            // Set compiled JSON back to Monaco Editor without triggering loops
+            editorInstance.setValue(JSON.stringify(compiled, null, 2));
+            
+            // Sync values to existing inputs
+            if (inputNode) {
+                linhaCabecalhoInput.value = inputNode.data.linhaCabecalho;
+                separadorInput.value = inputNode.data.delimitadorLista;
+            }
+        }
+
+        // Bidirectional Parsing: Monaco Editor JSON ➔ Flowchart Model
+        // Parses variable macros like {{NomeCampo}} beautifully
+        function parseJSONToFlowchart() {
+            if (!editorInstance) return;
+
+            let json = {};
+            try {
+                json = JSON.parse(editorInstance.getValue());
+            } catch(e) {
+                // If invalid JSON, abort drawing to prevent crashes
+                return;
+            }
+
+            // Reset nodes and connections
+            flowchartData.nodes = [];
+            flowchartData.connections = [];
+
+            // 1. Create static Excel Row Input node
+            const inputColumns = [];
+            
+            // Auto detect columns from field mappings to seed Excel Input node columns
+            const detectedLetters = new Set();
+            const mappings = json.mapeamento_campos || {};
+            
+            Object.keys(mappings).forEach(k => {
+                if (mappings[k].celula) {
+                    detectedLetters.add(mappings[k].celula.toUpperCase());
+                }
+            });
+
+            // Make sure we have at least columns A, B, C, D if empty
+            if (detectedLetters.size === 0) {
+                ['A', 'B', 'C', 'D'].forEach(l => detectedLetters.add(l));
+            }
+
+            // Sort detected columns
+            const sortedLetters = Array.from(detectedLetters).sort();
+            sortedLetters.forEach(l => {
+                let colLabel = `Coluna_${l}`;
+                if (l === 'A') colLabel = 'Nome/Consultor';
+                if (l === 'B') colLabel = 'CPF/ID';
+                if (l === 'C') colLabel = 'Valor Comissão';
+                
+                inputColumns.push({
+                    letter: l,
+                    label: colLabel,
+                    type: (l === 'C' ? 'Currency' : (l === 'B' ? 'Int' : 'String'))
+                });
+            });
+
+            const excelInputNode = {
+                id: 'node_excel_input',
+                type: 'excel_input',
+                title: '📥 Entrada Planilha',
+                x: 40,
+                y: 80,
+                data: {
+                    linhaCabecalho: json.configuracoes_gerais?.linha_cabecalho || 1,
+                    delimitadorLista: json.configuracoes_gerais?.delimitador_lista || ';',
+                    columns: inputColumns
+                }
+            };
+            flowchartData.nodes.push(excelInputNode);
+
+            // 2. Create static Save Transaction node
+            const destFields = [
+                { name: 'NomeConsultor', label: 'Nome Consultor (Nome)' },
+                { name: 'IDProfissional', label: 'CPF / ID (Documento)' },
+                { name: 'ValorVenda', label: 'Valor Comissão (ValorVenda)' },
+                { name: 'ValorComissao', label: 'Fator Conversão (ValorComissao)' }
+            ];
+
+            const saveTransactionNode = {
+                id: 'node_save_transaction',
+                type: 'save_node',
+                title: '💾 Gravar Transação',
+                x: 620,
+                y: 120,
+                data: {
+                    destFields
+                }
+            };
+            flowchartData.nodes.push(saveTransactionNode);
+
+            // 3. Rebuild intermediate script nodes and connections
+            let scriptIndex = 1;
+            let currentScriptY = 60;
+
+            Object.keys(mappings).forEach(fieldName => {
+                const mapMeta = mappings[fieldName];
+                const isSaveField = destFields.some(f => f.name === fieldName);
+                
+                // If it maps to one of our target destination fields
+                if (isSaveField) {
+                    if (mapMeta.script) {
+                        const scriptText = mapMeta.script.trim();
+                        // Detect if script was automatically compiled by our Text Sanitizer node
+                        const isSanitizer = 
+                            scriptText.includes('toUpperCase()') || 
+                            scriptText.includes('toLowerCase()') || 
+                            scriptText === 'return value.trim();' || 
+                            scriptText.includes('replace(/[^a-zA-Z0-9');
+
+                        if (isSanitizer) {
+                            const sanitizerId = `node_sanitizer_${scriptIndex++}`;
+                            let sanitizerRegra = 'uppercase';
+                            if (scriptText.includes('toLowerCase()')) {
+                                sanitizerRegra = 'lowercase';
+                            } else if (scriptText === 'return value.trim();') {
+                                sanitizerRegra = 'trim';
+                            } else if (scriptText.includes('replace(/[^a-zA-Z0-9')) {
+                                sanitizerRegra = 'clean';
+                            }
+
+                            const sanitizerNode = {
+                                id: sanitizerId,
+                                type: 'text_sanitizer',
+                                title: `🔤 Sanitizador: ${fieldName}`,
+                                x: 320,
+                                y: currentScriptY,
+                                data: {
+                                    fieldName: fieldName,
+                                    regra: sanitizerRegra
+                                }
+                            };
+                            flowchartData.nodes.push(sanitizerNode);
+                            currentScriptY += 120;
+
+                            // Connect excel column to sanitizer input
+                            if (mapMeta.celula) {
+                                flowchartData.connections.push({
+                                    from: 'node_excel_input',
+                                    fromPort: `col_${mapMeta.celula.toUpperCase()}`,
+                                    to: sanitizerId,
+                                    toPort: 'in'
+                                });
+                            }
+
+                            // Connect sanitizer output to save field
+                            flowchartData.connections.push({
+                                from: sanitizerId,
+                                fromPort: 'out',
+                                to: 'node_save_transaction',
+                                toPort: `field_${fieldName}`
+                            });
+                        } else {
+                            // Create a standard script block node
+                            const scriptId = `node_script_${scriptIndex++}`;
+                            const scriptNode = {
+                                id: scriptId,
+                                type: 'script_node',
+                                title: `💻 Script: ${fieldName}`,
+                                x: 320,
+                                y: currentScriptY,
+                                data: {
+                                    fieldName: fieldName,
+                                    script: mapMeta.script
+                                }
+                            };
+                            flowchartData.nodes.push(scriptNode);
+                            currentScriptY += 120;
+
+                            // Connect excel column to script input
+                            if (mapMeta.celula) {
+                                flowchartData.connections.push({
+                                    from: 'node_excel_input',
+                                    fromPort: `col_${mapMeta.celula.toUpperCase()}`,
+                                    to: scriptId,
+                                    toPort: 'in'
+                                });
+                            }
+
+                            // Connect script output to save field
+                            flowchartData.connections.push({
+                                from: scriptId,
+                                fromPort: 'out',
+                                to: 'node_save_transaction',
+                                toPort: `field_${fieldName}`
+                            });
+                        }
+
+                    } else if (mapMeta.celula) {
+                        // Direct connection line from input to output field
+                        flowchartData.connections.push({
+                            from: 'node_excel_input',
+                            fromPort: `col_${mapMeta.celula.toUpperCase()}`,
+                            to: 'node_save_transaction',
+                            toPort: `field_${fieldName}`
+                        });
+                    }
+                }
+            });
+
+            // 4. Rebuild hooks condition nodes (If/Else Condition)
+            if (json.hooks?.antes_salvar_linha) {
+                const ifelseNode = {
+                    id: 'node_ifelse_validation',
+                    type: 'ifelse_node',
+                    title: '🔀 Condicional Se (Hook)',
+                    x: 320,
+                    y: currentScriptY + 20,
+                    data: {
+                        script: json.hooks.antes_salvar_linha
+                    }
+                };
+                flowchartData.nodes.push(ifelseNode);
+            }
+
+            // 5. Rebuild webhook notification nodes if configured
+            const webhookConfig = json.configuracoes_gerais?.webhook_notificacao;
+            if (webhookConfig) {
+                const webhookNode = {
+                    id: 'node_webhook_alert',
+                    type: 'webhook_alert',
+                    title: '🔔 Enviar Webhook/Alerta',
+                    x: 620,
+                    y: currentScriptY + 20,
+                    data: {
+                        webhookUrl: webhookConfig.url,
+                        mensagem: webhookConfig.mensagem
+                    }
+                };
+                flowchartData.nodes.push(webhookNode);
+            }
+
+            renderNodes();
+        }
+
+        // Attach parsing trigger on switching tabs to Map
+        tabVisual.addEventListener('click', () => {
+            setTimeout(parseJSONToFlowchart, 50);
+        });
+
+        // Initialize Monaco Editor value sync hook on startup
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                if (editorInstance) {
+                    parseJSONToFlowchart();
+                }
+            }, 800);
+        });
+
+        // ═══════════════════════ INIT ═══════════════════════
+        window.addEventListener('DOMContentLoaded', () => {
+            renderHeader("Motor Programável", "Editor Avançado JSON & Sandbox Scripts");
+            loadPerfis();
+        });
+    </script>
+</body>
+</html>

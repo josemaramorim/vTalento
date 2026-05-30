@@ -31,6 +31,27 @@ function checkActiveTasks() {
 function main() {
     const stagedFiles = getStagedFiles();
     
+    // Regra de Governança Doc-as-Code: Se o código do motor mudar, o manual deve mudar
+    const hasMotorChanges = stagedFiles.some(file => 
+        file.includes('MotorImportacaoProgramavelService.js')
+    );
+    const hasManualChanges = stagedFiles.some(file => 
+        file.includes('motor-importacao-manual.md')
+    );
+
+    if (hasMotorChanges && !hasManualChanges) {
+        console.error('\n================================================================');
+        console.error('❌ ERRO DE GOVERNANÇA: COMMIT REJEITADO (Doc-as-Code)!');
+        console.error('Você alterou o código do motor de importação programável');
+        console.error('("MotorImportacaoProgramavelService.js"), mas não atualizou o');
+        console.error('manual de sintaxe e autoria em "docs/motor-importacao-manual.md".');
+        console.error('\nLEI DE GOVERNANÇA DOC-AS-CODE:');
+        console.error('Qualquer alteração no núcleo interpretador do motor exige a revisão/atualização');
+        console.error('do manual técnico correspondente para evitar a obsolescência da documentação.');
+        console.error('================================================================\n');
+        process.exit(1);
+    }
+
     // Se não há arquivos de código modificados, permite o commit
     const hasSourceChanges = stagedFiles.some(file => 
         (file.startsWith('src/') && (file.endsWith('.js') || file.endsWith('.html') || file.endsWith('.css')))
