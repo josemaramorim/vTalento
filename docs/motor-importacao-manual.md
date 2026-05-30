@@ -61,25 +61,38 @@ Os scripts de campo e hooks rodam dentro de um contexto isolado (`vm` do Node.js
 
 ---
 
-## 3. Helpers Utilitários Nativos
+## 3. Helpers Utilitários Nativos e Instruções de Retorno
 
-Estão expostos na sandbox sob o namespace `helpers`:
+Nos scripts de `mapeamento_campos`, o valor final de cada coluna processada deve ser explicitamente retornado usando a instrução `return`. Como tarefas de sanitização, formatação de moeda e manipulação de datas são extremamente comuns no processamento de planilhas Excel, a sandbox disponibiliza nativamente o objeto global `helpers` contendo utilitários pré-compilados.
 
-### `helpers.parseMoeda(val)`
-Converte de forma flexível e ultra-robusta diversos formatos de moedas nacionais (BRL) e estrangeiras (USD) para números do tipo Float.
-- Exemplos:
-  - `helpers.parseMoeda("R$ 1.500,50")` ➔ `1500.5`
-  - `helpers.parseMoeda("1,500.50")` ➔ `1500.5`
-  - `helpers.parseMoeda("1500,50")` ➔ `1500.5`
-  - `helpers.parseMoeda("1.500")` ➔ `1500`
+### Como utilizar a instrução `return helpers`
+Você pode chamar o helper e retornar seu valor diretamente na mesma linha, reduzindo o código e tornando-o limpo:
 
-### `helpers.cleanCPF(val)`
-Remove qualquer caractere não numérico, ideal para padronização de CPF, CNPJ e códigos de matrículas.
-- Exemplo: `helpers.cleanCPF("123.456.789-00")` ➔ `"12345678900"`
+```javascript
+// Exemplo: sanitiza o CPF lido da célula e já retorna o resultado limpo
+return helpers.cleanCPF(value);
+```
 
-### `helpers.somarMeses(dataStr, meses)`
-Calcula datas futuras adicionando meses a uma data inicial base. Suporta datas no padrão BRL (`DD/MM/YYYY`) ou padrão universal ISO. Retorna uma string no formato `YYYY-MM-DD`.
-- Exemplo: `helpers.somarMeses("15/01/2026", 3)` ➔ `"2026-04-15"`
+Também é possível armazenar em variáveis para aplicar lógicas condicionais ou matemáticas mais complexas antes do retorno:
+
+```javascript
+// Exemplo: converte moeda, faz um cálculo e retorna
+const vgv = helpers.parseMoeda(value);
+if (vgv > 500000) {
+  return vgv * 0.02; // 2% de comissão para grandes vendas
+}
+return vgv * 0.01; // 1% de comissão padrão
+```
+
+---
+
+### Tabela de Helpers Existentes Atualmente:
+
+| Função | Parâmetro | Tipo de Retorno | Descrição | Exemplo de Uso |
+| :--- | :--- | :--- | :--- | :--- |
+| **`helpers.parseMoeda(val)`** | `val` (String ou Número) | `Float` (ou `0` se inválido) | Sanitiza textos com cifras monetárias (BRL `R$ 1.500,00`, USD `1,500.00`, parciais `1.500`) e converte para decimal. | `helpers.parseMoeda("R$ 1.500,50")` ➔ `1500.5` |
+| **`helpers.cleanCPF(val)`** | `val` (String) | `String` | Remove qualquer caractere não numérico (letras, pontos, traços, barras, espaços). | `helpers.cleanCPF("123.456.789-00")` ➔ `"12345678900"` |
+| **`helpers.somarMeses(dataStr, meses)`** | `dataStr` (String), `meses` (Número) | `String` (formato `YYYY-MM-DD`) | Adiciona o número especificado de meses a uma data (suporta formato brasileiro `DD/MM/YYYY` ou formato ISO). | `helpers.somarMeses("15/01/2026", 3)` ➔ `"2026-04-15"` |
 
 ---
 
@@ -229,7 +242,6 @@ Este perfil simplificado é ideal para planilhas de recebimentos de comissões/b
   }
 }
 ```
-```
 
 ---
 
@@ -261,4 +273,35 @@ Este exemplo demonstra um cenário onde o contrato imobiliário não possui flux
   }
 }
 ```
+```
+
+---
+
+### Exemplo 7: Esteira de Venda Parcelada Padrão (Sem Balões)
+Este exemplo demonstra um cenário onde o contrato possui fluxo de parcelas mensais sucessivas (como financiamento padrão ou parcelas de comissão recorrentes) e pagamento da Entrada/Sinal, sem a necessidade de balões de reforço.
+
+```json
+{
+  "versao_motor": "2.0",
+  "configuracoes_gerais": {
+    "linha_cabecalho": 3,
+    "pular_linhas_vazias": true
+  },
+  "mapeamento_campos": {
+    "NomeConsultor": {
+      "celula": "R"
+    },
+    "IDProfissional": {
+      "celula": "S",
+      "script": "return value ? value.replace(/[^0-9]/g, '') : '';"
+    },
+    "ValorVenda": {
+      "celula": "E",
+      "script": "return helpers.parseMoeda(value);"
+    },
+    "transacoes_geradas": {
+      "script": "function parseExcelDate(val) {\n  if (!val) return new Date();\n  if (typeof val === 'number') {\n    return new Date((val - 25569) * 86400000);\n  }\n  const str = String(val).trim();\n  if (str.includes('/')) {\n    const parts = str.split('/');\n    if (parts.length === 3) {\n      return new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10));\n    }\n  }\n  const parsed = Date.parse(str);\n  return isNaN(parsed) ? new Date() : new Date(parsed);\n}\n\nconst fator = 100;\nconst transacoes = [];\n\nconst emp = row.C || 'Park View Residencial';\nconst uni = row.D || 'Geral';\nconst cliente = row.A || 'Cliente';\nconst obs = row.Q || '';\n\n// 1. Entrada / Sinal (Compensado na data de pagamento)\nconst valorEntradaRs = helpers.parseMoeda(row.F);\nif (valorEntradaRs > 0) {\n  const dataEntrada = parseExcelDate(row.G);\n  transacoes.push({\n    valor: Math.floor(valorEntradaRs / fator),\n    valor_original_rs: valorEntradaRs,\n    tipo: 'CREDITO',\n    status: 'COMPENSADO',\n    data_vencimento: dataEntrada.toISOString(),\n    empreendimento: emp,\n    unidade: uni,\n    contato_cliente: cliente,\n    justificativa: 'Entrada de Contrato - ' + emp + ' ' + uni,\n    dados_extras: { observacao: obs }\n  });\n}\n\n// 2. Loop de Parcelas (K parcelas já pagas -> COMPENSADO; restantes -> PENDENTE) - Sem Balões!\nconst qtdParcelas = parseInt(row.J) || 0;\nconst parcelasPagas = parseInt(row.K) || 0;\nconst valorParcelaRs = helpers.parseMoeda(row.H);\nconst dataReferencia = parseExcelDate(row.G);\n\nif (qtdParcelas > 0 && valorParcelaRs > 0) {\n  const valorParcelaTalentos = Math.floor(valorParcelaRs / fator);\n  for (let i = 0; i < qtdParcelas; i++) {\n    const dataVenc = new Date(dataReferencia.getTime());\n    dataVenc.setMonth(dataReferencia.getMonth() + i + 1);\n\n    const isPaga = i < parcelasPagas;\n    transacoes.push({\n      valor: valorParcelaTalentos,\n      valor_original_rs: valorParcelaRs,\n      tipo: 'CREDITO',\n      status: isPaga ? 'COMPENSADO' : 'PENDENTE',\n      data_vencimento: dataVenc.toISOString(),\n      empreendimento: emp,\n      unidade: uni,\n      contato_cliente: cliente,\n      justificativa: 'Parcela ' + (i + 1) + '/' + qtdParcelas + ' - ' + emp + ' ' + uni + (isPaga ? ' (Paga)' : ' (Pendente)'),\n      dados_extras: { observacao: obs }\n    });\n  }\n}\n\nreturn transacoes;"
+    }
+  }
+}
 ```
