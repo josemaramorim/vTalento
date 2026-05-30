@@ -230,3 +230,35 @@ Este perfil simplificado é ideal para planilhas de recebimentos de comissões/b
 }
 ```
 ```
+
+---
+
+### Exemplo 6: Lote de Balões/Reforços Exclusivos (Sem Parcelas)
+Este exemplo demonstra um cenário onde o contrato imobiliário não possui fluxo de parcelas mensais, mas apenas o pagamento da Entrada (compensado) e múltiplos Balões ou Reforços programados futuros (pendentes).
+
+```json
+{
+  "versao_motor": "2.0",
+  "configuracoes_gerais": {
+    "linha_cabecalho": 3,
+    "pular_linhas_vazias": true
+  },
+  "mapeamento_campos": {
+    "NomeConsultor": {
+      "celula": "R"
+    },
+    "IDProfissional": {
+      "celula": "S",
+      "script": "return value ? value.replace(/[^0-9]/g, '') : '';"
+    },
+    "ValorVenda": {
+      "celula": "E",
+      "script": "return helpers.parseMoeda(value);"
+    },
+    "transacoes_geradas": {
+      "script": "function parseExcelDate(val) {\n  if (!val) return new Date();\n  if (typeof val === 'number') {\n    return new Date((val - 25569) * 86400000);\n  }\n  const str = String(val).trim();\n  if (str.includes('/')) {\n    const parts = str.split('/');\n    if (parts.length === 3) {\n      return new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10));\n    }\n  }\n  const parsed = Date.parse(str);\n  return isNaN(parsed) ? new Date() : new Date(parsed);\n}\n\nconst fator = 100;\nconst transacoes = [];\n\nconst emp = row.C || 'Park View Residencial';\nconst uni = row.D || 'Geral';\nconst cliente = row.A || 'Cliente';\nconst obs = row.Q || '';\n\n// 1. Entrada / Sinal (Compensado na data de pagamento)\nconst valorEntradaRs = helpers.parseMoeda(row.F);\nif (valorEntradaRs > 0) {\n  const dataEntrada = parseExcelDate(row.G);\n  transacoes.push({\n    valor: Math.floor(valorEntradaRs / fator),\n    valor_original_rs: valorEntradaRs,\n    tipo: 'CREDITO',\n    status: 'COMPENSADO',\n    data_vencimento: dataEntrada.toISOString(),\n    empreendimento: emp,\n    unidade: uni,\n    contato_cliente: cliente,\n    justificativa: 'Entrada de Contrato - ' + emp + ' ' + uni,\n    dados_extras: { observacao: obs }\n  });\n}\n\n// 2. Balões / Reforços Extras (Pendentes) - Sem Parcelas!\nconst valorBalaoRs = helpers.parseMoeda(row.L);\nconst qtdBaloes = parseInt(row.M) || 0;\nconst datasBaloesStr = String(row.N || '').trim();\n\nif (valorBalaoRs > 0 && qtdBaloes > 0 && datasBaloesStr) {\n  const valorBalaoTalentos = Math.floor(valorBalaoRs / fator);\n  const datasArray = datasBaloesStr.split('|').map(d => d.trim()).filter(Boolean);\n  \n  datasArray.forEach((dataStr, idx) => {\n    const dataBalao = parseExcelDate(dataStr);\n    transacoes.push({\n      valor: valorBalaoTalentos,\n      valor_original_rs: valorBalaoRs,\n      tipo: 'CREDITO',\n      status: 'PENDENTE',\n      data_vencimento: dataBalao.toISOString(),\n      empreendimento: emp,\n      unidade: uni,\n      contato_cliente: cliente,\n      justificativa: 'Balão Reforço ' + (idx + 1) + '/' + datasArray.length + ' - ' + emp + ' ' + uni,\n      dados_extras: { observacao: obs }\n    });\n  });\n}\n\nreturn transacoes;"
+    }
+  }
+}
+```
+```
