@@ -168,3 +168,65 @@ Este exemplo utiliza o hook global `antes_salvar_linha` para impedir transaçõe
   }
 }
 ```
+
+---
+
+### Exemplo 4: Esteira Completa de Contrato Imobiliário (Entrada + Parcelas Mensais + Balões)
+Este exemplo demonstra um cenário corporativo completo do mercado imobiliário ou de bens duráveis, gerando dinamicamente transações de entrada compensadas, múltiplas parcelas mensais futuras (compensadas ou pendentes) e múltiplos balões de reforço a partir das colunas lidas de cada linha da planilha.
+
+```json
+{
+  "versao_motor": "2.0",
+  "configuracoes_gerais": {
+    "linha_cabecalho": 3,
+    "pular_linhas_vazias": true
+  },
+  "mapeamento_campos": {
+    "NomeConsultor": {
+      "celula": "R"
+    },
+    "IDProfissional": {
+      "celula": "S",
+      "script": "return value ? value.replace(/[^0-9]/g, '') : '';"
+    },
+    "ValorVenda": {
+      "celula": "E",
+      "script": "return helpers.parseMoeda(value);"
+    },
+    "transacoes_geradas": {
+      "script": "function parseExcelDate(val) {\n  if (!val) return new Date();\n  if (typeof val === 'number') {\n    return new Date((val - 25569) * 86400000);\n  }\n  const str = String(val).trim();\n  if (str.includes('/')) {\n    const parts = str.split('/');\n    if (parts.length === 3) {\n      return new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10));\n    }\n  }\n  const parsed = Date.parse(str);\n  return isNaN(parsed) ? new Date() : new Date(parsed);\n}\n\nconst fator = 100;\nconst transacoes = [];\n\nconst emp = row.C || 'Park View Residencial';\nconst uni = row.D || 'Geral';\nconst cliente = row.A || 'Cliente';\nconst obs = row.Q || '';\n\n// 1. Entrada / Sinal (Compensado na data de pagamento)\nconst valorEntradaRs = helpers.parseMoeda(row.F);\nif (valorEntradaRs > 0) {\n  const dataEntrada = parseExcelDate(row.G);\n  transacoes.push({\n    valor: Math.floor(valorEntradaRs / fator),\n    valor_original_rs: valorEntradaRs,\n    tipo: 'CREDITO',\n    status: 'COMPENSADO',\n    data_vencimento: dataEntrada.toISOString(),\n    empreendimento: emp,\n    unidade: uni,\n    contato_cliente: cliente,\n    justificativa: 'Entrada de Contrato - ' + emp + ' ' + uni,\n    dados_extras: { observacao: obs }\n  });\n}\n\n// 2. Loop de Parcelas (K parcelas já pagas -> COMPENSADO; restantes -> PENDENTE)\nconst qtdParcelas = parseInt(row.J) || 0;\nconst parcelasPagas = parseInt(row.K) || 0;\nconst valorParcelaRs = helpers.parseMoeda(row.H);\nconst dataReferencia = parseExcelDate(row.G);\n\nif (qtdParcelas > 0 && valorParcelaRs > 0) {\n  const valorParcelaTalentos = Math.floor(valorParcelaRs / fator);\n  for (let i = 0; i < qtdParcelas; i++) {\n    const dataVenc = new Date(dataReferencia.getTime());\n    dataVenc.setMonth(dataReferencia.getMonth() + i + 1);\n\n    const isPaga = i < parcelasPagas;\n    transacoes.push({\n      valor: valorParcelaTalentos,\n      valor_original_rs: valorParcelaRs,\n      tipo: 'CREDITO',\n      status: isPaga ? 'COMPENSADO' : 'PENDENTE',\n      data_vencimento: dataVenc.toISOString(),\n      empreendimento: emp,\n      unidade: uni,\n      contato_cliente: cliente,\n      justificativa: 'Parcela ' + (i + 1) + '/' + qtdParcelas + ' - ' + emp + ' ' + uni + (isPaga ? ' (Paga)' : ' (Pendente)'),\n      dados_extras: { observacao: obs }\n    });\n  }\n}\n\n// 3. Balões / Reforços Extras (Pendentes)\nconst valorBalaoRs = helpers.parseMoeda(row.L);\nconst qtdBaloes = parseInt(row.M) || 0;\nconst datasBaloesStr = String(row.N || '').trim();\n\nif (valorBalaoRs > 0 && qtdBaloes > 0 && datasBaloesStr) {\n  const valorBalaoTalentos = Math.floor(valorBalaoRs / fator);\n  const datasArray = datasBaloesStr.split('|').map(d => d.trim()).filter(Boolean);\n  \n  datasArray.forEach((dataStr, idx) => {\n    const dataBalao = parseExcelDate(dataStr);\n    transacoes.push({\n      valor: valorBalaoTalentos,\n      valor_original_rs: valorBalaoRs,\n      tipo: 'CREDITO',\n      status: 'PENDENTE',\n      data_vencimento: dataBalao.toISOString(),\n      empreendimento: emp,\n      unidade: uni,\n      contato_cliente: cliente,\n      justificativa: 'Balão Reforço ' + (idx + 1) + '/' + datasArray.length + ' - ' + emp + ' ' + uni,\n      dados_extras: { observacao: obs }\n    });\n  });\n}\n\nreturn transacoes;"
+    }
+  }
+}
+```
+
+### Exemplo 5: Conciliação Automática e Baixa de Parcelas (Motor FIFO)
+Este perfil simplificado é ideal para planilhas de recebimentos de comissões/baixas de parcelas. Quando importado no **Modo Baixas (Passo 2)** na tela de upload, o motor lê o valor de cada parceiro e aciona automaticamente o algoritmo **FIFO (First-In, First-Out)** para compensar suas parcelas pendentes mais antigas.
+
+```json
+{
+  "versao_motor": "2.0",
+  "configuracoes_gerais": {
+    "linha_cabecalho": 3,
+    "pular_linhas_vazias": true
+  },
+  "mapeamento_campos": {
+    "NomeConsultor": {
+      "celula": "R"
+    },
+    "IDProfissional": {
+      "celula": "S",
+      "script": "return value ? value.replace(/[^0-9]/g, '') : '';"
+    },
+    "ValorVenda": {
+      "celula": "C",
+      "script": "return helpers.parseMoeda(value);"
+    },
+    "ValorComissao": {
+      "celula": "O",
+      "script": "return Math.floor(helpers.parseMoeda(value) / 100);"
+    }
+  }
+}
+```
+```
