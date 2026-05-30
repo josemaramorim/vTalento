@@ -874,10 +874,20 @@
             try {
                 const res = await fetch(`${API_BASE}/perfis`, { headers: { 'Authorization': `Bearer ${token}` } });
                 const perfis = await res.json();
-                perfisCached = perfis;
+                
+                // Filtra para exibir apenas perfis programáveis (com versao_motor ou mapeamento_campos)
+                const perfisProgramaveis = perfis.filter(p => {
+                    let map = p.mapeamento_json;
+                    try {
+                        if (typeof map === 'string') map = JSON.parse(map);
+                    } catch (e) {}
+                    return map && (map.versao_motor === '2.0' || map.mapeamento_campos);
+                });
+
+                perfisCached = perfisProgramaveis;
 
                 perfilSelector.innerHTML = '<option value="" disabled selected>Selecionar Perfil...</option>';
-                perfis.forEach(p => {
+                perfisProgramaveis.forEach(p => {
                     const opt = document.createElement('option');
                     opt.value = p.id;
                     opt.textContent = p.nome_perfil;

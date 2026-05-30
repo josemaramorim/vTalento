@@ -307,6 +307,57 @@ describe('ImportacaoService', () => {
     });
   });
 
+  describe('Validação Defensiva de Perfis/Motores', () => {
+    it('deve barrar perfil programável sendo executado no motor clássico', async () => {
+      const mockPerfilProg = {
+        id: 'perfil-prog',
+        empresa_id: 'empresa-123',
+        nome_perfil: 'Perfil Programável 2.0',
+        mapeamento_json: JSON.stringify({
+          versao_motor: '2.0',
+          mapeamento_campos: {}
+        }),
+        linha_cabecalho: 1
+      };
+
+      db.mockImplementation((table) => {
+        const qb = {
+          where: jest.fn().mockReturnThis(),
+          first: jest.fn().mockResolvedValue(mockPerfilProg)
+        };
+        return qb;
+      });
+
+      await expect(
+        ImportacaoService.previewImportacao('empresa-123', 'fake-base64', 'perfil-prog')
+      ).rejects.toThrow('Este perfil foi criado para o Motor Programável e não pode ser executado no Motor de Importação clássico');
+    });
+
+    it('deve barrar perfil clássico sendo executado no motor programável', async () => {
+      const mockPerfilClassico = {
+        id: 'perfil-classico',
+        empresa_id: 'empresa-123',
+        nome_perfil: 'Perfil Clássico Antigo',
+        mapeamento_json: JSON.stringify({
+          corretor_identificador: 'Corretor'
+        }),
+        linha_cabecalho: 1
+      };
+
+      db.mockImplementation((table) => {
+        const qb = {
+          where: jest.fn().mockReturnThis(),
+          first: jest.fn().mockResolvedValue(mockPerfilClassico)
+        };
+        return qb;
+      });
+
+      await expect(
+        ImportacaoService.previewImportacaoProgramavel('empresa-123', 'fake-base64', 'perfil-classico')
+      ).rejects.toThrow('Este perfil foi criado para o Motor de Importação clássico e não possui regras programáveis compatíveis com o Motor Programável');
+    });
+  });
+
   describe('Confirmar Importação', () => {
     it('deve persistir as transacoes de importacao definitiva no banco e atualizar os saldos', async () => {
       const mockPerfil = {

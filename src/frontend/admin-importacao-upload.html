@@ -679,16 +679,26 @@
             try {
                 const res = await fetch(`${API_BASE}/perfis`, { headers: { 'Authorization': `Bearer ${token}` } });
                 const data = await res.json();
-                perfisCached = data;
+                
+                // Filtra para exibir apenas perfis clássicos (ignora programáveis com versao_motor ou mapeamento_campos)
+                const perfisClassicos = data.filter(p => {
+                    let map = p.mapeamento_json;
+                    try {
+                        if (typeof map === 'string') map = JSON.parse(map);
+                    } catch (e) {}
+                    return !map || (map.versao_motor !== '2.0' && !map.mapeamento_campos);
+                });
+
+                perfisCached = perfisClassicos;
                 perfilSelect.innerHTML = '';
 
-                if (data.length === 0) {
+                if (perfisClassicos.length === 0) {
                     perfilSelect.innerHTML = '<option value="" disabled selected>Nenhum perfil cadastrado</option>';
                     checkCanAdvance();
                     return;
                 }
 
-                data.forEach(p => {
+                perfisClassicos.forEach(p => {
                     const opt = document.createElement('option');
                     opt.value = p.id;
                     opt.textContent = p.nome_perfil;

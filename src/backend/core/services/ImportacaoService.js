@@ -383,6 +383,11 @@ class ImportacaoService {
     });
 
     const mapeamento = perfil.mapeamento_json;
+
+    // Validação defensiva: impede execução de perfil programável no motor clássico
+    if (mapeamento && (mapeamento.versao_motor === '2.0' || mapeamento.mapeamento_campos)) {
+      throw new Error('Este perfil foi criado para o Motor Programável e não pode ser executado no Motor de Importação clássico. Por favor, utilize a importação programável.');
+    }
     
     const fieldsToExtract = {
       corretor_identificador: String(mapeamento.corretor_identificador || '').trim().toUpperCase(),
@@ -797,6 +802,12 @@ class ImportacaoService {
     const perfil = await this.obterPerfil(empresa_id, perfil_id);
     if (!perfil) {
       throw new Error('Perfil de importação não encontrado');
+    }
+
+    const mapeamento = perfil.mapeamento_json;
+    // Validação defensiva: impede execução de perfil clássico no motor programável
+    if (!mapeamento || (mapeamento.versao_motor !== '2.0' && !mapeamento.mapeamento_campos)) {
+      throw new Error('Este perfil foi criado para o Motor de Importação clássico e não possui regras programáveis compatíveis com o Motor Programável.');
     }
 
     const rawRows = this._lerPlanilhaBase64(fileBase64);
