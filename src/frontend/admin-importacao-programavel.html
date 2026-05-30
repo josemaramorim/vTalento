@@ -883,6 +883,14 @@
                     opt.textContent = p.nome_perfil;
                     perfilSelector.appendChild(opt);
                 });
+
+                // Mantém o perfil ativo selecionado no dropdown e atualiza estado do botão Excluir
+                if (activePerfilId) {
+                    perfilSelector.value = activePerfilId;
+                    btnExcluir.disabled = false;
+                } else {
+                    btnExcluir.disabled = true;
+                }
             } catch(e) {
                 showToast('Falha ao carregar perfis.', 'error');
             }
@@ -969,12 +977,15 @@
                     body: JSON.stringify(body)
                 });
                 if (!res.ok) throw new Error('Erro ao persistir perfil');
+                
+                const data = await res.json();
+                // Se for um novo perfil, armazena o ID retornado pelo servidor para entrar em modo de edição
+                if (!isEdit && data && data.id) {
+                    activePerfilId = data.id;
+                }
+                
                 showToast('Perfil salvo com sucesso!', 'success');
                 await loadPerfis();
-                if (!isEdit) {
-                    activePerfilId = null;
-                    perfilNomeInput.value = '';
-                }
             } catch(e) {
                 showToast(e.message, 'error');
             }
