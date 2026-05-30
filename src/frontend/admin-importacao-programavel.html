@@ -931,9 +931,12 @@
                         "NomeConsultor": { "celula": "A" }
                     }
                 }, null, 2));
+                
+                // Força o reset imediato do canvas visual de fluxo
+                setTimeout(parseJSONToFlowchart, 10);
             }
             btnExcluir.disabled = true;
-            showToast('Prontidão para cadastrar novo perfil.', 'info');
+            showToast('Pronto para criar um novo perfil! Digite um nome e configure o seu fluxo.', 'info');
         });
 
         btnSalvar.addEventListener('click', async () => {

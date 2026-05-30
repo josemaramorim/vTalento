@@ -541,5 +541,5 @@ Esta fase permite que o administrador da empresa (`ADMIN_EMPRESA`) gerencie a id
 - [x] **Tarefa 28.2 (Frontend):** Adicionar as regras de estilos CSS (.node-variant-webhook_alert) com bordas laranjas e cabeçalho gradiente.
 - [x] **Tarefa 28.3 (Frontend):** Implementar a renderização visual do card terminal com uma porta de entrada `in`.
 - [x] **Tarefa 28.4 (Frontend):** Desenvolver o painel de propriedades para configurar a URL do webhook e o corpo da mensagem com suporte a macros `{{campo}}`.
-- [x] **Tarefa 28.5 (Frontend):** Adaptar `compileFlowchartToJSON` e `parseJSONToFlowchart` para converter o webhook em hooks ou configurações gerais de envio de alertas de forma bidirecional.
+- [/] **Tarefa 28.5 (Frontend):** Adaptar `compileFlowchartToJSON` e `parseJSONToFlowchart` para converter o webhook em hooks ou configurações gerais de envio de alertas de forma bidirecional.
 
