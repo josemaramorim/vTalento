@@ -18,11 +18,18 @@ window.fetch = async function(input, init) {
     
     if (response.status === 401) {
         const data = await response.clone().json().catch(() => ({}));
-        if (data.error === 'USER_INACTIVE') {
+        
+        // Se não for a rota de login, limpa a sessão expirada/inválida e redireciona
+        if (!url.includes('/auth/login')) {
             localStorage.removeItem('@VTalentos:token');
             localStorage.removeItem('@VTalentos:user');
+            
             if (!window.location.pathname.includes('login.html')) {
-                window.location.href = 'login.html?error=inactive';
+                if (data.error === 'USER_INACTIVE') {
+                    window.location.href = 'login.html?error=inactive';
+                } else {
+                    window.location.href = 'login.html?error=expired';
+                }
                 return response;
             }
         }
@@ -430,9 +437,18 @@ window.addEventListener('DOMContentLoaded', async () => {
                     window.showToast('Sua conta foi inativada. Entre em contato com o administrador.', 'error');
                 }
             }, 200);
+        } else if (urlParams.get('error') === 'expired') {
+            setTimeout(() => {
+                if (window.showToast) {
+                    window.showToast('Sua sessão expirou. Por favor, faça login novamente.', 'error');
+                }
+            }, 200);
         }
         return;
     }
+
+    // Garante que o usuário está autenticado antes de carregar dados da página protegida
+    checkAuth();
 
     const token = localStorage.getItem('@VTalentos:token');
     let themeToApply = localStorage.getItem('theme') || 'dark';
