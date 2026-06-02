@@ -543,3 +543,17 @@ Esta fase permite que o administrador da empresa (`ADMIN_EMPRESA`) gerencie a id
 - [x] **Tarefa 28.4 (Frontend):** Desenvolver o painel de propriedades para configurar a URL do webhook e o corpo da mensagem com suporte a macros `{{campo}}`.
 - [x] **Tarefa 28.5 (Frontend):** Adaptar `compileFlowchartToJSON` e `parseJSONToFlowchart` para converter o webhook em hooks ou configurações gerais de envio de alertas de forma bidirecional.
 
+---
+
+## FASE 17: Detalhes do Lançamento com Metadados Avançados (dados_extras JSON)
+
+### História 29: Visualização Interativa de dados_extras no Modal de Detalhes
+*Como administrador, quero visualizar os dados_extras das transações no modal de detalhes das movimentações em formato JSON estruturado e interativo, para facilitar auditorias e rastreamento.*
+
+- [x] **Tarefa 29.1 (Backend):** Selecionar e retornar a coluna `GamTransacao.dados_extras` no método `listarMovimentacoesEquipe` em `LancamentoService.js`.
+- [x] **Tarefa 29.2 (Frontend):** Adicionar estilos do JSON Tree Viewer no CSS do `admin-movimentacoes.html`.
+- [x] **Tarefa 29.3 (Frontend):** Implementar o visualizador de árvore JSON recursivo e interativo (`formatJSONTree`) no JavaScript do `admin-movimentacoes.html`.
+- [x] **Tarefa 29.4 (Frontend):** Adicionar o painel expansível e colapsável de metadados no modal de detalhes em `admin-movimentacoes.html`.
+- [x] **Tarefa 29.5 (Testes):** Verificar o funcionamento simulado no navegador e confirmar se as movimentações mostram metadados corretos.
+
+

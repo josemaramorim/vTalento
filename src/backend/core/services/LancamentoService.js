@@ -148,6 +148,7 @@ class LancamentoService {
         'GamTransacao.justificativa',
         'GamTransacao.empreendimento',
         'GamTransacao.unidade',
+        'GamTransacao.dados_extras',
         'GamTransacao.created_at',
         'GamTransacao.data_vencimento',
         'GamTransacao.data_compensacao',

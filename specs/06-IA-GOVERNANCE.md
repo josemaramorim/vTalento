@@ -101,6 +101,7 @@ Para garantir a continuidade perfeita e o alinhamento do projeto, a IA deve segu
 | **DESENVOLVIMENTO** | ✅ Concluído | Fase 15: Motor Importação Programável | `develop` | Motor de importação programável baseado em JSON e Sandbox vm do Node.js, com endpoints de preview/confirmação, resolvedor de usuário e testes unitários e de integração 100% concluídos. |
 | **DESENVOLVIMENTO** | ✅ Concluído | Fase 16: Editor No-Code e Novos Nós | `develop` | Editor visual de fluxos estendido com suporte a caixas Monaco, Nós de Sanitização de Texto e Envio de Alertas Webhook. |
 | **DOCUMENTAÇÃO**    | ✅ Concluído | Manual de Sintaxe e Fallback de Valor | `develop` | Sincronização do manual de autoria detalhando fallbacks de valores, macros e leitura direta de row.F sem duplicar colunas. |
+| **DESENVOLVIMENTO** | ✅ Concluído | Fase 17: Detalhes do Lançamento com Metadados | `develop` | Exibição colapsável e interativa em JSON Tree de dados_extras no modal de detalhes das movimentações do admin. |
 
 ---
 
