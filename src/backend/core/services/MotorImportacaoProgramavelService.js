@@ -1,8 +1,9 @@
 const vm = require('vm');
 
 class MotorImportacaoProgramavelService {
-  constructor(configJson) {
+  constructor(configJson, options = {}) {
     this.config = typeof configJson === 'string' ? JSON.parse(configJson) : configJson;
+    this.fatorConversao = parseFloat(options?.fatorConversao || (this.config?.configuracoes_gerais?.fator_conversao)) || 100;
     this.globalStore = {}; // Estado persistido de linha para linha
   }
 
@@ -174,6 +175,8 @@ class MotorImportacaoProgramavelService {
       globalStore: this.globalStore, // Estado compartilhado persistente
       helpers, // Funções auxiliares
       result: null, // Receptor do retorno
+      fatorConversao: this.fatorConversao,
+      fator_conversao: this.fatorConversao,
       log: {
         info: (msg) => logs.push(`[Linha ${numeroLinha}] [Campo ${campo}] [Info] ${msg}`),
         warning: (msg) => logs.push(`[Linha ${numeroLinha}] [Campo ${campo}] [Warning] ${msg}`),
@@ -201,6 +204,8 @@ class MotorImportacaoProgramavelService {
   executarScriptGlobal(scriptCode, logs) {
     const sandbox = {
       globalStore: this.globalStore,
+      fatorConversao: this.fatorConversao,
+      fator_conversao: this.fatorConversao,
       log: {
         info: (msg) => logs.push(`[Global] [Info] ${msg}`),
         warning: (msg) => logs.push(`[Global] [Warning] ${msg}`)
@@ -220,6 +225,8 @@ class MotorImportacaoProgramavelService {
     const sandbox = {
       linhaResult,
       globalStore: this.globalStore,
+      fatorConversao: this.fatorConversao,
+      fator_conversao: this.fatorConversao,
       log: {
         warning: (msg) => logs.push(`[Linha ${numeroLinha}] [Hook Warning] ${msg}`),
         info: (msg) => logs.push(`[Linha ${numeroLinha}] [Hook Info] ${msg}`)

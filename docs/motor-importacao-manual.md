@@ -96,7 +96,335 @@ return vgv * 0.01; // 1% de comissão padrão
 
 ---
 
-## 4. Exemplos Homologados e Executáveis
+## 4. O Editor de Fluxos Visual (No-Code)
+
+A plataforma também oferece uma experiência de mapeamento 100% visual no estilo arraste-e-solte (Node-RED/N8N), onde o JSON de perfil é gerado automaticamente nos bastidores. 
+
+Dentro desse editor, destacam-se os **Nós Geradores Financeiros (Sinal, Parcelas, Lançamentos Extras)**, que são nós especializados em criar as transações financeiras automaticamente, sem precisar de programação em JavaScript para regras comuns.
+
+### Exemplo Prático: Gerador de Entrada (Sinal)
+Este é um nó (bloco verde) usado para gerar uma transação inicial (sinal) quando a linha da planilha é lida.
+
+- **Portas de Conexão:** Possui entradas visuais para ligar as colunas do Excel correspondentes ao `Valor (Moeda)` e `Vencimento (Data)`. Quando você puxa um fio de uma coluna para essa porta, o sistema sabe de onde extrair os dados.
+- **Painel de Configuração:** Ao clicar no nó, o administrador pode escolher o `Status de Entrada` inicial (ex: *Compensado* ou *Pendente*) e definir a `Justificativa da Transação`.
+- **Poder das Macros:** A justificativa suporta macros dinâmicas, como `Entrada de Contrato - {{C}}`. O motor intercepta o `{{C}}`, busca o texto na **Coluna C** daquela respectiva linha do Excel e substitui em tempo real. (Ex: se na coluna C estiver "João", a transação salva será *"Entrada de Contrato - João"*).
+- **Conversão Code-Gen:** Por trás dos panos, o fluxo visual traduz essa configuração simples em um script de sandbox (mostrado nos exemplos abaixo) que monta o objeto JSON de transação completo e o empurra para o banco de dados.
+
+### Exemplo Prático: Gerador de Parcelas
+Este é um nó (bloco turquesa) focado em gerar um array de múltiplas transações sequenciais, como um carnê de parcelamento.
+
+- **Portas de Conexão:** Possui entradas para ligar as colunas de `Qtd Total`, `Qtd Pagas` (para saber quantas já estão compensadas), `Valor Parcela` e `Data Início`.
+- **Painel de Configuração:** Permite definir a `Frequência` (Mensal, Bimestral, Anual) e a `Justificativa`.
+- **Poder das Macros:** Além de suportar o valor da coluna com `{{C}}`, este nó suporta macros de loop como `{i}` (o número da parcela atual) e `{total}` (o número total de parcelas). Por exemplo: `Parcela {i}/{total} - {{C}}` vira *"Parcela 1/12 - João"*, *"Parcela 2/12 - João"*, etc.
+
+### Exemplo Prático: Gerador de Lançamentos Extras (Balões / Reforços)
+Este é um nó (bloco roxo) focado em gerar transações extras, avulsas ou de reforço (conhecidos em alguns segmentos como "balões") que não seguem uma frequência regular, lendo múltiplas datas de uma única célula do Excel.
+
+- **Portas de Conexão:** Possui entradas para `Valor Unitário`, `Qtd Lançamentos` e `String Datas` (uma coluna que contém as datas separadas por um caractere, como `15/05/2026 | 15/12/2026`).
+- **Painel de Configuração:** O usuário pode configurar qual o `Delimitador de Datas` (ex: `|`, `;` ou `,`) e o `Status Padrão do Lançamento`. A justificativa também aceita as macros `{i}`, `{total}` e `{{coluna}}`.
+
+### Exemplo Prático: Repetição e Loop
+Este é um nó (bloco laranja) focado em representar fluxos iterativos ou laços de repetição visualmente.
+
+- **Portas de Conexão:** Possui uma porta de entrada (`in`) e uma de saída (`out`) para conectar a sequência do fluxo conceitual.
+- **Painel de Configuração:** O administrador pode configurar a propriedade `Variável/Nome do Loop` (que por padrão inicia como *Parcelas*).
+- **Importante (Comportamento no Compilador):** 
+  > [!IMPORTANT]
+  > Atualmente, o compilador bidirecional do Editor de Fluxos Visual ignora o nó genérico de Loop ao exportar para o JSON do perfil.
+  > 
+  > Isso ocorre porque as lógicas de repetição financeira mais comuns (como a criação automática de parcelas ou lançamentos extras sequenciais a partir de uma linha de planilha) já são inteiramente tratadas e automatizadas de forma especializada pelos nós **Gerador de Parcelas** e **Gerador de Lançamentos Extras**. Portanto, o nó de repetição genérico funciona hoje como um **marcador visual conceitual** do fluxo de dados.
+- **Como implementar loops avançados via Código:** Caso você precise de loops genéricos ou lógicas de repetição complexas que vão além das capacidades dos nós geradores automáticos, você deve utilizar um **Bloco de Código JS (Script)** apontando para o campo especial `transacoes_geradas` e estruturar o loop manualmente via código Javascript.
+
+#### Exemplo Prático de Código de Loop Personalizado:
+Abaixo, veja como estruturar um loop no **Bloco de Código JS (Script)** para gerar uma quantidade de comissões customizada baseada em colunas da planilha:
+
+```javascript
+const transacoes = [];
+const totalRepeticoes = parseInt(row.J) || 0; // lê a quantidade de parcelas da coluna J
+const valorBase = helpers.parseMoeda(row.H); // lê o valor de cada repetição da coluna H
+const dataReferencia = new Date();
+
+// Loop manual estruturado via javascript na Sandbox
+for (let i = 0; i < totalRepeticoes; i++) {
+  const dataVencimento = new Date(dataReferencia.getTime());
+  dataVencimento.setMonth(dataReferencia.getMonth() + i);
+
+  transacoes.push({
+    valor: valorBase,
+    data_vencimento: dataVencimento.toISOString().split('T')[0],
+    status: 'PENDENTE',
+    justificativa: 'Comissão Recorrente ' + (i + 1) + '/' + totalRepeticoes,
+    tipo: 'CREDITO'
+  });
+}
+
+return transacoes; // Retorna o array de transações geradas pelo loop
+```
+
+### Exem- **Portas de Entrada (Campos de Destino)**:
+  Possui 11 portas de entrada, cada uma mapeando diretamente para a coluna correspondente na tabela `GamTransacao` no banco de dados:
+  1. **`Nome Consultor (Nome)`**: Grava na coluna `NomeConsultor` (usado para localizar o usuário no banco de dados).
+  2. **`CPF / ID (Documento)`**: Grava na coluna `IDProfissional` (usado alternativamente ou conjuntamente para localizar o usuário).
+  3. **`Valor Comissão (ValorVenda)`**: Grava na coluna `ValorVenda` (valor original monetário do produto/comissão).
+  4. **`Fator Conversão (ValorComissao)`**: Grava na coluna `ValorComissao` (valor em pontos/talentos gerado para a transação).
+  5. **`Empreendimento (Produto)`**: Grava na coluna `empreendimento`.
+  6. **`Unidade (Contrato)`**: Grava na coluna `unidade`.
+  7. **`Nome do Cliente`**: Grava na coluna `contato_cliente`.
+  8. **`Justificativa da Transação`**: Grava na coluna `justificativa` (caso não seja fornecido por um gerador financeiro ou por esta porta, o sistema gera uma justificativa padrão com o número da linha).
+  9. **`Tipo (Crédito/Débito)`**: Grava na coluna `tipo` (padrão: `'CREDITO'`).
+  10. **`Status da Transação`**: Grava na coluna `status` (padrão: `'COMPENSADO'`).
+  11. **`Data de Vencimento`**: Grava na coluna `data_vencimento`.
+
+- **Como funciona a ligação e os nomes de variáveis**:
+  > [!IMPORTANT]
+  > O que determina qual campo do banco de dados receberá o valor **não é o nome interno que você deu ao seu bloco de código/variável**, mas sim **a porta física do nó "Gravar Transação" onde você conectou o fio**.
+  >
+  > Se você criar um bloco de código com o nome do campo de saída configurado como `ComissaoGeral` ou `var_123`, esse nome interno **será ignorado na gravação final**. O compilador utiliza a conexão visual para saber o destino:
+  - Se a linha de ligação sai do seu bloco de código e entra na porta **`Valor Comissão (ValorVenda)`**, o valor calculado pelo seu código será gravado na coluna `ValorVenda` no banco de dados.
+  - Se a linha sai do mesmo bloco e entra na porta **`Fator Conversão (ValorComissao)`**, o valor será gravado na coluna `ValorComissao`.
+
+- **Visualização das Conexões**:
+  Ao clicar no nó **Gravar Transação**, o painel de propriedades exibe o status de cada porta em tempo real:
+  - `🔌 Conectado ao nó [NOME_NÓ]`: Indica de qual bloco o dado está sendo importado.
+  - `⚠️ Desconectado (Usará valor nulo)`: Indica que a porta está livre e o banco registrará valor vazio para aquele campo se nenhuma linha de ligação for feita.
+
+---
+
+## 5. Resolução de Casos de Uso e Dúvidas Comuns
+
+Nesta seção abordamos dúvidas frequentes na utilização do motor programável baseadas em planilhas reais de vendas, como a `Park_View_Clientes (1).xlsx`.
+
+### A. Por que o Corretor/Consultor aparece como "NÃO ENCONTRADO" no preview de simulação?
+
+No painel de simulação à direita (ao rodar em tempo real), a linha da planilha pode exibir um status em vermelho: **`NÃO ENCONTRADO`** e exibir o nome do consultor seguido de **`Sem ID`**.
+
+**Análise Prática da Imagem (Exemplo Real):**
+1. Na simulação, no bloco **DADOS RESOLVIDOS**, vemos o JSON gerado da linha:
+   ```json
+   {
+     "NomeConsultor": "Maria Costa",
+     "empreendimento": "Park View Residencial"
+   }
+   ```
+2. Na coluna **CONSULTOR**, o sistema exibe:
+   - **`Maria Costa`** (Nome resolvido)
+   - **`Sem ID`** (Isso significa que o campo `IDProfissional` não foi preenchido ou não foi conectado a nenhuma coluna da planilha contendo o CPF/ID. Portanto, o sistema só tem o nome para tentar localizar a conta).
+3. Na coluna **STATUS**, exibe **`NÃO ENCONTRADO`** (com uma tarja vermelha).
+
+**O Motivo Técnico:**
+O motor programável de importação realiza uma busca no banco de dados na tabela `GamUsuario` para converter o nome/documento da planilha em um ID de usuário real. 
+Ele executa uma busca restrita:
+* Apenas usuários com o perfil de **`CORRETOR`**.
+* Apenas usuários associados ao mesmo **`empresa_id`** do administrador logado.
+* Que possuam exatamente o mesmo nome `"MARIA COSTA"` (sem espaços extras e sem diferenciar maiúsculas/minúsculas).
+
+Se nenhuma linha no banco atender a esses 3 critérios, o motor não consegue descobrir qual é o ID da Maria Costa no banco de dados e retorna status **`NÃO ENCONTRADO`**.
+
+**Como Resolver (Passo a Passo):**
+
+#### Solução 1: Cadastrar a corretora no sistema (Recomendado)
+A Maria Costa precisa estar devidamente cadastrada na plataforma antes da importação.
+1. Vá até o menu de **Gestão de Usuários / Corretores** no painel de administração.
+2. Cadastre um novo usuário com os seguintes dados obrigatórios:
+   - **Nome Completo:** `Maria Costa` (deve coincidir exatamente com o nome da planilha).
+   - **Perfil / Função:** Selecione **Corretor**.
+   - **Empresa:** Certifique-se de vincular à sua empresa logada atual.
+3. Se você estiver importando em um ambiente local de testes (onde o banco é limpo), certifique-se de que o script de sementes (`seeding`) ou os testes insiram esse usuário antes do processo.
+
+#### Solução 2: Mapear a coluna de CPF/ID (Evita duplicidades de nomes)
+Buscar apenas por nome pode gerar conflitos caso existam duas corretoras com o mesmo nome (ex: duas "Maria Costa").
+1. Identifique se a planilha possui uma coluna com o CPF ou CNPJ do corretor (ex: Coluna S).
+2. No Editor de Fluxos Visual, conecte a porta de saída da **Coluna S (CPF/ID)** à porta de entrada **`CPF / ID (Documento)`** do nó **`Gravar Transação`**.
+3. No cadastro da corretora no painel de administração, certifique-se de preencher o CPF/Documento correspondente. O motor passará a buscar pelo CPF/ID em primeiro lugar, resolvendo o vínculo perfeitamente.
+
+---
+
+### B. Como mapear campos extras: Justificativa, EMPREENDIMENTO, unidade e contato_cliente?
+
+Se na sua planilha Excel (ex: `Park_View_Clientes (1).xlsx`) você possui colunas que trazem esses metadados (como nome do empreendimento, o número da unidade, o nome do cliente final e uma justificativa customizada), você pode importá-los e persistir nas colunas correspondentes do banco.
+
+Abaixo, veja o exemplo detalhado utilizando as seguintes colunas da planilha:
+* **Coluna R**: "corretor responsavel" (Nome da Maria Costa, etc.)
+* **Coluna C**: "EMPREENDIMENTO" (ex: "Park View Residencial")
+* **Coluna D**: "unidade" (ex: "Apto 102")
+* **Coluna B**: "contato_cliente" (ex: "João da Silva")
+* **Coluna P**: "Justificativa" (ex: "Venda aprovada pela diretoria")
+
+#### Método 1: Fazendo a Ligação Visivelmente (No-Code Flowchart)
+No Editor de Fluxos Visual, proceda da seguinte maneira:
+1. **Configurar a Entrada**: No nó **`Entrada Planilha`**, garanta que as colunas da planilha estejam cadastradas e nomeadas corretamente (ex: `R: Nome/Consultor`, `C: Empreendimento`, `D: Unidade`, `B: Contato Cliente`, `P: Justificativa`).
+2. **Fazer a Ligação Visual**:
+   - Puxe uma linha a partir da porta de saída **`R: Nome/Consultor`** e conecte-a na porta de entrada **`Nome Consultor (Nome)`** do nó **`Gravar Transação`**.
+   - Puxe uma linha a partir da porta de saída **`C: Empreendimento`** e conecte-a na porta de entrada **`Empreendimento (Produto)`** do nó **`Gravar Transação`**.
+   - Puxe uma linha a partir da porta de saída **`D: Unidade`** e conecte-a na porta de entrada **`Unidade (Contrato)`** do nó **`Gravar Transação`**.
+   - Puxe uma linha a partir da porta de saída **`B: Contato Cliente`** e conecte-a na porta de entrada **`Nome do Cliente`** do nó **`Gravar Transação`**.
+   - Puxe uma linha a partir da porta de saída **`P: Justificativa`** e conecte-a na porta de entrada **`Justificativa da Transação`** do nó **`Gravar Transação`**.
+3. O modelador sincronizará instantaneamente a estrutura no JSON.
+
+#### Método 2: Configurando via JSON Direto
+Se preferir usar o editor de código Monaco (JSON), a seção `mapeamento_campos` do seu perfil deve ser estruturada da seguinte forma:
+
+```json
+{
+  "versao_motor": "2.0",
+  "configuracoes_gerais": {
+    "linha_cabecalho": 3,
+    "pular_linhas_vazias": true,
+    "delimitador_lista": ";"
+  },
+  "mapeamento_campos": {
+    "NomeConsultor": {
+      "celula": "R"
+    },
+    "empreendimento": {
+      "celula": "C"
+    },
+    "unidade": {
+      "celula": "D"
+    },
+    "contato_cliente": {
+      "celula": "B"
+    },
+    "justificativa": {
+      "celula": "P"
+    },
+    "ValorVenda": {
+      "celula": "E",
+      "script": "return helpers.parseMoeda(value);"
+    },
+    "ValorComissao": {
+      "celula": "F",
+      "script": "return helpers.parseMoeda(value);"
+    }
+  }
+}
+```
+
+Desta forma, ao clicar em **"Iniciar Simulação"**, o motor carregará o empreendimento da coluna C, a unidade da coluna D, o cliente da coluna B, a justificativa da coluna P e o corretor da coluna R, preenchendo perfeitamente o banco de dados.
+
+---
+
+### C. Por que o valor do campo calculado por um "Bloco de Código JS (Script)" resulta em 0?
+
+No painel de simulação à direita, um dos campos do banco de dados (ex: `"ValorVenda"`) pode aparecer resolvido como `0`, mesmo sabendo que a planilha possui valores preenchidos naquela linha.
+
+**Análise Prática da Imagem (Exemplo Real):**
+1. No editor visual, temos uma ligação vinda da coluna **`F: ValorEntrada`** conectando na entrada (`in`) de um **`Bloco Código JS (Script)`**.
+2. A saída (`out`) do Bloco de Código está ligada na porta **`Valor Comissão (ValorVenda)`** do nó **`Gravar Transação`**.
+3. O código javascript inserido no Bloco de Código é:
+   ```javascript
+   let venda = helpers.parseMoeda('{{ValorEntrada}}');
+   return venda;
+   ```
+4. No preview, o resultado final do campo `"ValorVenda"` aparece como `0`.
+
+**O Motivo Técnico:**
+* **`value` e `row`:** Quando um Bloco de Código está conectado a uma coluna da planilha (ex: coluna `F`), o motor injeta automaticamente o valor bruto daquela célula na variável local **`value`**. Ele também disponibiliza a linha inteira no objeto **`row`** (onde a coluna F pode ser lida escrevendo `row.F`).
+* **Substituição de Macros `{{...}}`:** O recurso de chaves duplas `{{NomeCampo}}` serve unicamente para referenciar **outros campos já calculados e salvos no resultado da linha** (ex: `{{NomeConsultor}}` ou `{{IDProfissional}}`).
+* Como o seu Bloco de Código está conectado à porta `ValorVenda`, o campo gerado na saída se chamará `"ValorVenda"`. **Não existe** nenhum campo na saída final chamado `"ValorEntrada"`.
+* Como `"ValorEntrada"` não existe nos resultados finais da linha, o compilador não consegue substituir a macro `{{ValorEntrada}}`, mantendo o texto literal `'{{ValorEntrada}}'`.
+* Ao rodar a instrução `helpers.parseMoeda('{{ValorEntrada}}')`, o helper tenta converter o texto literal contendo chaves em número, falha (pois não é um número válido) e retorna o valor padrão `0`.
+
+**Como Resolver:**
+Substitua o uso da macro `{{ValorEntrada}}` por `value` ou `row.F` no seu código JavaScript.
+
+* **Solução Recomendada (Usando `value`):**
+  A variável `value` já contém o valor da coluna ligada à entrada do script (Coluna F):
+  ```javascript
+  let venda = helpers.parseMoeda(value);
+  return venda;
+  ```
+
+* **Solução Alternativa (Usando `row.F`):**
+  Lê diretamente da linha do Excel apontando a letra da coluna:
+  ```javascript
+  let venda = helpers.parseMoeda(row.F);
+  return venda;
+  ```
+
+---
+
+### D. Onde visualizar e como funciona o Fator de Conversão de Talentos?
+
+O Fator de Conversão é a relação de equivalência entre a moeda real (BRL/R$) e a moeda virtual da plataforma (Talentos). Por padrão, o sistema utiliza o fator **`100`**, o que significa que cada R$ 100,00 de VGV/Comissão equivalem a 1 Talento.
+
+A visualização e configuração dessa informação varia dependendo do motor de importação utilizado:
+
+#### 1. No Motor de Importação Clássico
+Para visualizar ou alterar o fator de conversão de um perfil clássico:
+1. Vá para a tela de **Mapeamento / Importação de Planilhas** (`admin-importacao-upload.html`).
+2. Clique no botão **Editar Perfil** no topo da página.
+3. No modal que abrir, você verá o campo **Fator de Conversão** (por padrão definido como `100`).
+4. Altere o valor nesse campo se necessário (por exemplo, defina `50` para que R$ 50,00 = 1 Talento) e salve o perfil.
+
+#### 2. No Motor Programável (Editor de Fluxos & Monaco)
+No Motor Programável, o processamento de dados é procedimental e configurado via código ou nós visuais. Por essa razão:
+1. Disponibilizamos o campo **Fator Conversão** diretamente no cabeçalho do editor visual (junto ao nome do perfil, linha do cabeçalho e separador de lista).
+2. O valor preenchido no cabeçalho é salvo no perfil do banco de dados e **injetado automaticamente** dentro do escopo da Sandbox segura como as variáveis nativas **`fatorConversao`** e **`fator_conversao`**.
+3. Você pode usar esta variável nativa diretamente em qualquer bloco de script, sem precisar declarar um valor estático no código.
+
+* **Exemplo Prático (Código JS no Bloco de Mapeamento):**
+  Se o valor original da planilha está na coluna `F` e você quer converter usando o fator definido no cabeçalho:
+  ```javascript
+  const valorOriginal = helpers.parseMoeda(row.F);
+  return Math.floor(valorOriginal / fatorConversao); // Usa a variável nativa injetada!
+  ```
+
+* **Exemplo com Sobrecarga/Customização:**
+  Você pode também usar regras condicionais que variam o fator dependendo de outras colunas, ignorando ou multiplicando o fator do cabeçalho:
+  ```javascript
+  const valorOriginal = helpers.parseMoeda(row.F);
+  const isParceiroVIP = row.K === 'VIP';
+  // Se for parceiro VIP, usa metade do fator configurado (ganhando o dobro de talentos)
+  const fatorEfetivo = isParceiroVIP ? (fatorConversao / 2) : fatorConversao;
+  return Math.floor(valorOriginal / fatorEfetivo);
+  ```
+
+Desta forma, no Motor Programável, você pode definir o fator de conversão de forma global no cabeçalho e consumi-lo dinamicamente nos scripts, mantendo a flexibilidade para regras de negócio complexas.
+
+### E. Por que o valor dos pontos (campo `valor`) ficou igual ao valor original em reais (`valor_original_rs`)?
+
+Se no seu JSON de mapeamento você definiu o campo `"ValorVenda"`, mas não especificou nenhum campo específico de pontos (como `"valor"` ou `"valor_talentos"`), o motor de importação aplicará uma lógica de *fallback*:
+1. Para o campo `valor_original_rs` (dinheiro em reais), ele buscará a chave `"ValorVenda"` e salvará o valor bruto em R$.
+2. Para o campo `valor` (pontos/talentos), ele tentará buscar chaves como `"valor"`, `"valor_talentos"` ou `"valortalentos"`. Como nenhuma delas foi mapeada, o motor seleciona o **primeiro campo de tipo numérico** resultante da linha (que neste caso foi o próprio `"ValorVenda"`).
+3. O resultado é que tanto o valor em pontos quanto o valor original em reais ficarão idênticos e sem a devida conversão.
+
+#### Como resolver sem mapear a mesma coluna/célula física duas vezes:
+Mapear a mesma letra de coluna (ex: `"celula": "F"`) mais de uma vez pode ser bloqueado pela validação da interface visual ou do JSON. Para contornar isso, você pode mapear apenas a coluna `"ValorVenda"` de forma física e o campo de pontos `"valor"` de forma puramente programável (usando scripts e sem declarar a propriedade `"celula"`).
+
+Existem duas formas limpas de configurar isso no seu JSON:
+
+##### Opção 1: Utilizando macros de referência cruzada (Recomendado)
+Como o campo `"ValorVenda"` não possui script, ele é resolvido na primeira passada do motor. O campo `"valor"` pode então usar uma macro `{{ValorVenda}}` para acessar seu valor já processado:
+
+```json
+"mapeamento_campos": {
+  "ValorVenda": {
+    "celula": "F"
+  },
+  "valor": {
+    "script": "return {{ValorVenda}} / fatorConversao;"
+  }
+}
+```
+
+##### Opção 2: Acessando a linha (`row`) diretamente
+Como o objeto `row` com todas as colunas da planilha é injetado no contexto, você pode ler a coluna `F` em tempo de execução usando `row.F` no script do campo `"valor"`:
+
+```json
+"mapeamento_campos": {
+  "ValorVenda": {
+    "celula": "F"
+  },
+  "valor": {
+    "script": "return helpers.parseMoeda(row.F) / fatorConversao;"
+  }
+}
+```
+
+---
+
+## 6. Exemplos Homologados e Executáveis
 
 Abaixo estão descritos três exemplos avançados de perfis perfeitamente válidos e testados pelo nosso auditor de integridade sintática.
 
@@ -184,8 +512,8 @@ Este exemplo utiliza o hook global `antes_salvar_linha` para impedir transaçõe
 
 ---
 
-### Exemplo 4: Esteira Completa de Contrato Imobiliário (Entrada + Parcelas Mensais + Balões)
-Este exemplo demonstra um cenário corporativo completo do mercado imobiliário ou de bens duráveis, gerando dinamicamente transações de entrada compensadas, múltiplas parcelas mensais futuras (compensadas ou pendentes) e múltiplos balões de reforço a partir das colunas lidas de cada linha da planilha.
+### Exemplo 4: Esteira Completa de Contrato Imobiliário (Entrada + Parcelas Mensais + Lançamentos Extras/Balões)
+Este exemplo demonstra um cenário corporativo completo do mercado imobiliário ou de bens duráveis, gerando dinamicamente transações de entrada compensadas, múltiplas parcelas mensais futuras (compensadas ou pendentes) e múltiplos lançamentos extras/reforços (balões) a partir das colunas lidas de cada linha da planilha.
 
 ```json
 {
@@ -245,8 +573,8 @@ Este perfil simplificado é ideal para planilhas de recebimentos de comissões/b
 
 ---
 
-### Exemplo 6: Lote de Balões/Reforços Exclusivos (Sem Parcelas)
-Este exemplo demonstra um cenário onde o contrato imobiliário não possui fluxo de parcelas mensais, mas apenas o pagamento da Entrada (compensado) e múltiplos Balões ou Reforços programados futuros (pendentes).
+### Exemplo 6: Lote de Lançamentos Extras/Balões (Sem Parcelas)
+Este exemplo demonstra um cenário onde o contrato financeiro não possui fluxo de parcelas mensais, mas apenas o pagamento da Entrada (compensado) e múltiplos Lançamentos Extras ou Reforços programados futuros (pendentes).
 
 ```json
 {
@@ -305,3 +633,40 @@ Este exemplo demonstra um cenário onde o contrato possui fluxo de parcelas mens
   }
 }
 ```
+
+---
+
+## 6. Natureza de Preview e Processo de Gravação (Confirmação)
+
+A esteira de importação opera sob um modelo transacional de duas etapas ("Preview/Simulação" e "Confirmação Definitiva"), garantindo total previsibilidade e segurança antes da gravação física de qualquer dado.
+
+### A. Fluxo de Carga na Memória (Preview / Simulação)
+Quando o usuário seleciona uma planilha e executa a análise:
+1. **Leitura Temporária em Memória:** Os dados da planilha são processados temporariamente no servidor para simulação. Nenhum registro é persistido no banco de dados neste momento.
+2. **Execução em Sandbox:** O Motor de Sandbox avalia todas as linhas, processando os scripts, helpers e hooks definidos no perfil JSON, e gera os resultados da simulação.
+3. **Identificação de Inconsistências:** O sistema analisa em tempo real se os consultores mapeados existem no banco de dados (`GamUsuario`) ou se há inconsistências de nomes e CPFs.
+
+---
+
+### B. Como Gravar Definitivamente os Dados no Banco
+
+Tanto no Motor Clássico quanto no Motor Programável, os dados **só serão gravados de fato no banco de dados** após a ação de confirmação final do usuário. Veja a diferença do fluxo nas duas interfaces:
+
+#### 1. No Motor de Importação Clássico
+No fluxo em etapas (Upload ➔ Preview ➔ Confirmação):
+1. Após analisar o preview, clique no botão **Avançar para Confirmação**.
+2. Na tela final (Etapa 3), você verá os cartões de resumo (Total de Registros, Corretores Resolvidos, Resoluções Manuais).
+3. Clique no botão verde **CONFIRMAR IMPORTAÇÃO DEFINITIVA** para abrir a transação de banco de dados.
+
+#### 2. No Motor Programável (Editor de Fluxos & Monaco)
+Na interface do Motor Programável, o fluxo de persistência é integrado diretamente ao **Simulador Lateral (Hot-Preview)**:
+1. Faça o upload da planilha modelo no card de simulação e clique em **⚡ INICIAR SIMULAÇÃO EM TEMPO REAL**.
+2. O sistema gerará a simulação na aba **Tabela Resultante** e os logs de execução na aba **Terminal de Logs**.
+3. **Regra de Segurança de Gravação:** 
+   - Se houver qualquer consultor/corretor com o status **`NÃO ENCONTRADO`** (tarja vermelha), o botão de confirmação definitiva ficará desabilitado com o texto **`🚀 IMPORTAÇÃO DESABILITADA (PARCEIROS NÃO LOCALIZADOS)`**. Nesse caso, você deve primeiro cadastrar os corretores no sistema ou ajustar as chaves do seu perfil.
+   - Se todos os registros forem validados com sucesso (todos os consultores marcados como **`OK`**), um botão verde premium **`🚀 EFETUAR IMPORTAÇÃO DEFINITIVA`** aparecerá logo abaixo do botão de simulação.
+4. Clique no botão **🚀 EFETUAR IMPORTAÇÃO DEFINITIVA**.
+5. Um modal de confirmação será exibido na tela perguntando se você deseja prosseguir. Clique em **Sim, Confirmar**.
+6. O sistema executará a chamada definitiva ao endpoint `/api/admin/importacao/programavel/confirm` envelopado em uma transação única de banco de dados (`knex.transaction`). Se qualquer linha falhar por erro crítico, toda a carga de dados será desfeita automaticamente (rollback), garantindo integridade transacional completa.
+7. Após o sucesso, um alerta de sucesso será exibido e um log consolidado com a telemetria da carga (vendas processadas, transações criadas e parceiros atualizados) será impresso no seu **Terminal de Logs**.
+

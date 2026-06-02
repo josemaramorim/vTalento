@@ -210,6 +210,30 @@ describe('ImportacaoService', () => {
       expect(suggestion.usa_ia).toBe(false);
       expect(suggestion.metodo).toBe('heuristica');
     });
+
+    it('deve sugerir mapeamento usando a Inteligência Artificial (NLP Semântico + Telemetria) quando usa_ia for true', async () => {
+      const mockSheetData = [
+        ['Vendedor de Elite', 'Registro Prof.', 'Aporte de Entrada', 'Produto Vendido'],
+        ['Carlos Souza', 'CRECI-987', 'R$ 15.000,00', 'Park View Residencial']
+      ];
+
+      xlsx.read.mockReturnValue({ SheetNames: ['Sheet1'], Sheets: { 'Sheet1': {} } });
+      xlsx.utils.sheet_to_json.mockReturnValue(mockSheetData);
+
+      const suggestion = await ImportacaoService.sugerirMapeamento('empresa-123', 'fake-base64', {
+        linha_cabecalho: 1,
+        usa_ia: true
+      });
+
+      expect(suggestion.usa_ia).toBe(true);
+      expect(suggestion.metodo).toBe('IA (NLP Semântico + Telemetria)');
+      expect(suggestion.sugestoes_mapeamento.corretor_identificador).toBe('Vendedor de Elite'); // Semelhança semântica com 'corretor'
+      expect(suggestion.sugestoes_mapeamento.corretor_creci).toBe('Registro Prof.'); // Semelhança semântica com 'creci'
+      expect(suggestion.sugestoes_mapeamento.valor_pago).toBe('Aporte de Entrada'); // Semelhança com 'pago' / 'entrada'
+      expect(suggestion.sugestoes_mapeamento.empreendimento).toBe('Produto Vendido'); // Semelhança com 'produto' / 'empreendimento'
+      expect(suggestion.insights_ia).toBeDefined();
+      expect(suggestion.insights_ia.length).toBeGreaterThan(0);
+    });
   });
 
   describe('Motor de Recebíveis (Agnóstico)', () => {

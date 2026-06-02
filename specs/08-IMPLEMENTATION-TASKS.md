@@ -62,10 +62,10 @@ Este documento é o guia de execução do projeto. Nenhuma tarefa deve ser inici
 - [x] **Tarefa 5.1:** Criar backend para processamento de arquivos (usando `xlsx` ou `csv-parser`).
 - [x] **Tarefa 5.2:** Implementar lógica de distribuição de saldo (Total recebido -> Percentual definido em GamEmpresa -> Atualiza `saldo_disponivel` do Usuário).
 - [x] **Tarefa 5.3:** Criar tela no frontend para upload de arquivos com barra de progresso.
-- [/] **Tarefa 5.4:** Implementar auto-mapeamento de colunas para o Motor de Importação, permitindo sugestão de mapeamento a partir dos cabeçalhos da planilha.
-- [ ] **Tarefa 5.5:** Adicionar suporte opcional de IA ao auto-mapeamento, controlado pelo parâmetro `usa_ia`, para inferir nomes de campos com base em cabeçalhos e amostras.
-- [ ] **Tarefa 5.6:** Atualizar `admin-importacao.html` para oferecer a opção "Sugerir mapeamento automático" e permitir revisão manual antes de salvar o perfil.
-- [ ] **Tarefa 5.7:** Documentar no spec que a etapa "Carregar Planilha" serve apenas para análise/preview e não realiza importação definitiva.
+- [x] **Tarefa 5.4:** Implementar auto-mapeamento de colunas para o Motor de Importação, permitindo sugestão de mapeamento a partir dos cabeçalhos da planilha.
+- [x] **Tarefa 5.5:** Adicionar suporte opcional de IA ao auto-mapeamento, controlado pelo parâmetro `usa_ia`, para inferir nomes de campos com base em cabeçalhos e amostras.
+- [x] **Tarefa 5.6:** Atualizar `admin-importacao.html` para oferecer a opção "Sugerir mapeamento automático" e permitir revisão manual antes de salvar o perfil.
+- [x] **Tarefa 5.7:** Documentar no spec que a etapa "Carregar Planilha" serve apenas para análise/preview e não realiza importação definitiva.
 
 ### História 6: Lançamento Manual de Talentos
 *Como administrador, quero poder adicionar ou remover talentos manualmente de um corretor específico, justificando a ação (ex: bônus extra ou correção).*

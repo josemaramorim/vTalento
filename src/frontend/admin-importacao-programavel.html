@@ -164,6 +164,7 @@
             user-select: none;
             z-index: 10;
             transition: border-color 0.2s, box-shadow 0.2s;
+            pointer-events: auto !important;
         }
         .flow-node-card.selected {
             outline: 2px solid var(--accent-primary) !important;
@@ -266,6 +267,18 @@
         .node-variant-text_sanitizer .flow-node-card-header { background: linear-gradient(90deg, #3498db, #1d6fa5); }
         .node-variant-webhook_alert { border: 1.5px solid #e67e22; box-shadow: 0 0 15px rgba(230,126,34,0.15); }
         .node-variant-webhook_alert .flow-node-card-header { background: linear-gradient(90deg, #e67e22, #d35400); }
+        
+        .node-variant-global_config_node { border: 1.5px solid #d4af37; box-shadow: 0 0 15px rgba(212,175,55,0.2); }
+        .node-variant-global_config_node .flow-node-card-header { background: linear-gradient(90deg, #d4af37, #aa8511); }
+        
+        .node-variant-sinal_node { border: 1.5px solid #2ecc71; box-shadow: 0 0 15px rgba(46,204,113,0.15); }
+        .node-variant-sinal_node .flow-node-card-header { background: linear-gradient(90deg, #2ecc71, #1abc9c); }
+        
+        .node-variant-parcelas_node { border: 1.5px solid #1abc9c; box-shadow: 0 0 15px rgba(26,188,156,0.15); }
+        .node-variant-parcelas_node .flow-node-card-header { background: linear-gradient(90deg, #1abc9c, #00ced1); }
+        
+        .node-variant-baloes_node { border: 1.5px solid #9b59b6; box-shadow: 0 0 15px rgba(155,89,182,0.15); }
+        .node-variant-baloes_node .flow-node-card-header { background: linear-gradient(90deg, #9b59b6, #8e44ad); }
 
         /* Fullscreen & minimizing visual editor behaviors */
         .fullscreen-workspace {
@@ -306,7 +319,7 @@
         /* ═══════════════════════ GRID LAYOUTS & COMPONENTES ═══════════════════════ */
         .form-mini-row {
             display: grid !important;
-            grid-template-columns: 3fr 1fr 1fr !important;
+            grid-template-columns: 3.5fr 1fr 1fr 1fr !important;
             gap: 15px !important;
             margin-bottom: 20px !important;
             align-items: end !important;
@@ -417,6 +430,22 @@
             border-color: #ffffff !important;
             color: #0d0e15 !important;
             box-shadow: 0 6px 20px rgba(240, 165, 0, 0.4);
+        }
+
+        /* btn-success override for premium green look */
+        .btn-success {
+            background: linear-gradient(135deg, var(--success), #27ae60) !important;
+            color: #ffffff !important;
+            border: 1px solid rgba(46, 204, 113, 0.4) !important;
+            font-weight: 700;
+            box-shadow: 0 4px 15px rgba(46, 204, 113, 0.25);
+        }
+        .btn-success:hover:not(:disabled) {
+            background: linear-gradient(135deg, #2ecc71, #2ecc71) !important;
+            border-color: #ffffff !important;
+            color: #ffffff !important;
+            box-shadow: 0 6px 20px rgba(46, 204, 113, 0.4);
+            transform: translateY(-1px);
         }
 
         /* btn-danger override for premium destructive look */
@@ -574,6 +603,10 @@
                             <label style="font-size:0.75rem;">Separador Lista</label>
                             <input type="text" id="separadorInput" class="form-control" value=";" style="padding: 8px 12px; font-size: 0.85rem;">
                         </div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label style="font-size:0.75rem;">Fator Conversão</label>
+                            <input type="number" id="fatorConversaoInput" class="form-control" value="100" min="0.01" step="any" style="padding: 8px 12px; font-size: 0.85rem;">
+                        </div>
                     </div>
 
                     <!-- TABS DO EDITOR -->
@@ -607,6 +640,18 @@
                                 <div class="toolbox-item" data-type="webhook_alert" style="padding: 10px; border-radius: 6px; border: 1px dashed rgba(230,126,34,0.3); background: rgba(230,126,34,0.05); font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 8px; color: #fff;">
                                     <span>🔔</span> Webhook / Alerta
                                 </div>
+                                <div class="toolbox-item" data-type="global_config_node" style="padding: 10px; border-radius: 6px; border: 1px dashed rgba(212,175,55,0.3); background: rgba(212,175,55,0.05); font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 8px; color: #fff;">
+                                    <span>⚙️</span> Variáveis Globais
+                                </div>
+                                <div class="toolbox-item" data-type="sinal_node" style="padding: 10px; border-radius: 6px; border: 1px dashed rgba(46,204,113,0.3); background: rgba(46,204,113,0.05); font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 8px; color: #fff;">
+                                    <span>💰</span> Gerador de Entrada
+                                </div>
+                                <div class="toolbox-item" data-type="parcelas_node" style="padding: 10px; border-radius: 6px; border: 1px dashed rgba(26,188,156,0.3); background: rgba(26,188,156,0.05); font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 8px; color: #fff;">
+                                    <span>📆</span> Gerador de Parcelas
+                                </div>
+                                <div class="toolbox-item" data-type="baloes_node" style="padding: 10px; border-radius: 6px; border: 1px dashed rgba(155,89,182,0.3); background: rgba(155,89,182,0.05); font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; gap: 8px; color: #fff;">
+                                    <span>✨</span> Gerador de Lançamentos Extras
+                                </div>
                                 <div style="margin-top: auto; font-size: 0.65rem; color: var(--text-secondary); line-height: 1.3;">
                                     💡 <strong>Modelador Visual:</strong> Clique para adicionar blocos ao canvas. Clique em um conector de saída e arraste um cabo até um conector de entrada para criar caminhos. O JSON sincroniza em tempo real!
                                 </div>
@@ -627,7 +672,7 @@
                                         <svg id="flowConnectionsSvg" style="position: absolute; top:0; left:0; width:4000px; height:4000px; pointer-events: none; z-index: 1;">
                                         </svg>
                                         <!-- RENDERED NODES AREA -->
-                                        <div id="flowNodesContainer" style="position: absolute; top:0; left:0; width:4000px; height:4000px; pointer-events: auto; z-index: 2;"></div>
+                                        <div id="flowNodesContainer" style="position: absolute; top:0; left:0; width:4000px; height:4000px; pointer-events: none; z-index: 2;"></div>
                                     </div>
                                 </div>
 
@@ -701,6 +746,7 @@
                     </div>
 
                     <button id="btnSimular" class="btn-advance" style="width: 100%; font-weight:700;" disabled>⚡ INICIAR SIMULAÇÃO EM TEMPO REAL</button>
+                    <button id="btnConfirmarImportacao" class="btn btn-success" style="width: 100%; font-weight:700; margin-top: 15px; display: none;">🚀 EFETUAR IMPORTAÇÃO DEFINITIVA</button>
                 </section>
             </div>
         </main>
@@ -712,10 +758,12 @@
     <script>
         // ═══════════════════════ MONACO SETUP ═══════════════════════
         let editorInstance = null;
+        let propEditorInstance = null;
         let selectedFileBase64 = null;
         let selectedFileName = '';
         let perfisCached = [];
         let activePerfilId = null;
+        let lastSimulatedPerfilId = null;
 
         // Custom Premium Confirm Dialog (Alternative to native clash alert)
         function showConfirm(title, message, isDestructive = false) {
@@ -788,7 +836,8 @@
                     "configuracoes_gerais": {
                         "linha_cabecalho": 1,
                         "pular_linhas_vazias": true,
-                        "delimitador_lista": ";"
+                        "delimitador_lista": ";",
+                        "fator_conversao": 100
                     },
                     "contexto_global": {
                         "script_inicializacao": "globalStore.fatorDolar = 5.25;"
@@ -819,6 +868,11 @@
                 automaticLayout: true,
                 minimap: { enabled: false },
                 fontSize: 12
+            });
+            editorInstance.onDidChangeModelContent(() => {
+                syncJSONToInputs();
+                const btnConfirmar = document.getElementById('btnConfirmarImportacao');
+                if (btnConfirmar) btnConfirmar.style.display = 'none';
             });
         });
 
@@ -870,6 +924,86 @@
         const linhaCabecalhoInput = document.getElementById('linhaCabecalhoInput');
         const separadorInput = document.getElementById('separadorInput');
 
+        let isSyncing = false;
+
+        function syncInputsToJSON() {
+            if (isSyncing) return;
+            if (!editorInstance) return;
+            try {
+                let json = JSON.parse(editorInstance.getValue());
+                if (!json.configuracoes_gerais) {
+                    json.configuracoes_gerais = {};
+                }
+                const newLine = parseInt(linhaCabecalhoInput.value, 10) || 1;
+                const newDelim = separadorInput.value || ";";
+                const newFator = parseFloat(document.getElementById('fatorConversaoInput').value) || 100;
+                
+                if (
+                    json.configuracoes_gerais.linha_cabecalho !== newLine || 
+                    json.configuracoes_gerais.delimitador_lista !== newDelim ||
+                    json.configuracoes_gerais.fator_conversao !== newFator
+                ) {
+                    isSyncing = true;
+                    json.configuracoes_gerais.linha_cabecalho = newLine;
+                    json.configuracoes_gerais.delimitador_lista = newDelim;
+                    json.configuracoes_gerais.fator_conversao = newFator;
+                    
+                    const state = editorInstance.saveViewState();
+                    editorInstance.setValue(JSON.stringify(json, null, 2));
+                    if (state) editorInstance.restoreViewState(state);
+
+                    // Atualiza os nós no diagrama visual se eles existirem
+                    const globalConfigNode = flowchartData.nodes.find(n => n.type === 'global_config_node');
+                    if (globalConfigNode) {
+                        globalConfigNode.data.linhaCabecalho = newLine;
+                        globalConfigNode.data.delimitadorLista = newDelim;
+                        globalConfigNode.data.fatorConversao = newFator;
+                        renderNodes();
+                    }
+                    const excelInputNode = flowchartData.nodes.find(n => n.type === 'excel_input');
+                    if (excelInputNode) {
+                        excelInputNode.data.linhaCabecalho = newLine;
+                        excelInputNode.data.delimitadorLista = newDelim;
+                        renderNodes();
+                    }
+                    isSyncing = false;
+                }
+            } catch (e) {
+                isSyncing = false;
+            }
+        }
+
+        function syncJSONToInputs() {
+            if (isSyncing) return;
+            if (!editorInstance) return;
+            try {
+                const json = JSON.parse(editorInstance.getValue());
+                if (json.configuracoes_gerais) {
+                    const jsonLine = json.configuracoes_gerais.linha_cabecalho;
+                    const jsonDelim = json.configuracoes_gerais.delimitador_lista;
+                    const jsonFator = json.configuracoes_gerais.fator_conversao;
+                    
+                    isSyncing = true;
+                    if (jsonLine !== undefined && parseInt(linhaCabecalhoInput.value, 10) !== jsonLine) {
+                        linhaCabecalhoInput.value = jsonLine;
+                    }
+                    if (jsonDelim !== undefined && separadorInput.value !== jsonDelim) {
+                        separadorInput.value = jsonDelim;
+                    }
+                    if (jsonFator !== undefined && parseFloat(document.getElementById('fatorConversaoInput').value) !== jsonFator) {
+                        document.getElementById('fatorConversaoInput').value = jsonFator;
+                    }
+                    isSyncing = false;
+                }
+            } catch (e) {
+                isSyncing = false;
+            }
+        }
+
+        linhaCabecalhoInput.addEventListener('input', syncInputsToJSON);
+        separadorInput.addEventListener('input', syncInputsToJSON);
+        document.getElementById('fatorConversaoInput').addEventListener('input', syncInputsToJSON);
+
         async function loadPerfis() {
             try {
                 const res = await fetch(`${API_BASE}/perfis`, { headers: { 'Authorization': `Bearer ${token}` } });
@@ -914,6 +1048,7 @@
                 perfilNomeInput.value = perfil.nome_perfil || '';
                 linhaCabecalhoInput.value = perfil.linha_cabecalho || 1;
                 separadorInput.value = perfil.separador_multiplo || ';';
+                document.getElementById('fatorConversaoInput').value = perfil.fator_conversao || 100;
                 
                 let valJson = perfil.mapeamento_json;
                 if (typeof valJson === 'string') {
@@ -925,6 +1060,9 @@
                 }
                 btnExcluir.disabled = false;
                 showToast('Perfil carregado com sucesso!', 'info');
+                
+                const btnConfirmar = document.getElementById('btnConfirmarImportacao');
+                if (btnConfirmar) btnConfirmar.style.display = 'none';
             }
         });
 
@@ -934,13 +1072,15 @@
             perfilNomeInput.value = '';
             linhaCabecalhoInput.value = 1;
             separadorInput.value = ';';
+            document.getElementById('fatorConversaoInput').value = 100;
             if (editorInstance) {
                 editorInstance.setValue(JSON.stringify({
                     "versao_motor": "2.0",
                     "configuracoes_gerais": {
                         "linha_cabecalho": 1,
                         "pular_linhas_vazias": true,
-                        "delimitador_lista": ";"
+                        "delimitador_lista": ";",
+                        "fator_conversao": 100
                     },
                     "contexto_global": {
                         "script_inicializacao": "// Escreva scripts globais aqui"
@@ -955,6 +1095,9 @@
             }
             btnExcluir.disabled = true;
             showToast('Pronto para criar um novo perfil! Digite um nome e configure o seu fluxo.', 'info');
+            
+            const btnConfirmar = document.getElementById('btnConfirmarImportacao');
+            if (btnConfirmar) btnConfirmar.style.display = 'none';
         });
 
         btnSalvar.addEventListener('click', async () => {
@@ -973,6 +1116,7 @@
                 nome_perfil: nome,
                 linha_cabecalho: parseInt(linhaCabecalhoInput.value, 10) || 1,
                 separador_multiplo: separadorInput.value,
+                fator_conversao: parseFloat(document.getElementById('fatorConversaoInput').value) || 100,
                 mapeamento_json: mapVal
             };
 
@@ -1043,6 +1187,8 @@
                 reader.onload = (evt) => {
                     selectedFileBase64 = evt.target.result;
                     btnSimular.disabled = false;
+                    const btnConfirmar = document.getElementById('btnConfirmarImportacao');
+                    if (btnConfirmar) btnConfirmar.style.display = 'none';
                     showToast('Planilha modelo carregada.', 'success');
                 };
                 reader.readAsDataURL(file);
@@ -1066,15 +1212,20 @@
 
                 // Criamos um perfil temporário ou atualizamos o ativo antes de simular
                 // Para simplificar a simulação reativa de autoria, enviamos uma chamada especial
+                let targetPerfilId = activePerfilId;
+                if (targetPerfilId) {
+                    await autoupdateActivePerfil(targetPerfilId, mapVal);
+                } else {
+                    targetPerfilId = await autocreateTempPerfil(mapVal);
+                }
+                lastSimulatedPerfilId = targetPerfilId;
+
                 const res = await fetch(`${API_BASE}/programavel/preview`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                     body: JSON.stringify({
                         fileBase64: selectedFileBase64,
-                        // Para não exigir salvar, podemos criar um perfil dummy ou enviar o perfil de forma a simular na API
-                        // Mas como nossa API preview recebe perfil_id, salvamos temporariamente ou usamos o ativo.
-                        // Caso não tenha ativo, podemos criar um temporário na hora!
-                        perfil_id: activePerfilId || await autocreateTempPerfil(mapVal)
+                        perfil_id: targetPerfilId
                     })
                 });
 
@@ -1094,6 +1245,23 @@
             }
         });
 
+        async function autoupdateActivePerfil(id, mapeamento_json) {
+            const nome = perfilNomeInput.value.trim() || `Perfil ${id}`;
+            const res = await fetch(`${API_BASE}/perfis/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({
+                    nome_perfil: nome,
+                    linha_cabecalho: parseInt(linhaCabecalhoInput.value, 10) || 1,
+                    separador_multiplo: separadorInput.value,
+                    fator_conversao: parseFloat(document.getElementById('fatorConversaoInput').value) || 100,
+                    mapeamento_json
+                })
+            });
+            if (!res.ok) throw new Error('Falha ao atualizar o perfil ativo para a simulação.');
+            await loadPerfis();
+        }
+
         async function autocreateTempPerfil(mapeamento_json) {
             const tempNome = `[TEMP] Simulação ${Date.now()}`;
             const res = await fetch(`${API_BASE}/perfis`, {
@@ -1103,6 +1271,7 @@
                     nome_perfil: tempNome,
                     linha_cabecalho: parseInt(linhaCabecalhoInput.value, 10) || 1,
                     separador_multiplo: separadorInput.value,
+                    fator_conversao: parseFloat(document.getElementById('fatorConversaoInput').value) || 100,
                     mapeamento_json
                 })
             });
@@ -1166,7 +1335,83 @@
             
             // Alterna aba ativa para ver os logs ou resultados
             tabPreview.click();
+
+            // Gerencia visibilidade e estado do botão de confirmação definitiva
+            const btnConfirmar = document.getElementById('btnConfirmarImportacao');
+            if (btnConfirmar) {
+                btnConfirmar.style.display = 'inline-flex';
+                const hasUnresolved = data.linhas.some(row => !row.corretor_encontrado);
+                const hasErrors = data.logs && data.logs.some(logLine => 
+                    logLine.toUpperCase().includes('ERRO') || 
+                    logLine.toUpperCase().includes('ERROR')
+                );
+                const hasLines = data.linhas && data.linhas.length > 0;
+
+                if (hasErrors) {
+                    btnConfirmar.disabled = true;
+                    btnConfirmar.innerHTML = '🚀 IMPORTAÇÃO DESABILITADA (CORRIJA OS ERROS NO TERMINAL)';
+                } else if (hasUnresolved) {
+                    btnConfirmar.disabled = true;
+                    btnConfirmar.innerHTML = '🚀 IMPORTAÇÃO DESABILITADA (PARCEIROS NÃO LOCALIZADOS)';
+                } else if (!hasLines) {
+                    btnConfirmar.disabled = true;
+                    btnConfirmar.innerHTML = '🚀 IMPORTAÇÃO DESABILITADA (NENHUM REGISTRO PROCESSADO)';
+                } else {
+                    btnConfirmar.disabled = false;
+                    btnConfirmar.innerHTML = '🚀 EFETUAR IMPORTAÇÃO DEFINITIVA';
+                }
+            }
         }
+
+        // Event listener para o botão de confirmação definitiva
+        document.getElementById('btnConfirmarImportacao').addEventListener('click', async () => {
+            if (!selectedFileBase64 || !lastSimulatedPerfilId) return;
+
+            const confirmImport = await showConfirm(
+                'Confirmar Importação Definitiva',
+                'Deseja realmente processar a importação definitiva para o banco de dados? Esta ação criará lançamentos e atualizará o saldo dos corretores de forma irreversível.',
+                false
+            );
+            if (!confirmImport) return;
+
+            const btnConfirmar = document.getElementById('btnConfirmarImportacao');
+            try {
+                btnConfirmar.disabled = true;
+                btnConfirmar.textContent = 'PROCESSANDO IMPORTAÇÃO...';
+
+                const res = await fetch(`${API_BASE}/programavel/confirm`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({
+                        fileBase64: selectedFileBase64,
+                        perfil_id: lastSimulatedPerfilId,
+                        resolucoes: {}
+                    })
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.error || 'Erro ao processar importação');
+                }
+
+                const data = await res.json();
+                showToast('Importação definitiva concluída com sucesso!', 'success');
+
+                const successMsg = `[Sucesso] Importação definitiva processada: ${data.total_vendas_processadas || 0} vendas, ${data.transacoes_criadas || 0} transações, ${data.corretores_atualizados || 0} corretores afetados.`;
+                const line = document.createElement('div');
+                line.className = 'terminal-line global';
+                line.textContent = `> ${successMsg}`;
+                terminalConsole.appendChild(line);
+
+                tabTerminal.click();
+                btnConfirmar.style.display = 'none';
+
+            } catch (e) {
+                showToast(e.message, 'error');
+                btnConfirmar.disabled = false;
+                btnConfirmar.innerHTML = '🚀 EFETUAR IMPORTAÇÃO DEFINITIVA';
+            }
+        });
 
         // ═══════════════════════ FLOWCHART ENGINE (n8n/Node-RED STYLE) ═══════════════════════
         const flowchartData = {
@@ -1345,18 +1590,41 @@
         });
 
         function drawBezier(x1, y1, x2, y2, color, conn, isTemp = false) {
-            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
             const dx = Math.abs(x2 - x1) * 0.5;
             const d = `M ${x1} ${y1} C ${x1 + dx} ${y1}, ${x2 - dx} ${y2}, ${x2} ${y2}`;
-            
+
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
             path.setAttribute('d', d);
             path.setAttribute('stroke', color);
             path.setAttribute('stroke-width', isTemp ? '2' : '3');
             path.setAttribute('fill', 'none');
             
-            if (!isTemp) {
-                path.setAttribute('style', 'cursor: pointer; pointer-events: stroke; filter: drop-shadow(0 0 4px rgba(212,175,55,0.4));');
-                path.addEventListener('click', async (e) => {
+            if (isTemp) {
+                path.setAttribute('stroke-dasharray', '4 4');
+                flowConnectionsSvg.appendChild(path);
+            } else {
+                path.setAttribute('style', 'pointer-events: none; filter: drop-shadow(0 0 4px rgba(212,175,55,0.4)); transition: stroke-width 0.2s, stroke 0.2s;');
+                flowConnectionsSvg.appendChild(path);
+
+                // Linha de colisão invisível maior para facilitar o clique
+                const hitBox = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                hitBox.setAttribute('d', d);
+                hitBox.setAttribute('stroke', 'rgba(255, 255, 255, 0.01)');
+                hitBox.setAttribute('stroke-width', '16');
+                hitBox.setAttribute('fill', 'none');
+                hitBox.setAttribute('style', 'cursor: pointer; pointer-events: stroke;');
+
+                // Efeito hover visual na linha de conexão
+                hitBox.addEventListener('pointerenter', () => {
+                    path.setAttribute('stroke', '#e74c3c');
+                    path.setAttribute('stroke-width', '5');
+                });
+                hitBox.addEventListener('pointerleave', () => {
+                    path.setAttribute('stroke', color);
+                    path.setAttribute('stroke-width', '3');
+                });
+
+                hitBox.addEventListener('click', async (e) => {
                     e.stopPropagation();
                     const confirmDel = await showConfirm('Remover Conexão', 'Deseja realmente excluir esta conexão?', true);
                     if (confirmDel) {
@@ -1365,11 +1633,8 @@
                         compileFlowchartToJSON();
                     }
                 });
-            } else {
-                path.setAttribute('stroke-dasharray', '4 4');
+                flowConnectionsSvg.appendChild(hitBox);
             }
-            
-            flowConnectionsSvg.appendChild(path);
         }
 
         // Add visual nodes to DOM
@@ -1470,6 +1735,87 @@
                                 </div>
                             `).join('')}
                         </div>
+                    `;
+                } else if (node.type === 'global_config_node') {
+                    headerTitle = `⚙️ Configurações & Vars`;
+                    bodyHtml = `
+                        <div style="font-size:0.65rem; color:#fff;">
+                            Cabeçalho: <strong>Linha ${node.data.linhaCabecalho || 1}</strong><br>
+                            Delimitador: <strong>"${node.data.delimitadorLista || ';'}"</strong><br>
+                            Fator Conversão: <strong>${node.data.fatorConversao || 100}</strong><br>
+                            Pular Vazias: <strong>${node.data.pularLinhasVazias ? 'Sim' : 'Não'}</strong><br>
+                            Vars: <strong>${(node.data.variaveis || []).length} cadastradas</strong>
+                        </div>
+                    `;
+                    portsHtml = ``;
+                } else if (node.type === 'sinal_node') {
+                    headerTitle = `🟢 Gerador de Entrada`;
+                    bodyHtml = `
+                        <div style="font-size:0.65rem; color:#fff; margin-bottom:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Justificativa: <strong>${node.data.justificativa || '—'}</strong></div>
+                        <div style="font-size:0.65rem; color:#fff; margin-bottom:6px;">Status: <strong>${node.data.status || 'COMPENSADO'}</strong></div>
+                        <div style="display:flex; flex-direction:column; gap:4px;">
+                            <div class="flow-port-row" style="padding-left: 10px;">
+                                <div class="flow-port-row-port input" data-port-id="in_valor" style="background-color:#2ecc71;"></div>
+                                <span>Valor (Moeda)</span>
+                            </div>
+                            <div class="flow-port-row" style="padding-left: 10px;">
+                                <div class="flow-port-row-port input" data-port-id="in_data" style="background-color:#2ecc71;"></div>
+                                <span>Vencimento (Data)</span>
+                            </div>
+                        </div>
+                    `;
+                    portsHtml = `
+                        <div class="flow-port output" data-port-id="out" style="background-color:#2ecc71;"></div>
+                    `;
+                } else if (node.type === 'parcelas_node') {
+                    headerTitle = `🗓️ Gerador de Parcelas`;
+                    bodyHtml = `
+                        <div style="font-size:0.65rem; color:#fff; margin-bottom:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Justificativa: <strong>${node.data.justificativa || '—'}</strong></div>
+                        <div style="font-size:0.65rem; color:#fff; margin-bottom:6px;">Frequência: <strong>${node.data.frequencia || 'Mensal'}</strong></div>
+                        <div style="display:flex; flex-direction:column; gap:4px;">
+                            <div class="flow-port-row" style="padding-left: 10px;">
+                                <div class="flow-port-row-port input" data-port-id="in_qtd_total" style="background-color:#1abc9c;"></div>
+                                <span>Qtd Total (Int)</span>
+                            </div>
+                            <div class="flow-port-row" style="padding-left: 10px;">
+                                <div class="flow-port-row-port input" data-port-id="in_qtd_pagas" style="background-color:#1abc9c;"></div>
+                                <span>Qtd Pagas (Int)</span>
+                            </div>
+                            <div class="flow-port-row" style="padding-left: 10px;">
+                                <div class="flow-port-row-port input" data-port-id="in_valor_parcela" style="background-color:#1abc9c;"></div>
+                                <span>Valor Parcela (Moeda)</span>
+                            </div>
+                            <div class="flow-port-row" style="padding-left: 10px;">
+                                <div class="flow-port-row-port input" data-port-id="in_data_inicio" style="background-color:#1abc9c;"></div>
+                                <span>Data Início (Data)</span>
+                            </div>
+                        </div>
+                    `;
+                    portsHtml = `
+                        <div class="flow-port output" data-port-id="out" style="background-color:#1abc9c;"></div>
+                    `;
+                } else if (node.type === 'baloes_node') {
+                    headerTitle = `✨ Gerador de Lançamentos Extras`;
+                    bodyHtml = `
+                        <div style="font-size:0.65rem; color:#fff; margin-bottom:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">Justificativa: <strong>${node.data.justificativa || '—'}</strong></div>
+                        <div style="font-size:0.65rem; color:#fff; margin-bottom:6px;">Status: <strong>${node.data.status || 'PENDENTE'}</strong></div>
+                        <div style="display:flex; flex-direction:column; gap:4px;">
+                            <div class="flow-port-row" style="padding-left: 10px;">
+                                <div class="flow-port-row-port input" data-port-id="in_valor_unitario" style="background-color:#9b59b6;"></div>
+                                <span>Valor Unitário (Moeda)</span>
+                            </div>
+                            <div class="flow-port-row" style="padding-left: 10px;">
+                                <div class="flow-port-row-port input" data-port-id="in_qtd_baloes" style="background-color:#9b59b6;"></div>
+                                <span>Qtd Lançamentos (Int)</span>
+                            </div>
+                            <div class="flow-port-row" style="padding-left: 10px;">
+                                <div class="flow-port-row-port input" data-port-id="in_string_datas" style="background-color:#9b59b6;"></div>
+                                <span>String Datas (Texto)</span>
+                            </div>
+                        </div>
+                    `;
+                    portsHtml = `
+                        <div class="flow-port output" data-port-id="out" style="background-color:#9b59b6;"></div>
                     `;
                 }
 
@@ -1658,6 +2004,35 @@
                     webhookUrl: 'https://hooks.slack.com/services/...',
                     mensagem: 'Importação realizada com sucesso para o consultor {{NomeConsultor}}!'
                 };
+            } else if (type === 'global_config_node') {
+                newNode.title = 'Configurações & Vars';
+                newNode.data = {
+                    linhaCabecalho: 3,
+                    pularLinhasVazias: true,
+                    delimitadorLista: ';',
+                    variaveis: [
+                        { chave: 'fatorDolar', tipo: 'Número', valor: '5.25' }
+                    ]
+                };
+            } else if (type === 'sinal_node') {
+                newNode.title = 'Gerador de Entrada';
+                newNode.data = {
+                    status: 'COMPENSADO',
+                    justificativa: 'Entrada de Contrato - {{C}} {{D}}'
+                };
+            } else if (type === 'parcelas_node') {
+                newNode.title = 'Gerador de Parcelas';
+                newNode.data = {
+                    frequencia: 'Mensal',
+                    justificativa: 'Parcela {i}/{total} - {{C}} {{D}}'
+                };
+            } else if (type === 'baloes_node') {
+                newNode.title = 'Gerador de Lançamentos Extras';
+                newNode.data = {
+                    delimitador: '|',
+                    status: 'PENDENTE',
+                    justificativa: 'Lançamento Extra {i}/{total} - {{C}} {{D}}'
+                };
             } else if (type === 'excel_input' || type === 'save_node') {
                 showToast('Só é permitido ter uma Entrada e uma Saída no grafo.', 'warning');
                 return;
@@ -1671,6 +2046,12 @@
 
         // Selected Node properties config panel render
         function showNodeProperties(node) {
+            // Descartar editor anterior para evitar vazamento de memória
+            if (propEditorInstance) {
+                propEditorInstance.dispose();
+                propEditorInstance = null;
+            }
+
             // Expand the panel automatically if it was minimized
             nodePropsPanel.classList.remove('minimized-panel');
             const btnToggle = document.getElementById('btnTogglePropsPanel');
@@ -1692,6 +2073,10 @@
             btnDeleteNode.onclick = async () => {
                 const confirmDel = await showConfirm('Remover Nó', 'Deseja realmente remover este nó e suas conexões?', true);
                 if (confirmDel) {
+                    if (propEditorInstance) {
+                        propEditorInstance.dispose();
+                        propEditorInstance = null;
+                    }
                     flowchartData.nodes = flowchartData.nodes.filter(n => n.id !== node.id);
                     flowchartData.connections = flowchartData.connections.filter(c => c.from !== node.id && c.to !== node.id);
                     nodePropsPanel.style.display = 'none';
@@ -1791,7 +2176,7 @@
                     </div>
                     <div>
                         <label style="font-size:0.7rem; color:var(--text-secondary);">Código Javascript Customizado (N8N Style)</label>
-                        <textarea id="propScriptArea" class="form-control" style="font-family:monospace; font-size:0.75rem; height:150px; margin:0; line-height:1.4; padding:8px; background:#1e1e1e; border:1px solid #333; color:#fff;" rows="6">${node.data.script || ''}</textarea>
+                        <div id="propScriptMonaco" style="height: 180px; border-radius: 8px; border: 1px solid var(--glass-border); overflow: hidden; background: #1e1e1e; margin-top: 5px;"></div>
                         <div style="font-size:0.6rem; color:var(--text-secondary); margin-top:4px;">
                             💡 Escreva um bloco funcional. Use <code>value</code> para ler a célula de entrada, <code>helpers.parseMoeda(val)</code>, <code>helpers.cleanCPF(val)</code> e macros com duas chaves <code>{{CPF}}</code> para referenciar outros campos calculados.
                         </div>
@@ -1804,28 +2189,58 @@
                     compileFlowchartToJSON();
                 });
 
-                document.getElementById('propScriptArea').addEventListener('change', (e) => {
-                    node.data.script = e.target.value;
-                    renderNodes();
-                    compileFlowchartToJSON();
-                });
+                if (window.monaco) {
+                    propEditorInstance = monaco.editor.create(document.getElementById('propScriptMonaco'), {
+                        value: node.data.script || '',
+                        language: 'javascript',
+                        theme: 'vs-dark',
+                        automaticLayout: true,
+                        minimap: { enabled: false },
+                        fontSize: 12,
+                        scrollbar: { vertical: 'visible', horizontal: 'visible' }
+                    });
+
+                    propEditorInstance.onDidChangeModelContent(() => {
+                        node.data.script = propEditorInstance.getValue();
+                        compileFlowchartToJSON();
+                    });
+
+                    propEditorInstance.onDidBlurEditorText(() => {
+                        renderNodes();
+                    });
+                }
 
             } else if (node.type === 'ifelse_node') {
                 propsFormContent.innerHTML = `
                     <div>
                         <label style="font-size:0.7rem; color:var(--text-secondary);">Código de Validação Hook (antes_salvar_linha)</label>
-                        <textarea id="propIfElseArea" class="form-control" style="font-family:monospace; font-size:0.75rem; height:150px; margin:0; background:#1e1e1e; color:#fff;" rows="6">${node.data.script || ''}</textarea>
+                        <div id="propIfElseMonaco" style="height: 180px; border-radius: 8px; border: 1px solid var(--glass-border); overflow: hidden; background: #1e1e1e; margin-top: 5px;"></div>
                         <div style="font-size:0.6rem; color:var(--text-secondary); margin-top:4px;">
                             💡 Retorne <code>false</code> para descartar a linha inteira da importação, ou <code>true</code> para validar e persistir.
                         </div>
                     </div>
                 `;
 
-                document.getElementById('propIfElseArea').addEventListener('change', (e) => {
-                    node.data.script = e.target.value;
-                    renderNodes();
-                    compileFlowchartToJSON();
-                });
+                if (window.monaco) {
+                    propEditorInstance = monaco.editor.create(document.getElementById('propIfElseMonaco'), {
+                        value: node.data.script || '',
+                        language: 'javascript',
+                        theme: 'vs-dark',
+                        automaticLayout: true,
+                        minimap: { enabled: false },
+                        fontSize: 12,
+                        scrollbar: { vertical: 'visible', horizontal: 'visible' }
+                    });
+
+                    propEditorInstance.onDidChangeModelContent(() => {
+                        node.data.script = propEditorInstance.getValue();
+                        compileFlowchartToJSON();
+                    });
+
+                    propEditorInstance.onDidBlurEditorText(() => {
+                        renderNodes();
+                    });
+                }
 
             } else if (node.type === 'loop_node') {
                 propsFormContent.innerHTML = `
@@ -1891,12 +2306,210 @@
                     renderNodes();
                     compileFlowchartToJSON();
                 });
+            } else if (node.type === 'global_config_node') {
+                propsFormContent.innerHTML = `
+                    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; margin-bottom:10px;">
+                        <div>
+                            <label style="font-size:0.7rem; color:var(--text-secondary);">Linha do Cabeçalho</label>
+                            <input type="number" id="propGlobalLine" class="form-control" style="font-size:0.8rem; padding:4px 8px; margin:0;" value="${node.data.linhaCabecalho || 1}">
+                        </div>
+                        <div>
+                            <label style="font-size:0.7rem; color:var(--text-secondary);">Separador de Lista</label>
+                            <input type="text" id="propGlobalDelim" class="form-control" style="font-size:0.8rem; padding:4px 8px; margin:0;" value="${node.data.delimitadorLista || ';'}">
+                        </div>
+                        <div>
+                            <label style="font-size:0.7rem; color:var(--text-secondary);">Fator Conversão</label>
+                            <input type="number" id="propGlobalFator" class="form-control" style="font-size:0.8rem; padding:4px 8px; margin:0;" value="${node.data.fatorConversao || 100}" min="0.01" step="any">
+                        </div>
+                    </div>
+                    <div style="margin-bottom:10px;">
+                        <label style="font-size:0.7rem; color:var(--text-secondary); display:flex; align-items:center; gap:6px;">
+                            <input type="checkbox" id="propGlobalSkipEmpty" ${node.data.pularLinhasVazias ? 'checked' : ''}> Pular Linhas Vazias
+                        </label>
+                    </div>
+                    <div style="font-size:0.72rem; margin-bottom:8px; font-weight:700;">Variáveis Globais:</div>
+                    <div id="propVarsList" style="display:flex; flex-direction:column; gap:5px; max-height:150px; overflow-y:auto; margin-bottom:10px;">
+                        ${(node.data.variaveis || []).map((v, i) => `
+                            <div style="display:flex; gap:5px; align-items:center;">
+                                <input type="text" class="form-control prop-var-key" style="flex:1; padding:3px; font-size:0.75rem; margin:0;" placeholder="Chave" value="${v.chave}">
+                                <select class="form-control prop-var-type" style="width:80px; padding:3px; font-size:0.75rem; margin:0;">
+                                    <option value="Número" ${v.tipo === 'Número' ? 'selected' : ''}>Número</option>
+                                    <option value="Texto" ${v.tipo === 'Texto' ? 'selected' : ''}>Texto</option>
+                                    <option value="Booleano" ${v.tipo === 'Booleano' ? 'selected' : ''}>Booleano</option>
+                                </select>
+                                <input type="text" class="form-control prop-var-value" style="flex:1; padding:3px; font-size:0.75rem; margin:0;" placeholder="Valor" value="${v.valor}">
+                                <button class="btn btn-danger btn-remove-var" style="padding:2px 8px; font-size:0.7rem;" data-index="${i}">x</button>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <button id="btnAddVar" class="btn" style="background:rgba(255,255,255,0.05); color:var(--accent-primary); width:100%; padding:5px; font-size:0.75rem;">+ Adicionar Variável</button>
+                `;
+
+                document.getElementById('propGlobalLine').addEventListener('change', (e) => {
+                    node.data.linhaCabecalho = parseInt(e.target.value, 10) || 1;
+                    renderNodes();
+                    compileFlowchartToJSON();
+                });
+                document.getElementById('propGlobalDelim').addEventListener('change', (e) => {
+                    node.data.delimitadorLista = e.target.value || ';';
+                    renderNodes();
+                    compileFlowchartToJSON();
+                });
+                document.getElementById('propGlobalFator').addEventListener('change', (e) => {
+                    node.data.fatorConversao = parseFloat(e.target.value) || 100;
+                    renderNodes();
+                    compileFlowchartToJSON();
+                });
+                document.getElementById('propGlobalSkipEmpty').addEventListener('change', (e) => {
+                    node.data.pularLinhasVazias = e.target.checked;
+                    renderNodes();
+                    compileFlowchartToJSON();
+                });
+
+                document.getElementById('btnAddVar').onclick = () => {
+                    if (!node.data.variaveis) node.data.variaveis = [];
+                    node.data.variaveis.push({
+                        chave: `var_${node.data.variaveis.length + 1}`,
+                        tipo: 'Texto',
+                        valor: 'valor_aqui'
+                    });
+                    renderNodes();
+                    showNodeProperties(node);
+                    compileFlowchartToJSON();
+                };
+
+                propsFormContent.querySelectorAll('.btn-remove-var').forEach(btn => {
+                    btn.onclick = () => {
+                        const idx = parseInt(btn.getAttribute('data-index'), 10);
+                        node.data.variaveis.splice(idx, 1);
+                        renderNodes();
+                        showNodeProperties(node);
+                        compileFlowchartToJSON();
+                    };
+                });
+
+                propsFormContent.querySelectorAll('.prop-var-key, .prop-var-type, .prop-var-value').forEach(el => {
+                    el.addEventListener('change', () => {
+                        const keyInputs = propsFormContent.querySelectorAll('.prop-var-key');
+                        const typeSelects = propsFormContent.querySelectorAll('.prop-var-type');
+                        const valInputs = propsFormContent.querySelectorAll('.prop-var-value');
+
+                        node.data.variaveis = Array.from(keyInputs).map((inp, idx) => ({
+                            chave: inp.value.trim(),
+                            tipo: typeSelects[idx].value,
+                            valor: valInputs[idx].value
+                        }));
+                        renderNodes();
+                        compileFlowchartToJSON();
+                    });
+                });
+
+            } else if (node.type === 'sinal_node') {
+                propsFormContent.innerHTML = `
+                    <div style="margin-bottom:10px;">
+                        <label style="font-size:0.7rem; color:var(--text-secondary);">Status de Entrada</label>
+                        <select id="propSinalStatus" class="form-control" style="font-size:0.8rem; padding:4px 8px; margin:0;">
+                            <option value="COMPENSADO" ${node.data.status === 'COMPENSADO' ? 'selected' : ''}>Compensado</option>
+                            <option value="PENDENTE" ${node.data.status === 'PENDENTE' ? 'selected' : ''}>Pendente</option>
+                            <option value="ATRIBUIDO" ${node.data.status === 'ATRIBUIDO' ? 'selected' : ''}>Atribuído</option>
+                        </select>
+                    </div>
+                    <div style="margin-bottom:10px;">
+                        <label style="font-size:0.7rem; color:var(--text-secondary);">Justificativa da Transação (Suporta macros {{coluna}})</label>
+                        <input type="text" id="propSinalJust" class="form-control" style="font-size:0.8rem; padding:4px 8px; margin:0;" value="${node.data.justificativa || ''}">
+                    </div>
+                `;
+
+                document.getElementById('propSinalStatus').addEventListener('change', (e) => {
+                    node.data.status = e.target.value;
+                    renderNodes();
+                    compileFlowchartToJSON();
+                });
+
+                document.getElementById('propSinalJust').addEventListener('change', (e) => {
+                    node.data.justificativa = e.target.value;
+                    renderNodes();
+                    compileFlowchartToJSON();
+                });
+
+            } else if (node.type === 'parcelas_node') {
+                propsFormContent.innerHTML = `
+                    <div style="margin-bottom:10px;">
+                        <label style="font-size:0.7rem; color:var(--text-secondary);">Frequência de Cobrança</label>
+                        <select id="propParcelasFreq" class="form-control" style="font-size:0.8rem; padding:4px 8px; margin:0;">
+                            <option value="Mensal" ${node.data.frequencia === 'Mensal' ? 'selected' : ''}>Mensal</option>
+                            <option value="Bimestral" ${node.data.frequencia === 'Bimestral' ? 'selected' : ''}>Bimestral</option>
+                            <option value="Trimestral" ${node.data.frequencia === 'Trimestral' ? 'selected' : ''}>Trimestral</option>
+                            <option value="Anual" ${node.data.frequencia === 'Anual' ? 'selected' : ''}>Anual</option>
+                        </select>
+                    </div>
+                    <div style="margin-bottom:10px;">
+                        <label style="font-size:0.7rem; color:var(--text-secondary);">Justificativa (Suporta macros {{coluna}}, {i} e {total})</label>
+                        <input type="text" id="propParcelasJust" class="form-control" style="font-size:0.8rem; padding:4px 8px; margin:0;" value="${node.data.justificativa || ''}">
+                    </div>
+                `;
+
+                document.getElementById('propParcelasFreq').addEventListener('change', (e) => {
+                    node.data.frequencia = e.target.value;
+                    renderNodes();
+                    compileFlowchartToJSON();
+                });
+
+                document.getElementById('propParcelasJust').addEventListener('change', (e) => {
+                    node.data.justificativa = e.target.value;
+                    renderNodes();
+                    compileFlowchartToJSON();
+                });
+
+            } else if (node.type === 'baloes_node') {
+                propsFormContent.innerHTML = `
+                    <div style="margin-bottom:10px;">
+                        <label style="font-size:0.7rem; color:var(--text-secondary);">Delimitador de Datas</label>
+                        <input type="text" id="propBaloesDelim" class="form-control" style="font-size:0.8rem; padding:4px 8px; margin:0; width:50px; text-align:center;" value="${node.data.delimitador || '|'}">
+                    </div>
+                    <div style="margin-bottom:10px;">
+                        <label style="font-size:0.7rem; color:var(--text-secondary);">Status Padrão do Lançamento</label>
+                        <select id="propBaloesStatus" class="form-control" style="font-size:0.8rem; padding:4px 8px; margin:0;">
+                            <option value="PENDENTE" ${node.data.status === 'PENDENTE' ? 'selected' : ''}>Pendente</option>
+                            <option value="COMPENSADO" ${node.data.status === 'COMPENSADO' ? 'selected' : ''}>Compensado</option>
+                        </select>
+                    </div>
+                    <div style="margin-bottom:10px;">
+                        <label style="font-size:0.7rem; color:var(--text-secondary);">Justificativa (Suporta macros {{coluna}}, {i} e {total})</label>
+                        <input type="text" id="propBaloesJust" class="form-control" style="font-size:0.8rem; padding:4px 8px; margin:0;" value="${node.data.justificativa || ''}">
+                    </div>
+                `;
+
+                document.getElementById('propBaloesDelim').addEventListener('change', (e) => {
+                    node.data.delimitador = e.target.value || '|';
+                    renderNodes();
+                    compileFlowchartToJSON();
+                });
+
+                document.getElementById('propBaloesStatus').addEventListener('change', (e) => {
+                    node.data.status = e.target.value;
+                    renderNodes();
+                    compileFlowchartToJSON();
+                });
+
+                document.getElementById('propBaloesJust').addEventListener('change', (e) => {
+                    node.data.justificativa = e.target.value;
+                    renderNodes();
+                    compileFlowchartToJSON();
+                });
             } else if (node.type === 'save_node') {
                 const fields = node.data?.destFields || [
                     { name: 'NomeConsultor', label: 'Nome Consultor (Nome)' },
                     { name: 'IDProfissional', label: 'CPF / ID (Documento)' },
                     { name: 'ValorVenda', label: 'Valor Comissão (ValorVenda)' },
-                    { name: 'ValorComissao', label: 'Fator Conversão (ValorComissao)' }
+                    { name: 'ValorComissao', label: 'Fator Conversão (ValorComissao)' },
+                    { name: 'empreendimento', label: 'Empreendimento (Produto)' },
+                    { name: 'unidade', label: 'Unidade (Contrato)' },
+                    { name: 'contato_cliente', label: 'Nome do Cliente' },
+                    { name: 'justificativa', label: 'Justificativa da Transação' },
+                    { name: 'tipo', label: 'Tipo (Crédito/Débito)' },
+                    { name: 'status', label: 'Status da Transação' },
+                    { name: 'data_vencimento', label: 'Data de Vencimento' }
                 ];
                 propsFormContent.innerHTML = `
                     <div style="margin-bottom: 10px;">
@@ -1937,16 +2550,37 @@
             const saveNode = flowchartData.nodes.find(n => n.type === 'save_node');
             const ifElseNode = flowchartData.nodes.find(n => n.type === 'ifelse_node');
 
+            const globalConfigNode = flowchartData.nodes.find(n => n.type === 'global_config_node');
+
             let compiled = {
                 versao_motor: "2.0",
                 configuracoes_gerais: {
-                    linha_cabecalho: inputNode ? inputNode.data.linhaCabecalho : 1,
-                    pular_linhas_vazias: true,
-                    delimitador_lista: inputNode ? inputNode.data.delimitadorLista : ";"
+                    linha_cabecalho: globalConfigNode ? (parseInt(globalConfigNode.data.linhaCabecalho, 10) || 1) : (inputNode ? inputNode.data.linhaCabecalho : 1),
+                    pular_linhas_vazias: globalConfigNode ? !!globalConfigNode.data.pularLinhasVazias : true,
+                    delimitador_lista: globalConfigNode ? (globalConfigNode.data.delimitadorLista || ";") : (inputNode ? inputNode.data.delimitadorLista : ";")
                 },
                 mapeamento_campos: {},
                 hooks: {}
             };
+
+            // Compile global variables
+            if (globalConfigNode && globalConfigNode.data.variaveis && globalConfigNode.data.variaveis.length > 0) {
+                let scriptInic = "";
+                globalConfigNode.data.variaveis.forEach(v => {
+                    let parsedVal = v.valor;
+                    if (v.tipo === 'Número') {
+                        parsedVal = isNaN(parseFloat(v.valor)) ? '0' : v.valor;
+                    } else if (v.tipo === 'Texto') {
+                        parsedVal = `"${v.valor.replace(/"/g, '\\"')}"`;
+                    } else if (v.tipo === 'Booleano') {
+                        parsedVal = v.valor === 'true' || v.valor === '1' || v.valor === 'Sim' ? 'true' : 'false';
+                    }
+                    scriptInic += `globalStore.${v.chave} = ${parsedVal}; `;
+                });
+                compiled.contexto_global = {
+                    script_inicializacao: scriptInic.trim()
+                };
+            }
 
             // Compile hooks
             if (ifElseNode && ifElseNode.data.script) {
@@ -2011,6 +2645,127 @@
                 });
             }
 
+            // Generate automatic transacoes_geradas.script from Visual No-Code nodes if present
+            const sinalNode = flowchartData.nodes.find(n => n.type === 'sinal_node');
+            const parcelasNode = flowchartData.nodes.find(n => n.type === 'parcelas_node');
+            const baloesNode = flowchartData.nodes.find(n => n.type === 'baloes_node');
+
+            if (sinalNode || parcelasNode || baloesNode) {
+                let generatorScript = `// SCRIPT GERADO AUTOMATICAMENTE VIA NO-CODE NODES\n`;
+                
+                // Add helper functions
+                generatorScript += `function parseExcelDate(val) {\n`;
+                generatorScript += `  if (!val) return new Date();\n`;
+                generatorScript += `  if (typeof val === 'number') {\n`;
+                generatorScript += `    return new Date((val - 25569) * 86400000);\n`;
+                generatorScript += `  }\n`;
+                generatorScript += `  const str = String(val).trim();\n`;
+                generatorScript += `  if (str.includes('/')) {\n`;
+                generatorScript += `    const parts = str.split('/');\n`;
+                generatorScript += `    if (parts.length === 3) {\n`;
+                generatorScript += `      return new Date(parseInt(parts[2], 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10));\n`;
+                generatorScript += `    }\n`;
+                generatorScript += `  }\n`;
+                generatorScript += `  const parsed = Date.parse(str);\n`;
+                generatorScript += `  return isNaN(parsed) ? new Date() : new Date(parsed);\n`;
+                generatorScript += `}\n\n`;
+
+                generatorScript += `function somarMeses(dataStr, meses) {\n`;
+                generatorScript += `  let dt = parseExcelDate(dataStr);\n`;
+                generatorScript += `  dt.setMonth(dt.getMonth() + parseInt(meses, 10));\n`;
+                generatorScript += `  return dt.toISOString().split('T')[0];\n`;
+                generatorScript += `}\n\n`;
+
+                generatorScript += `const list = [];\n\n`;
+
+                if (sinalNode) {
+                    const valConn = flowchartData.connections.find(c => c.to === sinalNode.id && c.toPort === 'in_valor');
+                    const dataConn = flowchartData.connections.find(c => c.to === sinalNode.id && c.toPort === 'in_data');
+                    const colVal = valConn ? valConn.fromPort.replace('col_', '') : 'G';
+                    const colData = dataConn ? dataConn.fromPort.replace('col_', '') : 'F';
+
+                    generatorScript += `// Sinal/Entrada\n`;
+                    generatorScript += `const val_sinal = helpers.parseMoeda(row.${colVal});\n`;
+                    generatorScript += `const data_sinal = row.${colData};\n`;
+                    generatorScript += `let just_sinal = "${sinalNode.data.justificativa || 'Entrada de Contrato'}";\n`;
+                    generatorScript += `just_sinal = just_sinal.replace(/\\{\\{([A-Z])\\}\\}/g, (match, col) => row[col] || '');\n`;
+                    generatorScript += `list.push({\n`;
+                    generatorScript += `  valor: val_sinal,\n`;
+                    generatorScript += `  data_vencimento: parseExcelDate(data_sinal).toISOString().split('T')[0],\n`;
+                    generatorScript += `  status: "${sinalNode.data.status || 'COMPENSADO'}",\n`;
+                    generatorScript += `  justificativa: just_sinal,\n`;
+                    generatorScript += `  tipo: "CREDITO"\n`;
+                    generatorScript += `});\n\n`;
+                }
+
+                if (parcelasNode) {
+                    const qtdTotalConn = flowchartData.connections.find(c => c.to === parcelasNode.id && c.toPort === 'in_qtd_total');
+                    const qtdPagasConn = flowchartData.connections.find(c => c.to === parcelasNode.id && c.toPort === 'in_qtd_pagas');
+                    const valorConn = flowchartData.connections.find(c => c.to === parcelasNode.id && c.toPort === 'in_valor_parcela');
+                    const dataInicioConn = flowchartData.connections.find(c => c.to === parcelasNode.id && c.toPort === 'in_data_inicio');
+
+                    const colQtdTotal = qtdTotalConn ? qtdTotalConn.fromPort.replace('col_', '') : 'J';
+                    const colQtdPagas = qtdPagasConn ? qtdPagasConn.fromPort.replace('col_', '') : 'K';
+                    const colValor = valorConn ? valorConn.fromPort.replace('col_', '') : 'H';
+                    const colDataInicio = dataInicioConn ? dataInicioConn.fromPort.replace('col_', '') : 'I';
+
+                    generatorScript += `// Parcelas\n`;
+                    generatorScript += `const qtd_total = parseInt(row.${colQtdTotal}) || 0;\n`;
+                    generatorScript += `const qtd_pagas = parseInt(row.${colQtdPagas}) || 0;\n`;
+                    generatorScript += `const valor_parcela = helpers.parseMoeda(row.${colValor});\n`;
+                    generatorScript += `const data_inicio = row.${colDataInicio};\n`;
+                    generatorScript += `for (let i = 1; i <= qtd_total; i++) {\n`;
+                    generatorScript += `  const data_venc = somarMeses(data_inicio, i - 1);\n`;
+                    generatorScript += `  const status_parcela = i <= qtd_pagas ? 'COMPENSADO' : 'PENDENTE';\n`;
+                    generatorScript += `  let just_parcela = "${parcelasNode.data.justificativa || 'Parcela {i}/{total}'}";\n`;
+                    generatorScript += `  just_parcela = just_parcela.replace('{i}', i).replace('{total}', qtd_total).replace(/\\{\\{([A-Z])\\}\\}/g, (match, col) => row[col] || '');\n`;
+                    generatorScript += `  list.push({\n`;
+                    generatorScript += `    valor: valor_parcela,\n`;
+                    generatorScript += `    data_vencimento: data_venc,\n`;
+                    generatorScript += `    status: status_parcela,\n`;
+                    generatorScript += `    justificativa: just_parcela,\n`;
+                    generatorScript += `    tipo: "CREDITO"\n`;
+                    generatorScript += `  });\n`;
+                    generatorScript += `}\n\n`;
+                }
+
+                if (baloesNode) {
+                    const valUnitConn = flowchartData.connections.find(c => c.to === baloesNode.id && c.toPort === 'in_valor_unitario');
+                    const qtdBaloesConn = flowchartData.connections.find(c => c.to === baloesNode.id && c.toPort === 'in_qtd_baloes');
+                    const stringDatasConn = flowchartData.connections.find(c => c.to === baloesNode.id && c.toPort === 'in_string_datas');
+
+                    const colValUnit = valUnitConn ? valUnitConn.fromPort.replace('col_', '') : 'L';
+                    const colQtdBaloes = qtdBaloesConn ? qtdBaloesConn.fromPort.replace('col_', '') : 'M';
+                    const colStringDatas = stringDatasConn ? stringDatasConn.fromPort.replace('col_', '') : 'N';
+
+                    generatorScript += `// Balões\n`;
+                    generatorScript += `const valor_balao = helpers.parseMoeda(row.${colValUnit});\n`;
+                    generatorScript += `const string_datas = String(row.${colStringDatas} || '');\n`;
+                    generatorScript += `if (string_datas) {\n`;
+                    generatorScript += `  const delimitador = "${baloesNode.data.delimitador || '|'}";\n`;
+                    generatorScript += `  const datas = string_datas.split(delimitador).map(d => d.trim()).filter(Boolean);\n`;
+                    generatorScript += `  datas.forEach((data_str, idx) => {\n`;
+                    generatorScript += `    const data_venc = parseExcelDate(data_str).toISOString().split('T')[0];\n`;
+                    generatorScript += `    let just_balao = "${baloesNode.data.justificativa || 'Balão Reforço {i}/{total}'}";\n`;
+                    generatorScript += `    just_balao = just_balao.replace('{i}', idx + 1).replace('{total}', datas.length).replace(/\\{\\{([A-Z])\\}\\}/g, (match, col) => row[col] || '');\n`;
+                    generatorScript += `    list.push({\n`;
+                    generatorScript += `      valor: valor_balao,\n`;
+                    generatorScript += `      data_vencimento: data_venc,\n`;
+                    generatorScript += `      status: "${baloesNode.data.status || 'PENDENTE'}",\n`;
+                    generatorScript += `      justificativa: just_balao,\n`;
+                    generatorScript += `      tipo: "CREDITO"\n`;
+                    generatorScript += `    });\n`;
+                    generatorScript += `  });\n`;
+                    generatorScript += `}\n\n`;
+                }
+
+                generatorScript += `return list;\n`;
+
+                compiled.mapeamento_campos.transacoes_geradas = {
+                    script: generatorScript
+                };
+            }
+
             // Compile webhook configs if present
             const webhookNode = flowchartData.nodes.find(n => n.type === 'webhook_alert');
             if (webhookNode && webhookNode.data.webhookUrl) {
@@ -2035,6 +2790,14 @@
         function parseJSONToFlowchart() {
             if (!editorInstance) return;
 
+            // Limpa seleção ativa e descarta o editor do painel de propriedades para evitar referências a nós obsoletos
+            flowchartData.selectedNodeId = null;
+            if (propEditorInstance) {
+                propEditorInstance.dispose();
+                propEditorInstance = null;
+            }
+            nodePropsPanel.style.display = 'none';
+
             let json = {};
             try {
                 json = JSON.parse(editorInstance.getValue());
@@ -2058,6 +2821,15 @@
                 if (mappings[k].celula) {
                     detectedLetters.add(mappings[k].celula.toUpperCase());
                 }
+                if (mappings[k].script) {
+                    const scriptMatches = mappings[k].script.match(/row\.([A-Z])/g);
+                    if (scriptMatches) {
+                        scriptMatches.forEach(m => {
+                            const letter = m.split('.')[1].toUpperCase();
+                            detectedLetters.add(letter);
+                        });
+                    }
+                }
             });
 
             // Make sure we have at least columns A, B, C, D if empty
@@ -2068,15 +2840,51 @@
             // Sort detected columns
             const sortedLetters = Array.from(detectedLetters).sort();
             sortedLetters.forEach(l => {
+                const mappedFields = Object.keys(mappings).filter(fieldName => {
+                    const m = mappings[fieldName];
+                    return m && m.celula && String(m.celula).toUpperCase() === l;
+                });
+
                 let colLabel = `Coluna_${l}`;
-                if (l === 'A') colLabel = 'Nome/Consultor';
-                if (l === 'B') colLabel = 'CPF/ID';
-                if (l === 'C') colLabel = 'Valor Comissão';
+                let colType = 'String';
+
+                if (mappedFields.length > 0) {
+                    const mainField = mappedFields[0];
+                    if (mainField === 'NomeConsultor') {
+                        colLabel = 'Nome/Consultor';
+                        colType = 'String';
+                    } else if (mainField === 'IDProfissional') {
+                        colLabel = 'CPF/ID';
+                        colType = 'Int';
+                    } else if (mainField === 'ValorVenda') {
+                        colLabel = 'Valor Comissão';
+                        colType = 'Currency';
+                    } else if (mainField === 'ValorComissao') {
+                        colLabel = 'Fator Conversão';
+                        colType = 'Currency';
+                    } else {
+                        colLabel = mainField.charAt(0).toUpperCase() + mainField.slice(1);
+                        if (['valor', 'valor_original_rs', 'valorvenda', 'valorcomissao'].includes(mainField.toLowerCase())) {
+                            colType = 'Currency';
+                        }
+                    }
+                } else {
+                    if (l === 'A') {
+                        colLabel = 'Nome/Consultor';
+                        colType = 'String';
+                    } else if (l === 'B') {
+                        colLabel = 'CPF/ID';
+                        colType = 'Int';
+                    } else if (l === 'C') {
+                        colLabel = 'Valor Comissão';
+                        colType = 'Currency';
+                    }
+                }
                 
                 inputColumns.push({
                     letter: l,
                     label: colLabel,
-                    type: (l === 'C' ? 'Currency' : (l === 'B' ? 'Int' : 'String'))
+                    type: colType
                 });
             });
 
@@ -2094,12 +2902,54 @@
             };
             flowchartData.nodes.push(excelInputNode);
 
-            // 2. Create static Save Transaction node
+            // 2. Create Global Config & Variables Node if configuracoes_gerais or contexto_global exists
+            const vars = [];
+            const scriptInic = json.contexto_global?.script_inicializacao || "";
+            const regexVar = /globalStore\.([a-zA-Z0-9_]+)\s*=\s*([^;]+);/g;
+            let match;
+            while ((match = regexVar.exec(scriptInic)) !== null) {
+                const key = match[1];
+                let rawVal = match[2].trim();
+                let type = "Número";
+                let val = rawVal;
+                if (rawVal.startsWith('"') || rawVal.startsWith("'")) {
+                    type = "Texto";
+                    val = rawVal.slice(1, -1);
+                } else if (rawVal === "true" || rawVal === "false") {
+                    type = "Booleano";
+                }
+                vars.push({ chave: key, tipo: type, valor: val });
+            }
+
+            const globalConfigNode = {
+                id: 'node_global_config',
+                type: 'global_config_node',
+                title: '⚙️ Configurações & Vars',
+                x: 40,
+                y: 280,
+                data: {
+                    linhaCabecalho: json.configuracoes_gerais?.linha_cabecalho || 1,
+                    pularLinhasVazias: json.configuracoes_gerais?.pular_linhas_vazias !== false,
+                    delimitadorLista: json.configuracoes_gerais?.delimitador_lista || ';',
+                    fatorConversao: json.configuracoes_gerais?.fator_conversao || 100,
+                    variaveis: vars.length > 0 ? vars : [{ chave: 'fatorDolar', tipo: 'Número', valor: '5.25' }]
+                }
+            };
+            flowchartData.nodes.push(globalConfigNode);
+
+            // 3. Create static Save Transaction node
             const destFields = [
                 { name: 'NomeConsultor', label: 'Nome Consultor (Nome)' },
                 { name: 'IDProfissional', label: 'CPF / ID (Documento)' },
                 { name: 'ValorVenda', label: 'Valor Comissão (ValorVenda)' },
-                { name: 'ValorComissao', label: 'Fator Conversão (ValorComissao)' }
+                { name: 'ValorComissao', label: 'Fator Conversão (ValorComissao)' },
+                { name: 'empreendimento', label: 'Empreendimento (Produto)' },
+                { name: 'unidade', label: 'Unidade (Contrato)' },
+                { name: 'contato_cliente', label: 'Nome do Cliente' },
+                { name: 'justificativa', label: 'Justificativa da Transação' },
+                { name: 'tipo', label: 'Tipo (Crédito/Débito)' },
+                { name: 'status', label: 'Status da Transação' },
+                { name: 'data_vencimento', label: 'Data de Vencimento' }
             ];
 
             const saveTransactionNode = {
@@ -2114,7 +2964,173 @@
             };
             flowchartData.nodes.push(saveTransactionNode);
 
-            // 3. Rebuild intermediate script nodes and connections
+            // 4. Parse and Rebuild No-Code generator nodes if present in transacoes_geradas script
+            let currentGenY = 160;
+            if (mappings.transacoes_geradas && mappings.transacoes_geradas.script) {
+                const scriptText = mappings.transacoes_geradas.script;
+                
+                if (scriptText.includes('// Sinal/Entrada')) {
+                    const valMatch = scriptText.match(/const val_sinal = helpers\.parseMoeda\(row\.([A-Z])\);/);
+                    const dataMatch = scriptText.match(/const data_sinal = row\.([A-Z]);/);
+                    const justMatch = scriptText.match(/let just_sinal = "([^"]+)";/);
+                    const statusMatch = scriptText.match(/status: "([^"]+)"/);
+
+                    const colVal = valMatch ? valMatch[1] : 'G';
+                    const colData = dataMatch ? dataMatch[1] : 'F';
+                    const just = justMatch ? justMatch[1] : 'Entrada de Contrato - {{C}} {{D}}';
+                    const status = statusMatch ? statusMatch[1] : 'COMPENSADO';
+
+                    const sinalNode = {
+                        id: 'node_sinal_gen',
+                        type: 'sinal_node',
+                        title: 'Gerador de Entrada',
+                        x: 320,
+                        y: currentGenY,
+                        data: {
+                            status: status,
+                            justificativa: just
+                        }
+                    };
+                    flowchartData.nodes.push(sinalNode);
+                    currentGenY += 150;
+
+                    // Connect input columns
+                    flowchartData.connections.push({
+                        from: 'node_excel_input',
+                        fromPort: `col_${colVal}`,
+                        to: 'node_sinal_gen',
+                        toPort: 'in_valor'
+                    });
+                    flowchartData.connections.push({
+                        from: 'node_excel_input',
+                        fromPort: `col_${colData}`,
+                        to: 'node_sinal_gen',
+                        toPort: 'in_data'
+                    });
+
+                    // Visual connection from sinal_gen.out to save node
+                    flowchartData.connections.push({
+                        from: 'node_sinal_gen',
+                        fromPort: 'out',
+                        to: 'node_save_transaction',
+                        toPort: 'field_ValorVenda'
+                    });
+                }
+
+                if (scriptText.includes('// Parcelas')) {
+                    const totalMatch = scriptText.match(/const qtd_total = parseInt\(row\.([A-Z])\)/);
+                    const pagasMatch = scriptText.match(/const qtd_pagas = parseInt\(row\.([A-Z])\)/);
+                    const valMatch = scriptText.match(/const valor_parcela = helpers\.parseMoeda\(row\.([A-Z])\)/);
+                    const inicioMatch = scriptText.match(/const data_inicio = row\.([A-Z]);/);
+                    const justMatch = scriptText.match(/let just_parcela = "([^"]+)";/);
+
+                    const colTotal = totalMatch ? totalMatch[1] : 'J';
+                    const colPagas = pagasMatch ? pagasMatch[1] : 'K';
+                    const colVal = valMatch ? valMatch[1] : 'H';
+                    const colInicio = inicioMatch ? inicioMatch[1] : 'I';
+                    const just = justMatch ? justMatch[1] : 'Parcela {i}/{total} - {{C}} {{D}}';
+
+                    const parcelasNode = {
+                        id: 'node_parcelas_gen',
+                        type: 'parcelas_node',
+                        title: 'Gerador de Parcelas',
+                        x: 320,
+                        y: currentGenY,
+                        data: {
+                            frequencia: 'Mensal',
+                            justificativa: just
+                        }
+                    };
+                    flowchartData.nodes.push(parcelasNode);
+                    currentGenY += 150;
+
+                    // Connect input columns
+                    flowchartData.connections.push({
+                        from: 'node_excel_input',
+                        fromPort: `col_${colTotal}`,
+                        to: 'node_parcelas_gen',
+                        toPort: 'in_qtd_total'
+                    });
+                    flowchartData.connections.push({
+                        from: 'node_excel_input',
+                        fromPort: `col_${colPagas}`,
+                        to: 'node_parcelas_gen',
+                        toPort: 'in_qtd_pagas'
+                    });
+                    flowchartData.connections.push({
+                        from: 'node_excel_input',
+                        fromPort: `col_${colVal}`,
+                        to: 'node_parcelas_gen',
+                        toPort: 'in_valor_parcela'
+                    });
+                    flowchartData.connections.push({
+                        from: 'node_excel_input',
+                        fromPort: `col_${colInicio}`,
+                        to: 'node_parcelas_gen',
+                        toPort: 'in_data_inicio'
+                    });
+
+                    // Visual connection from parcelas_gen.out to save node
+                    flowchartData.connections.push({
+                        from: 'node_parcelas_gen',
+                        fromPort: 'out',
+                        to: 'node_save_transaction',
+                        toPort: 'field_ValorComissao'
+                    });
+                }
+
+                if (scriptText.includes('// Balões')) {
+                    const valMatch = scriptText.match(/const valor_balao = helpers\.parseMoeda\(row\.([A-Z])\)/);
+                    const datasMatch = scriptText.match(/const string_datas = String\(row\.([A-Z])\s*\|\|\s*''\)/);
+                    const delimMatch = scriptText.match(/const delimitador = "([^"]+)";/);
+                    const statusMatch = scriptText.match(/status: "([^"]+)"/);
+                    const justMatch = scriptText.match(/let just_balao = "([^"]+)";/);
+
+                    const colVal = valMatch ? valMatch[1] : 'L';
+                    const colDatas = datasMatch ? datasMatch[1] : 'N';
+                    const delim = delimMatch ? delimMatch[1] : '|';
+                    const status = statusMatch ? statusMatch[1] : 'PENDENTE';
+                    const just = justMatch ? justMatch[1] : 'Lançamento Extra {i}/{total} - {{C}} {{D}}';
+
+                    const baloesNode = {
+                        id: 'node_baloes_gen',
+                        type: 'baloes_node',
+                        title: 'Gerador de Lançamentos Extras',
+                        x: 320,
+                        y: currentGenY,
+                        data: {
+                            delimitador: delim,
+                            status: status,
+                            justificativa: just
+                        }
+                    };
+                    flowchartData.nodes.push(baloesNode);
+
+                    // Connect input columns
+                    flowchartData.connections.push({
+                        from: 'node_excel_input',
+                        fromPort: `col_${colVal}`,
+                        to: 'node_baloes_gen',
+                        toPort: 'in_valor_unitario'
+                    });
+                    flowchartData.connections.push({
+                        from: 'node_excel_input',
+                        fromPort: `col_${colDatas}`,
+                        to: 'node_baloes_gen',
+                        toPort: 'in_string_datas'
+                    });
+
+                    // Visual connection from baloes_gen.out to save node
+                    flowchartData.connections.push({
+                        from: 'node_baloes_gen',
+                        fromPort: 'out',
+                        to: 'node_save_transaction',
+                        toPort: 'field_ValorComissao'
+                    });
+                }
+            }
+
+            // 5. Rebuild intermediate script nodes and connections
             let scriptIndex = 1;
             let currentScriptY = 60;
 

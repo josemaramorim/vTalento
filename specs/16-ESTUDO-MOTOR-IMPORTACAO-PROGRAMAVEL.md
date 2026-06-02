@@ -252,7 +252,13 @@ Tudo que é desenhado na tela é mapeado para um formato JSON estruturado (Abstr
    - **If / Else (Se/Senão):** Direciona o fluxo com base em condições (ex: `Se Categoria == 'MASTER'`).
    - **Switch (Múltiplas Opções):** Direciona para diferentes canais dependendo do valor da célula.
 5. **Nó de Repetição (For / Loops):** Recebe um valor numérico (ex: `Quantidade de Parcelas`) e duplica a saída do fluxo $N$ vezes, incrementando datas automaticamente.
-6. **Destino (Database Output Node):** Grava a transação com os valores resultantes na tabela `GamTransacao`. Este nó representa o ponto final de escrita da esteira de dados e possui a seguinte arquitetura detalhada:
+6. **Nós Geradores Financeiros (Sinal, Parcelas, Balões):** Nós especializados em criar transações financeiras automaticamente, sem precisar de programação em JavaScript para regras comuns.
+   - **Exemplo Prático: Gerador de Entrada (Sinal)**
+     - **Portas de Conexão:** Possui entradas visuais para ligar as colunas do Excel correspondentes ao `Valor (Moeda)` e `Vencimento (Data)`.
+     - **Painel de Configuração:** O administrador escolhe o `Status de Entrada` inicial (ex: *Compensado* ou *Pendente*) e define a `Justificativa da Transação`.
+     - **Poder das Macros:** A justificativa suporta macros como `Entrada de Contrato - {{C}}`. O motor de processamento intercepta o `{{C}}`, busca na **Coluna C** daquela respectiva linha do Excel e substitui em tempo real. (Ex: se na coluna C estiver "João", a transação salva será *"Entrada de Contrato - João"*).
+     - **Conversão Code-Gen:** Por trás dos panos, o fluxo visual traduz essa configuração em um script que monta o objeto JSON de transação completo e o empurra para o banco de dados.
+7. **Destino (Database Output Node):** Grava a transação com os valores resultantes na tabela `GamTransacao`. Este nó representa o ponto final de escrita da esteira de dados e possui a seguinte arquitetura detalhada:
    - **Portas de Entrada Dinâmicas (Input Connectors):**
      - `Valor em Talentos` (Obrigatório): Recebe a saída numérica final de pontos após fator de conversão.
      - `Valor Original R$` (Opcional): Recebe o valor financeiro bruto da comissão ou venda.

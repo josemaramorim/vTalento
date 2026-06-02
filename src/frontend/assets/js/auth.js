@@ -24,7 +24,7 @@ window.fetch = async function(input, init) {
             localStorage.removeItem('@VTalentos:token');
             localStorage.removeItem('@VTalentos:user');
             
-            if (!window.location.pathname.includes('login.html')) {
+            if (!window.location.pathname.includes('login')) {
                 if (data.error === 'USER_INACTIVE') {
                     window.location.href = 'login.html?error=inactive';
                 } else {
@@ -43,7 +43,7 @@ window.fetch = async function(input, init) {
                 const user = JSON.parse(userStr);
                 // O Super-Admin está imune a bloqueios de tenants
                 if (user.perfil !== 'SUPER_ADMIN') {
-                    if (!window.location.pathname.includes('fatura-vencida.html')) {
+                    if (!window.location.pathname.includes('fatura-vencida')) {
                         window.location.href = 'fatura-vencida.html';
                     }
                 }
@@ -232,7 +232,7 @@ window.showConfirmModal = function(title, message, onConfirm, onCancel = null) {
 // Função para verificar se está logado
 function checkAuth() {
     const token = localStorage.getItem('@VTalentos:token');
-    if (!token && !window.location.pathname.includes('login.html')) {
+    if (!token && !window.location.pathname.includes('login')) {
         window.location.href = 'login.html';
     }
 }
@@ -427,7 +427,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
 
     // A tela de login é sempre forçada a manter o tema escuro premium
-    if (window.location.pathname.includes('login.html') || window.location.pathname === '/' || window.location.pathname.endsWith('/')) {
+    if (window.location.pathname.includes('login') || window.location.pathname === '/' || window.location.pathname.endsWith('/')) {
         document.body.setAttribute('data-theme', 'dark');
         
         const urlParams = new URLSearchParams(window.location.search);
@@ -502,12 +502,12 @@ window.addEventListener('DOMContentLoaded', async () => {
 
                     if (userData.perfil !== 'SUPER_ADMIN') {
                         if (suspensa && !cortesiaAtiva) {
-                            if (!window.location.pathname.includes('fatura-vencida.html') && !window.location.pathname.includes('login.html')) {
+                            if (!window.location.pathname.includes('fatura-vencida') && !window.location.pathname.includes('login')) {
                                 window.location.href = 'fatura-vencida.html';
                                 return;
                             }
                         } else {
-                            if (window.location.pathname.includes('fatura-vencida.html')) {
+                            if (window.location.pathname.includes('fatura-vencida')) {
                                 window.location.href = 'dashboard.html';
                                 return;
                             }

@@ -182,13 +182,35 @@ class ImportacaoService {
     }
 
     const colunasDetectadas = headers.map(h => (h === null || h === undefined ? '' : String(h).trim()));
+
+    if (usa_ia) {
+      const sampleRows = [];
+      for (let i = cabecalho0Based + 1; i < rawRows.length; i++) {
+        const row = rawRows[i];
+        if (row && row.length > 0 && !row.every(v => v === null || v === undefined || String(v).trim() === '')) {
+          sampleRows.push(row);
+          if (sampleRows.length >= 3) break;
+        }
+      }
+
+      const { sugestoes, insights_ia } = this._guessMapeamentoIA(colunasDetectadas, sampleRows);
+      return {
+        colunas_detectadas: colunasDetectadas,
+        sugestoes_mapeamento: sugestoes,
+        linha_cabecalho: cabecalho0Based + 1,
+        usa_ia: true,
+        metodo: 'IA (NLP Semântico + Telemetria)',
+        insights_ia
+      };
+    }
+
     const sugestoesMapeamento = this._guessMapeamento(colunasDetectadas);
 
     return {
       colunas_detectadas: colunasDetectadas,
       sugestoes_mapeamento: sugestoesMapeamento,
       linha_cabecalho: cabecalho0Based + 1,
-      usa_ia: !!usa_ia,
+      usa_ia: false,
       metodo: 'heuristica'
     };
   }
@@ -838,7 +860,9 @@ class ImportacaoService {
       mappedRows.push(mappedRow);
     }
 
-    const motor = new MotorImportacaoProgramavelService(perfil.mapeamento_json);
+    const motor = new MotorImportacaoProgramavelService(perfil.mapeamento_json, {
+      fatorConversao: perfil.fator_conversao
+    });
     const { resultados, logs } = await motor.processar(mappedRows);
 
     const resultadoRows = [];
@@ -1094,6 +1118,167 @@ class ImportacaoService {
     });
 
     return resultadoProcessado;
+  }
+
+  _levenshtein(a, b) {
+    if (a.length === 0) return b.length;
+    if (b.length === 0) return a.length;
+    const matrix = [];
+    for (let i = 0; i <= b.length; i++) {
+      matrix[i] = [i];
+    }
+    for (let j = 0; j <= a.length; j++) {
+      matrix[0][j] = j;
+    }
+    for (let i = 1; i <= b.length; i++) {
+      for (let j = 1; j <= a.length; j++) {
+        if (b.charAt(i - 1) === a.charAt(j - 1)) {
+          matrix[i][j] = matrix[i - 1][j - 1];
+        } else {
+          matrix[i][j] = Math.min(
+            matrix[i - 1][j - 1] + 1, // substitution
+            Math.min(
+              matrix[i][j - 1] + 1, // insertion
+              matrix[i - 1][j] + 1 // deletion
+            )
+          );
+        }
+      }
+    }
+    return matrix[b.length][a.length];
+  }
+
+  _areSimilar(str1, str2) {
+    const s1 = this._normalizeText(str1);
+    const s2 = this._normalizeText(str2);
+    if (!s1 || !s2) return false;
+    if (s1.includes(s2) || s2.includes(s1)) return true;
+    const distance = this._levenshtein(s1, s2);
+    const maxLength = Math.max(s1.length, s2.length);
+    if (maxLength === 0) return true;
+    return (distance / maxLength) < 0.35;
+  }
+
+  _guessMapeamentoIA(headers, sampleRows) {
+    const fields = {
+      corretor_identificador: {
+        label: 'Parceiro/Consultor (Nome)',
+        patterns: ['corretor', 'nome', 'consultor', 'vendedor', 'parceiro', 'colaborador', 'angariador', 'responsavel'],
+        validate: (samples) => samples.some(s => s && typeof s === 'string' && isNaN(s) && s.trim().length > 3)
+      },
+      corretor_creci: {
+        label: 'ID Profissional / Matrícula',
+        patterns: ['creci', 'cpf', 'cnpj', 'registro', 'identificador', 'matricula', 'documento', 'doc'],
+        validate: (samples) => samples.some(s => s && String(s).replace(/[^0-9]/g, '').length >= 4)
+      },
+      valor_venda: {
+        label: 'Valor Total do Negócio',
+        patterns: ['valor venda', 'venda', 'vgv', 'total', 'negocio', 'bruto', 'contrato valor'],
+        validate: (samples) => samples.some(s => {
+          const num = this._parseMoeda(s);
+          return num > 1000;
+        })
+      },
+      valor_pago: {
+        label: 'Valor Pago (Entrada/Sinal)',
+        patterns: ['valor pago', 'pago', 'sinal', 'entrada', 'ato', 'recebido', 'repasse', 'pago ato'],
+        validate: (samples) => samples.some(s => this._parseMoeda(s) > 0)
+      },
+      empreendimento: {
+        label: 'Produto / Serviço / Campanha',
+        patterns: ['empreendimento', 'obra', 'residencial', 'produto', 'servico', 'campanha', 'projeto', 'loteamento'],
+        validate: (samples) => samples.some(s => s && typeof s === 'string' && isNaN(s))
+      },
+      unidade: {
+        label: 'Ref. Contrato / ID Venda',
+        patterns: ['unidade', 'apto', 'sala', 'lote', 'quadra', 'imovel', 'contrato', 'ref', 'venda id'],
+        validate: () => true
+      },
+      cliente_nome: {
+        label: 'Nome do Cliente',
+        patterns: ['cliente', 'comprador', 'adquirente', 'mutuario', 'cliente final'],
+        validate: (samples) => samples.some(s => s && typeof s === 'string' && isNaN(s) && s.trim().length > 3)
+      },
+      balao_valor: {
+        label: 'Valores Rec. Extras',
+        patterns: ['balao valor', 'balão valor', 'reforco valor', 'reforço valor', 'extra valor'],
+        validate: (samples) => samples.some(s => this._parseMoeda(s) > 0)
+      },
+      balao_datas: {
+        label: 'Datas Rec. Extras',
+        patterns: ['balao datas', 'balão datas', 'reforco datas', 'reforço datas', 'datas baloes', 'datas balões'],
+        validate: (samples) => samples.some(s => s && (String(s).includes('|') || String(s).includes(';') || String(s).includes('/')))
+      },
+      balao_qtd: {
+        label: 'Qtd Recebimentos Extras',
+        patterns: ['balao qtd', 'balão qtd', 'reforco qtd', 'reforço qtd', 'qtd reforcos', 'qtd baloes'],
+        validate: (samples) => samples.some(s => s && !isNaN(s) && parseInt(s) > 0)
+      },
+      parcela_valor: {
+        label: 'Valor da Parcela',
+        patterns: ['parcela valor', 'mensal valor', 'valor parcela', 'mensalidade'],
+        validate: (samples) => samples.some(s => this._parseMoeda(s) > 0)
+      },
+      parcela_qtd: {
+        label: 'Qtd de Parcelas',
+        patterns: ['parcela qtd', 'qtd parcelas', 'quantidade parcelas', 'meses'],
+        validate: (samples) => samples.some(s => s && !isNaN(s) && parseInt(s) > 0)
+      },
+      parcela_data_inicio: {
+        label: 'Data Início Parcelas',
+        patterns: ['parcela data', 'data parcelas', 'inicio parcelas', 'primeiro vencimento'],
+        validate: (samples) => samples.some(s => s && String(s).includes('/'))
+      }
+    };
+
+    const sugestoes = {};
+    const insights_ia = [];
+
+    for (const key of Object.keys(fields)) {
+      const fieldMeta = fields[key];
+      let bestHeader = '';
+      let highestScore = 0;
+      let reason = '';
+
+      headers.forEach((header, colIdx) => {
+        if (!header) return;
+
+        const samples = sampleRows.map(row => row[colIdx]).filter(v => v !== null && v !== undefined && String(v).trim() !== '');
+
+        let termMatchScore = 0;
+        fieldMeta.patterns.forEach(pattern => {
+          if (this._areSimilar(header, pattern)) {
+            termMatchScore = 3;
+          }
+          if (this._normalizeText(header) === this._normalizeText(pattern)) {
+            termMatchScore = 5;
+          }
+        });
+
+        const typeValid = fieldMeta.validate ? fieldMeta.validate(samples) : true;
+        if (typeValid && termMatchScore > 0) {
+          termMatchScore += 2;
+        }
+
+        if (termMatchScore > highestScore) {
+          highestScore = termMatchScore;
+          bestHeader = header;
+          reason = `IA detectou semelhança semântica entre '${header}' e o padrão de '${fieldMeta.label}'`;
+          if (typeValid && samples.length > 0) {
+            reason += ` (confirmado por amostragem de dados: "${samples.slice(0, 2).join(', ')}")`;
+          }
+        }
+      });
+
+      if (bestHeader) {
+        sugestoes[key] = bestHeader;
+        insights_ia.push(reason);
+      } else {
+        sugestoes[key] = '';
+      }
+    }
+
+    return { sugestoes, insights_ia };
   }
 }
 
