@@ -161,19 +161,63 @@ for (let i = 0; i < totalRepeticoes; i++) {
 return transacoes; // Retorna o array de transações geradas pelo loop
 ```
 
-### Exem- **Portas de Entrada (Campos de Destino)**:
-  Possui 11 portas de entrada, cada uma mapeando diretamente para a coluna correspondente na tabela `GamTransacao` no banco de dados:
-  1. **`Nome Consultor (Nome)`**: Grava na coluna `NomeConsultor` (usado para localizar o usuário no banco de dados).
-  2. **`CPF / ID (Documento)`**: Grava na coluna `IDProfissional` (usado alternativamente ou conjuntamente para localizar o usuário).
-  3. **`Valor Comissão (ValorVenda)`**: Grava na coluna `ValorVenda` (valor original monetário do produto/comissão).
-  4. **`Fator Conversão (ValorComissao)`**: Grava na coluna `ValorComissao` (valor em pontos/talentos gerado para a transação).
-  5. **`Empreendimento (Produto)`**: Grava na coluna `empreendimento`.
-  6. **`Unidade (Contrato)`**: Grava na coluna `unidade`.
-  7. **`Nome do Cliente`**: Grava na coluna `contato_cliente`.
-  8. **`Justificativa da Transação`**: Grava na coluna `justificativa` (caso não seja fornecido por um gerador financeiro ou por esta porta, o sistema gera uma justificativa padrão com o número da linha).
-  9. **`Tipo (Crédito/Débito)`**: Grava na coluna `tipo` (padrão: `'CREDITO'`).
-  10. **`Status da Transação`**: Grava na coluna `status` (padrão: `'COMPENSADO'`).
-  11. **`Data de Vencimento`**: Grava na coluna `data_vencimento`.
+### **Portas de Entrada (Campos de Destino) do Nó "Gravar Transação"**:
+
+O nó **Gravar Transação** possui 11 portas de entrada, cada uma mapeando diretamente para a coluna correspondente na tabela `GamTransacao` no banco de dados:
+
+1. **`Nome Consultor (Nome)`**: Grava na coluna `NomeConsultor` (usado para localizar o usuário no banco de dados).
+2. **`CPF / ID (Documento)`**: Grava na coluna `IDProfissional` (usado alternativamente ou conjuntamente para localizar o usuário).
+3. **`Valor Comissão (ValorVenda)`**: Grava na coluna `ValorVenda` (valor original em Reais BRL do negócio/comissão).
+4. **`Fator Conversão (ValorComissao)`**: Grava na coluna `ValorComissao` (valor convertido em Pontos/Talentos virtuais que o consultor vai receber).
+5. **`Empreendimento (Produto)`**: Grava na coluna `empreendimento`.
+6. **`Unidade (Contrato)`**: Grava na coluna `unidade`.
+7. **`Nome do Cliente`**: Grava na coluna `contato_cliente`.
+8. **`Justificativa da Transação`**: Grava na coluna `justificativa` (caso não seja fornecido por um gerador financeiro ou por esta porta, o sistema gera uma justificativa padrão com o número da linha).
+9. **`Tipo (Crédito/Débito)`**: Grava na coluna `tipo` (padrão: `'CREDITO'`).
+10. **`Status da Transação`**: Grava na coluna `status` (padrão: `'COMPENSADO'`).
+11. **`Data de Vencimento`**: Grava na coluna `data_vencimento`.
+
+---
+
+#### 📌 Entendendo os campos de Valores no Nó de Destino
+
+No fluxo do V-Talentos, existem duas formas de representar o valor de uma comissão no banco de dados. É fundamental compreender a diferença entre essas duas portas do nó de gravação:
+
+##### A. **Valor Comissão (ValorVenda)**
+* **O que recebe:** Recebe o valor monetário bruto em Reais (BRL / R$). Geralmente é conectado diretamente a um nó de coluna da planilha (ex: coluna que contém a comissão bruta) ou após passar por um bloco de limpeza.
+* **O que representa no banco:** Mapeia para a coluna `valor_original_rs` na tabela `GamTransacao`.
+* **Exemplo de uso:** Se a comissão na planilha é de **R$ 1.500,00**, você conecta a coluna correspondente a esta porta. No extrato, o administrador verá que a venda original tinha o valor de R$ 1.500,00.
+
+##### B. **Fator Conversão (ValorComissao)**
+* **O que recebe:** Recebe o valor final convertido em **Pontos/Talentos** (moeda virtual da plataforma) que será adicionado ao saldo do consultor.
+* **O que representa no banco:** Mapeia para a coluna `valor` na tabela `GamTransacao`. Este é o valor numérico que de fato altera o saldo disponível ou a receber do usuário.
+* **Exemplo de uso:** Geralmente, você passa o valor original por um **Bloco de Código JS** para realizar a divisão pelo fator de conversão (ex: 100). Se a comissão é de R$ 1.500,00 e o fator é 100, o bloco de código retornará **15** e você conectará a saída desse bloco à porta `Fator Conversão (ValorComissao)`.
+
+---
+
+##### 💡 Exemplo Prático Completo de Fluxo (Conexão e Código)
+
+Se você tem a comissão original de **R$ 25.000,00** na **Coluna F** da planilha e quer alimentar as duas portas corretamente:
+
+1. **Ligando o Valor Original (Reais):**
+   * Puxe a ligação da **Coluna F** diretamente para a porta **`Valor Comissão (ValorVenda)`**.
+   * *Resultado:* O banco salvará `valor_original_rs = 25000.00`.
+
+2. **Ligando o Valor Convertido (Pontos/Talentos):**
+   * Crie um nó **`Bloco Código (JS)`** e conecte a saída da **Coluna F** na entrada dele.
+   * No script do bloco de código, utilize o helper e a variável global do fator de conversão:
+     ```javascript
+     const valorReais = helpers.parseMoeda(value); // value aqui é o valor da coluna F
+     return valorReais / fatorConversao; // Divide pelo fator (ex: 100) para converter em pontos
+     ```
+   * Puxe a ligação da saída (`out`) do seu **`Bloco Código (JS)`** para a porta **`Fator Conversão (ValorComissao)`** do nó de gravação.
+   * *Resultado:* Se o fator for 100, o script retornará `250`. O banco salvará `valor = 250` na tabela de transações.
+
+> [!TIP]
+> **Auditabilidade do Fator de Conversão:**
+> Para garantir que possamos auditar e saber exatamente qual fator de conversão foi utilizado em cada lançamento (uma vez que o fator global do perfil pode ser alterado por usuários no futuro), o motor de importação **grava automaticamente** a chave `fator_conversao_utilizado` dentro do JSON de metadados `dados_extras` da tabela `GamTransacao` para todas as transações criadas.
+
+---
 
 - **Como funciona a ligação e os nomes de variáveis**:
   > [!IMPORTANT]

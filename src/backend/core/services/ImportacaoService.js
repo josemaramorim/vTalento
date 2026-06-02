@@ -917,6 +917,9 @@ class ImportacaoService {
   }
 
   async confirmarImportacaoProgramavel(empresa_id, admin_id, fileBase64, perfil_id, resolucoes = {}) {
+    const perfil = await this.obterPerfil(empresa_id, perfil_id);
+    const fatorConversao = perfil ? parseFloat(perfil.fator_conversao || 100) : 100;
+
     const preview = await this.previewImportacaoProgramavel(empresa_id, fileBase64, perfil_id);
 
     for (const row of preview.linhas) {
@@ -949,7 +952,10 @@ class ImportacaoService {
         const corretorId = row.corretor_id;
         corretoresAfetados.add(corretorId);
 
-        const linhaResult = row.dados;
+        const linhaResult = {
+          ...row.dados,
+          fator_conversao_utilizado: fatorConversao
+        };
         const justificativaBase = `Importação Programável - Linha ${row.linha}`;
         const dadosExtrasStr = JSON.stringify(linhaResult);
 
