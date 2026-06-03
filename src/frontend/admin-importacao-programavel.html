@@ -2498,19 +2498,23 @@
                     compileFlowchartToJSON();
                 });
             } else if (node.type === 'save_node') {
-                const fields = node.data?.destFields || [
-                    { name: 'NomeConsultor', label: 'Nome Consultor (Nome)' },
-                    { name: 'IDProfissional', label: 'CPF / ID (Documento)' },
-                    { name: 'ValorVenda', label: 'Valor Comissão (ValorVenda)' },
-                    { name: 'ValorComissao', label: 'Fator Conversão (ValorComissao)' },
-                    { name: 'empreendimento', label: 'Empreendimento (Produto)' },
-                    { name: 'unidade', label: 'Unidade (Contrato)' },
-                    { name: 'contato_cliente', label: 'Nome do Cliente' },
-                    { name: 'justificativa', label: 'Justificativa da Transação' },
-                    { name: 'tipo', label: 'Tipo (Crédito/Débito)' },
-                    { name: 'status', label: 'Status da Transação' },
-                    { name: 'data_vencimento', label: 'Data de Vencimento' }
-                ];
+                if (!node.data) node.data = {};
+                if (!node.data.destFields) {
+                    node.data.destFields = [
+                        { name: 'NomeConsultor', label: 'Nome Consultor (Nome)' },
+                        { name: 'IDProfissional', label: 'CPF / ID (Documento)' },
+                        { name: 'ValorVenda', label: 'Valor Comissão (ValorVenda)' },
+                        { name: 'ValorComissao', label: 'Fator Conversão (ValorComissao)' },
+                        { name: 'empreendimento', label: 'Empreendimento (Produto)' },
+                        { name: 'unidade', label: 'Unidade (Contrato)' },
+                        { name: 'contato_cliente', label: 'Nome do Cliente' },
+                        { name: 'justificativa', label: 'Justificativa da Transação' },
+                        { name: 'tipo', label: 'Tipo (Crédito/Débito)' },
+                        { name: 'status', label: 'Status da Transação' },
+                        { name: 'data_vencimento', label: 'Data de Vencimento' }
+                    ];
+                }
+                const fields = node.data.destFields;
                 propsFormContent.innerHTML = `
                     <div style="margin-bottom: 10px;">
                         <div style="font-size:0.75rem; font-weight:700; color:var(--accent-primary); margin-bottom:8px;">💾 Persistência em Banco de Dados</div>
@@ -2523,10 +2527,12 @@
                                 const conn = flowchartData.connections.find(c => c.to === node.id && c.toPort === `field_${field.name}`);
                                 const sourceNodeName = conn ? conn.from.replace('node_', '').toUpperCase() : '';
                                 const connText = conn ? `🔌 Conectado ao nó <strong>${sourceNodeName}</strong>` : `⚠️ Desconectado (Usará valor nulo)`;
+                                const isDefault = ['NomeConsultor', 'IDProfissional', 'ValorVenda', 'ValorComissao', 'empreendimento', 'unidade', 'contato_cliente', 'justificativa', 'tipo', 'status', 'data_vencimento'].includes(field.name);
+                                const removeBtn = !isDefault ? `<button onclick="removeCustomField('${field.name}')" style="background:none; border:none; color:var(--error); cursor:pointer; font-size:0.75rem; padding:0; margin-left:8px; display:inline-block;" title="Remover Campo">🗑️</button>` : '';
                                 return `
                                     <div style="background:rgba(255,255,255,0.01); border:1px solid var(--glass-border); padding:8px; border-radius:6px; transition: all 0.3s;">
                                         <div style="display:flex; justify-content:space-between; align-items:center;">
-                                            <span style="font-size:0.72rem; font-weight:600; color:#fff;">${field.label}</span>
+                                            <span style="font-size:0.72rem; font-weight:600; color:#fff;">${field.label} ${removeBtn}</span>
                                             <span style="font-size:0.62rem; font-family:monospace; color:var(--text-secondary);">${field.name}</span>
                                         </div>
                                         <div style="font-size:0.68rem; color:${conn ? 'var(--success)' : 'var(--warning)'}; margin-top:4px; display: flex; align-items: center; gap: 4px;">
@@ -2536,10 +2542,58 @@
                                 `;
                             }).join('')}
                         </div>
+                        <div style="margin-top: 15px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 15px;">
+                            <label style="font-size:0.72rem; font-weight:700; color:#fff; display:block; margin-bottom:5px;">Adicionar Campo Customizado / Extra</label>
+                            <div style="display:flex; gap:6px;">
+                                <input type="text" id="newCustomFieldName" class="form-control" style="flex:1; font-size:0.72rem; padding:4px 8px; margin:0;" placeholder="ex: valor, status_custom...">
+                                <button id="btnAddCustomField" class="btn btn-sm btn-primary" style="font-size:0.72rem; padding:4px 10px; margin:0; cursor:pointer;">Adicionar</button>
+                            </div>
+                        </div>
                     </div>
                 `;
+
+                const addBtn = document.getElementById('btnAddCustomField');
+                if (addBtn) {
+                    addBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        const inputEl = document.getElementById('newCustomFieldName');
+                        const fieldName = inputEl.value.trim();
+                        if (!fieldName) {
+                            showToast('Nome do campo não pode ser vazio!', 'error');
+                            return;
+                        }
+                        if (!/^[a-zA-Z0-9_]+$/.test(fieldName)) {
+                            showToast('Nome do campo inválido! Use apenas letras, números e sublinhados.', 'error');
+                            return;
+                        }
+                        if (node.data.destFields.some(f => f.name === fieldName)) {
+                            showToast('Este campo já existe!', 'error');
+                            return;
+                        }
+                        node.data.destFields.push({
+                            name: fieldName,
+                            label: `${fieldName} (Customizado)`
+                        });
+                        renderNodes();
+                        compileFlowchartToJSON();
+                        showNodeProperties(node);
+                    });
+                }
             }
         }
+
+        window.removeCustomField = function(fieldName) {
+            const saveNode = flowchartData.nodes.find(n => n.type === 'save_node');
+            if (saveNode && saveNode.data && saveNode.data.destFields) {
+                flowchartData.connections = flowchartData.connections.filter(c => !(c.to === saveNode.id && c.toPort === `field_${fieldName}`));
+                saveNode.data.destFields = saveNode.data.destFields.filter(f => f.name !== fieldName);
+                renderNodes();
+                compileFlowchartToJSON();
+                if (flowchartData.selectedNodeId === saveNode.id) {
+                    showNodeProperties(saveNode);
+                }
+            }
+        };
 
         // Bidirectional Compiling: Flowchart Model ➔ Monaco Editor JSON
         // Resolves variables/macros like {{NomeCampo}} automatically
@@ -2951,6 +3005,19 @@
                 { name: 'status', label: 'Status da Transação' },
                 { name: 'data_vencimento', label: 'Data de Vencimento' }
             ];
+
+            // Auto-detect custom fields from mappings
+            const mappings = json.mapeamento_campos || {};
+            Object.keys(mappings).forEach(k => {
+                if (k === 'transacoes_geradas') return;
+                const exists = destFields.some(f => f.name === k);
+                if (!exists) {
+                    destFields.push({
+                        name: k,
+                        label: `${k} (Customizado)`
+                    });
+                }
+            });
 
             const saveTransactionNode = {
                 id: 'node_save_transaction',
