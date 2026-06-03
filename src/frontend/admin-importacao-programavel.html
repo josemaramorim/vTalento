@@ -565,6 +565,28 @@
             justify-content: center;
             gap: 15px;
         }
+
+        /* ═══════════════════════ TABELA DE SIMULAÇÃO (PREVIEW) ═══════════════════════ */
+        .preview-table {
+            width: 100% !important;
+            table-layout: fixed !important;
+            border-collapse: collapse !important;
+        }
+        .preview-table th, .preview-table td {
+            padding: 8px 10px !important;
+            font-size: 0.78rem !important;
+            word-wrap: break-word !important;
+            overflow-wrap: break-word !important;
+            white-space: normal !important;
+        }
+        .preview-table pre {
+            white-space: pre-wrap !important;
+            word-wrap: break-word !important;
+            overflow-wrap: break-word !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            font-family: 'Consolas', 'Courier New', Courier, monospace !important;
+        }
     </style>
 </head>
 <body data-theme="dark">
@@ -723,13 +745,13 @@
                         </div>
                         <div id="previewTableContainer" style="display: none;">
                             <div class="table-responsive">
-                                <table style="font-size: 0.8rem;">
+                                <table class="premium-table preview-table" style="font-size: 0.8rem;">
                                     <thead>
                                         <tr>
-                                            <th>Linha</th>
-                                            <th>Dados Resolvidos</th>
-                                            <th>Consultor</th>
-                                            <th>Status</th>
+                                            <th style="width: 10%;">Linha</th>
+                                            <th style="width: 48%;">Dados Resolvidos</th>
+                                            <th style="width: 24%;">Consultor</th>
+                                            <th style="width: 18%;">Status</th>
                                         </tr>
                                     </thead>
                                     <tbody id="previewTableBody"></tbody>
@@ -873,8 +895,16 @@
                 syncJSONToInputs();
                 const btnConfirmar = document.getElementById('btnConfirmarImportacao');
                 if (btnConfirmar) btnConfirmar.style.display = 'none';
+                // Sync: Editor JSON -> Mapa Visual (apenas quando a aba do mapa está visível)
+                // IMPORTANTE: ignora se a mudança veio do próprio canvas visual (evita loop infinito)
+                if (window._isFlowchartCompiling) return;
+                if (visualView && visualView.style.display !== 'none') {
+                    clearTimeout(window._parseDebounce);
+                    window._parseDebounce = setTimeout(parseJSONToFlowchart, 600);
+                }
             });
         });
+
 
         // ═══════════════════════ DOM NAVIGATION ═══════════════════════
         const tabCode = document.getElementById('tabCode');
@@ -887,6 +917,10 @@
             tabVisual.classList.remove('active');
             codeView.style.display = 'block';
             visualView.style.display = 'none';
+            // Sync: Mapa Visual -> Editor JSON ao voltar para o editor (apenas se o mapa foi usado)
+            if (window._visualWasActive) {
+                compileFlowchartToJSON();
+            }
         });
 
         tabVisual.addEventListener('click', () => {
@@ -894,7 +928,10 @@
             tabCode.classList.remove('active');
             visualView.style.display = 'block';
             codeView.style.display = 'none';
+            window._visualWasActive = true;
+            setTimeout(parseJSONToFlowchart, 50);
         });
+
 
         const tabPreview = document.getElementById('tabPreview');
         const tabTerminal = document.getElementById('tabTerminal');
@@ -1009,13 +1046,16 @@
                 const res = await fetch(`${API_BASE}/perfis`, { headers: { 'Authorization': `Bearer ${token}` } });
                 const perfis = await res.json();
                 
-                // Filtra para exibir apenas perfis programáveis (com versao_motor ou mapeamento_campos)
+                // Filtra para exibir apenas perfis programáveis (com mapeamento_json válido e não-vazio)
                 const perfisProgramaveis = perfis.filter(p => {
+                    if (!p.mapeamento_json) return false;
                     let map = p.mapeamento_json;
                     try {
                         if (typeof map === 'string') map = JSON.parse(map);
-                    } catch (e) {}
-                    return map && (map.versao_motor === '2.0' || map.mapeamento_campos);
+                    } catch (e) { return false; }
+                    // Inclui perfis com estrutura programável (versao_motor 2.0) OU mapeamento_campos
+                    // OU qualquer perfil com mapeamento_json que seja um objeto válido
+                    return map && typeof map === 'object';
                 });
 
                 perfisCached = perfisProgramaveis;
@@ -1435,6 +1475,8 @@
         let isCanvasPanning = false;
         let panStartPos = { x: 0, y: 0 };
         let panStartOffset = { x: 0, y: 0 };
+        // Flag to prevent node click events while confirming connection deletion
+        let _isConfirmingConnectionDel = false;
 
         const flowWorkspaceCanvas = document.getElementById('flowWorkspaceCanvas');
         const flowWorkspaceViewport = document.getElementById('flowWorkspaceViewport');
@@ -1624,9 +1666,17 @@
                     path.setAttribute('stroke-width', '3');
                 });
 
+                hitBox.addEventListener('pointerdown', (e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                });
+
                 hitBox.addEventListener('click', async (e) => {
                     e.stopPropagation();
+                    e.preventDefault();
+                    _isConfirmingConnectionDel = true;
                     const confirmDel = await showConfirm('Remover Conexão', 'Deseja realmente excluir esta conexão?', true);
+                    _isConfirmingConnectionDel = false;
                     if (confirmDel) {
                         flowchartData.connections = flowchartData.connections.filter(c => c !== conn);
                         renderConnections();
@@ -1832,6 +1882,7 @@
                 // Add pointer dragging behavior to node header
                 const header = card.querySelector('.flow-node-card-header');
                 header.addEventListener('pointerdown', (e) => {
+                    if (_isConfirmingConnectionDel) return;
                     e.stopPropagation();
                     flowchartData.draggedNodeId = node.id;
                     flowchartData.selectedNodeId = node.id;
@@ -1899,6 +1950,7 @@
 
                 // Select node on body click
                 card.addEventListener('pointerdown', (e) => {
+                    if (_isConfirmingConnectionDel) return;
                     e.stopPropagation();
                     flowchartData.selectedNodeId = node.id;
                     document.querySelectorAll('.flow-node-card').forEach(el => el.classList.remove('selected'));
@@ -2070,7 +2122,10 @@
             // Can't delete Excel input or Save destination nodes
             btnDeleteNode.style.display = (node.type === 'excel_input' || node.type === 'save_node') ? 'none' : 'block';
 
-            btnDeleteNode.onclick = async () => {
+            btnDeleteNode.onclick = async (e) => {
+                // Safety guard: if the user is in the middle of confirming a connection deletion
+                // (e.g., both modals were triggered), abort the node deletion to avoid accidental data loss.
+                if (_isConfirmingConnectionDel) return;
                 const confirmDel = await showConfirm('Remover Nó', 'Deseja realmente remover este nó e suas conexões?', true);
                 if (confirmDel) {
                     if (propEditorInstance) {
@@ -2144,6 +2199,11 @@
                 propsFormContent.querySelectorAll('.btn-remove-col').forEach(btn => {
                     btn.onclick = () => {
                         const idx = parseInt(btn.getAttribute('data-index'), 10);
+                        const removedCol = node.data.columns[idx];
+                        if (removedCol) {
+                            const portId = `col_${removedCol.letter}`;
+                            flowchartData.connections = flowchartData.connections.filter(c => !(c.from === node.id && c.fromPort === portId));
+                        }
                         node.data.columns.splice(idx, 1);
                         renderNodes();
                         showNodeProperties(node);
@@ -2152,20 +2212,76 @@
                 });
 
                 // Sync typing values back to the columns array
-                propsFormContent.querySelectorAll('.prop-col-letter, .prop-col-label, .prop-col-type').forEach(el => {
-                    el.addEventListener('change', () => {
-                        const letterInputs = propsFormContent.querySelectorAll('.prop-col-letter');
-                        const labelInputs = propsFormContent.querySelectorAll('.prop-col-label');
-                        const typeSelects = propsFormContent.querySelectorAll('.prop-col-type');
+                // updateColumnsData: updates the in-memory model only (fast, no re-render)
+                const updateColumnsData = () => {
+                    const letterInputs = propsFormContent.querySelectorAll('.prop-col-letter');
+                    const labelInputs = propsFormContent.querySelectorAll('.prop-col-label');
+                    const typeSelects = propsFormContent.querySelectorAll('.prop-col-type');
 
-                        node.data.columns = Array.from(letterInputs).map((inp, idx) => ({
-                            letter: inp.value.toUpperCase(),
+                    const oldColumns = [...node.data.columns];
+
+                    node.data.columns = Array.from(letterInputs).map((inp, idx) => {
+                        const newLetter = inp.value.toUpperCase().slice(0, 2) || oldColumns[idx]?.letter || 'A';
+                        const oldCol = oldColumns[idx];
+                        if (oldCol && oldCol.letter !== newLetter) {
+                            // Column letter changed! Update connections from this port
+                            const oldPortId = `col_${oldCol.letter}`;
+                            const newPortId = `col_${newLetter}`;
+                            flowchartData.connections.forEach(c => {
+                                if (c.from === node.id && c.fromPort === oldPortId) {
+                                    c.fromPort = newPortId;
+                                }
+                            });
+                        }
+                        return {
+                            letter: newLetter,
                             label: labelInputs[idx].value,
                             type: typeSelects[idx].value
-                        }));
+                        };
+                    });
+                };
+
+                // syncColumnsDebounced: re-renders canvas + JSON after a short pause (avoids refresh while typing)
+                let _syncColTimer = null;
+                const syncColumnsDebounced = () => {
+                    updateColumnsData();
+                    clearTimeout(_syncColTimer);
+                    _syncColTimer = setTimeout(() => {
                         renderNodes();
                         compileFlowchartToJSON();
-                    });
+                        // Re-focus the active input so typing can continue after canvas re-render
+                        const focused = document.activeElement;
+                        if (focused && propsFormContent.contains(focused)) {
+                            const name = focused.className;
+                            const idx = Array.from(propsFormContent.querySelectorAll('.' + name.trim().split(' ')[0])).indexOf(focused);
+                            setTimeout(() => {
+                                const els = propsFormContent.querySelectorAll('.' + name.trim().split(' ')[0]);
+                                if (els[idx]) {
+                                    els[idx].focus();
+                                    const len = els[idx].value.length;
+                                    els[idx].setSelectionRange(len, len);
+                                }
+                            }, 20);
+                        }
+                    }, 700);
+                };
+
+                // Label fields: update model on every keystroke (no re-render), sync+render on blur/change
+                propsFormContent.querySelectorAll('.prop-col-label').forEach(el => {
+                    el.addEventListener('input', updateColumnsData);
+                    el.addEventListener('change', syncColumnsDebounced);
+                    el.addEventListener('blur', syncColumnsDebounced);
+                });
+
+                // Letter fields: only sync on change/blur (letters are single chars, no debounce needed)
+                propsFormContent.querySelectorAll('.prop-col-letter').forEach(el => {
+                    el.addEventListener('change', syncColumnsDebounced);
+                    el.addEventListener('blur', syncColumnsDebounced);
+                });
+
+                // Type selects: sync immediately on change
+                propsFormContent.querySelectorAll('.prop-col-type').forEach(el => {
+                    el.addEventListener('change', syncColumnsDebounced);
                 });
 
             } else if (node.type === 'script_node') {
@@ -2608,10 +2724,16 @@
 
             let compiled = {
                 versao_motor: "2.0",
+                colunas_entrada: inputNode && inputNode.data && inputNode.data.columns ? inputNode.data.columns.map(col => ({
+                    celula: col.letter,
+                    label: col.label,
+                    tipo: col.type
+                })) : undefined,
                 configuracoes_gerais: {
                     linha_cabecalho: globalConfigNode ? (parseInt(globalConfigNode.data.linhaCabecalho, 10) || 1) : (inputNode ? inputNode.data.linhaCabecalho : 1),
                     pular_linhas_vazias: globalConfigNode ? !!globalConfigNode.data.pularLinhasVazias : true,
-                    delimitador_lista: globalConfigNode ? (globalConfigNode.data.delimitadorLista || ";") : (inputNode ? inputNode.data.delimitadorLista : ";")
+                    delimitador_lista: globalConfigNode ? (globalConfigNode.data.delimitadorLista || ";") : (inputNode ? inputNode.data.delimitadorLista : ";"),
+                    fator_conversao: globalConfigNode ? (parseFloat(globalConfigNode.data.fatorConversao) || 100) : (parseFloat(document.getElementById('fatorConversaoInput').value) || 100)
                 },
                 mapeamento_campos: {},
                 hooks: {}
@@ -2639,6 +2761,21 @@
             // Compile hooks
             if (ifElseNode && ifElseNode.data.script) {
                 compiled.hooks.antes_salvar_linha = ifElseNode.data.script;
+            }
+
+            // Compile loop_node -> hooks.loop_personalizado
+            const loopNode = flowchartData.nodes.find(n => n.type === 'loop_node');
+            if (loopNode) {
+                // Trace the input connection to find the source column
+                const loopInConn = flowchartData.connections.find(c => c.to === loopNode.id && c.toPort === 'in');
+                const loopOutConn = flowchartData.connections.find(c => c.from === loopNode.id && c.fromPort === 'out');
+                const inCelula = loopInConn ? loopInConn.fromPort.replace('col_', '') : '';
+                const outField = loopOutConn ? loopOutConn.toPort.replace('field_', '') : '';
+                compiled.hooks.loop_personalizado = {
+                    itemName: loopNode.data.itemName || 'item',
+                    celula_entrada: inCelula || undefined,
+                    campo_saida: outField || undefined
+                };
             }
 
             // Compile field mappings by tracing backwards from save node inputs
@@ -2700,9 +2837,9 @@
             }
 
             // Generate automatic transacoes_geradas.script from Visual No-Code nodes if present
-            const sinalNode = flowchartData.nodes.find(n => n.type === 'sinal_node');
-            const parcelasNode = flowchartData.nodes.find(n => n.type === 'parcelas_node');
-            const baloesNode = flowchartData.nodes.find(n => n.type === 'baloes_node');
+            const sinalNode = flowchartData.nodes.find(n => n.type === 'sinal_node' && flowchartData.connections.some(c => c.from === n.id && c.fromPort === 'out' && c.to === 'node_save_transaction'));
+            const parcelasNode = flowchartData.nodes.find(n => n.type === 'parcelas_node' && flowchartData.connections.some(c => c.from === n.id && c.fromPort === 'out' && c.to === 'node_save_transaction'));
+            const baloesNode = flowchartData.nodes.find(n => n.type === 'baloes_node' && flowchartData.connections.some(c => c.from === n.id && c.fromPort === 'out' && c.to === 'node_save_transaction'));
 
             if (sinalNode || parcelasNode || baloesNode) {
                 let generatorScript = `// SCRIPT GERADO AUTOMATICAMENTE VIA NO-CODE NODES\n`;
@@ -2792,8 +2929,9 @@
                     const colQtdBaloes = qtdBaloesConn ? qtdBaloesConn.fromPort.replace('col_', '') : 'M';
                     const colStringDatas = stringDatasConn ? stringDatasConn.fromPort.replace('col_', '') : 'N';
 
-                    generatorScript += `// Balões\n`;
+                    generatorScript += `// Baloes\n`;
                     generatorScript += `const valor_balao = helpers.parseMoeda(row.${colValUnit});\n`;
+                    generatorScript += `const qtd_baloes_col = row.${colQtdBaloes};\n`;
                     generatorScript += `const string_datas = String(row.${colStringDatas} || '');\n`;
                     generatorScript += `if (string_datas) {\n`;
                     generatorScript += `  const delimitador = "${baloesNode.data.delimitador || '|'}";\n`;
@@ -2829,13 +2967,22 @@
                 };
             }
 
-            // Set compiled JSON back to Monaco Editor without triggering loops
+            // Set compiled JSON back to Monaco Editor.
+            // Flag _isFlowchartCompiling prevents onDidChangeModelContent from triggering
+            // parseJSONToFlowchart and causing an infinite re-render loop.
+            window._isFlowchartCompiling = true;
             editorInstance.setValue(JSON.stringify(compiled, null, 2));
+            // Reset flag after the Monaco change event has been dispatched (microtask)
+            Promise.resolve().then(() => { window._isFlowchartCompiling = false; });
             
             // Sync values to existing inputs
-            if (inputNode) {
-                linhaCabecalhoInput.value = inputNode.data.linhaCabecalho;
-                separadorInput.value = inputNode.data.delimitadorLista;
+            if (globalConfigNode) {
+                linhaCabecalhoInput.value = globalConfigNode.data.linhaCabecalho || 1;
+                separadorInput.value = globalConfigNode.data.delimitadorLista || ';';
+                document.getElementById('fatorConversaoInput').value = globalConfigNode.data.fatorConversao || 100;
+            } else if (inputNode) {
+                linhaCabecalhoInput.value = inputNode.data.linhaCabecalho || 1;
+                separadorInput.value = inputNode.data.delimitadorLista || ';';
             }
         }
 
@@ -2864,83 +3011,95 @@
             flowchartData.nodes = [];
             flowchartData.connections = [];
 
+            // Declare mappings in function scope so it is accessible throughout all steps below
+            const mappings = json.mapeamento_campos || {};
+
             // 1. Create static Excel Row Input node
             const inputColumns = [];
             
-            // Auto detect columns from field mappings to seed Excel Input node columns
-            const detectedLetters = new Set();
-            const mappings = json.mapeamento_campos || {};
-            
-            Object.keys(mappings).forEach(k => {
-                if (mappings[k].celula) {
-                    detectedLetters.add(mappings[k].celula.toUpperCase());
-                }
-                if (mappings[k].script) {
-                    const scriptMatches = mappings[k].script.match(/row\.([A-Z])/g);
-                    if (scriptMatches) {
-                        scriptMatches.forEach(m => {
-                            const letter = m.split('.')[1].toUpperCase();
-                            detectedLetters.add(letter);
-                        });
+            if (json.colunas_entrada && Array.isArray(json.colunas_entrada)) {
+                json.colunas_entrada.forEach(col => {
+                    inputColumns.push({
+                        letter: col.celula.toUpperCase(),
+                        label: col.label || `Coluna_${col.celula}`,
+                        type: col.tipo || 'String'
+                    });
+                });
+            } else {
+                // Auto detect columns from field mappings to seed Excel Input node columns (backward compatibility)
+                const detectedLetters = new Set();
+                
+                Object.keys(mappings).forEach(k => {
+                    if (mappings[k].celula) {
+                        detectedLetters.add(mappings[k].celula.toUpperCase());
                     }
-                }
-            });
-
-            // Make sure we have at least columns A, B, C, D if empty
-            if (detectedLetters.size === 0) {
-                ['A', 'B', 'C', 'D'].forEach(l => detectedLetters.add(l));
-            }
-
-            // Sort detected columns
-            const sortedLetters = Array.from(detectedLetters).sort();
-            sortedLetters.forEach(l => {
-                const mappedFields = Object.keys(mappings).filter(fieldName => {
-                    const m = mappings[fieldName];
-                    return m && m.celula && String(m.celula).toUpperCase() === l;
+                    if (mappings[k].script) {
+                        const scriptMatches = mappings[k].script.match(/row\.([A-Z])/g);
+                        if (scriptMatches) {
+                            scriptMatches.forEach(m => {
+                                const letter = m.split('.')[1].toUpperCase();
+                                detectedLetters.add(letter);
+                            });
+                        }
+                    }
                 });
 
-                let colLabel = `Coluna_${l}`;
-                let colType = 'String';
+                // Make sure we have at least columns A, B, C, D if empty
+                if (detectedLetters.size === 0) {
+                    ['A', 'B', 'C', 'D'].forEach(l => detectedLetters.add(l));
+                }
 
-                if (mappedFields.length > 0) {
-                    const mainField = mappedFields[0];
-                    if (mainField === 'NomeConsultor') {
-                        colLabel = 'Nome/Consultor';
-                        colType = 'String';
-                    } else if (mainField === 'IDProfissional') {
-                        colLabel = 'CPF/ID';
-                        colType = 'Int';
-                    } else if (mainField === 'ValorVenda') {
-                        colLabel = 'Valor Comissão';
-                        colType = 'Currency';
-                    } else if (mainField === 'ValorComissao') {
-                        colLabel = 'Fator Conversão';
-                        colType = 'Currency';
+                // Sort detected columns
+                const sortedLetters = Array.from(detectedLetters).sort();
+                sortedLetters.forEach(l => {
+                    const mappedFields = Object.keys(mappings).filter(fieldName => {
+                        const m = mappings[fieldName];
+                        return m && m.celula && String(m.celula).toUpperCase() === l;
+                    });
+
+                    let colLabel = `Coluna_${l}`;
+                    let colType = 'String';
+
+                    if (mappedFields.length > 0) {
+                        const mainField = mappedFields[0];
+                        if (mainField === 'NomeConsultor') {
+                            colLabel = 'Nome/Consultor';
+                            colType = 'String';
+                        } else if (mainField === 'IDProfissional') {
+                            colLabel = 'CPF/ID';
+                            colType = 'Int';
+                        } else if (mainField === 'ValorVenda') {
+                            colLabel = 'Valor Comissão';
+                            colType = 'Currency';
+                        } else if (mainField === 'ValorComissao') {
+                            colLabel = 'Fator Conversão';
+                            colType = 'Currency';
+                        } else {
+                            colLabel = mainField.charAt(0).toUpperCase() + mainField.slice(1);
+                            if (['valor', 'valor_original_rs', 'valorvenda', 'valorcomissao'].includes(mainField.toLowerCase())) {
+                                colType = 'Currency';
+                            }
+                        }
                     } else {
-                        colLabel = mainField.charAt(0).toUpperCase() + mainField.slice(1);
-                        if (['valor', 'valor_original_rs', 'valorvenda', 'valorcomissao'].includes(mainField.toLowerCase())) {
+                        if (l === 'A') {
+                            colLabel = 'Nome/Consultor';
+                            colType = 'String';
+                        } else if (l === 'B') {
+                            colLabel = 'CPF/ID';
+                            colType = 'Int';
+                        } else if (l === 'C') {
+                            colLabel = 'Valor Comissão';
                             colType = 'Currency';
                         }
                     }
-                } else {
-                    if (l === 'A') {
-                        colLabel = 'Nome/Consultor';
-                        colType = 'String';
-                    } else if (l === 'B') {
-                        colLabel = 'CPF/ID';
-                        colType = 'Int';
-                    } else if (l === 'C') {
-                        colLabel = 'Valor Comissão';
-                        colType = 'Currency';
-                    }
-                }
-                
-                inputColumns.push({
-                    letter: l,
-                    label: colLabel,
-                    type: colType
+                    
+                    inputColumns.push({
+                        letter: l,
+                        label: colLabel,
+                        type: colType
+                    });
                 });
-            });
+            }
 
             const excelInputNode = {
                 id: 'node_excel_input',
@@ -2955,6 +3114,11 @@
                 }
             };
             flowchartData.nodes.push(excelInputNode);
+
+            const colExists = (letter) => {
+                if (!letter) return false;
+                return inputColumns.some(col => col.letter.toUpperCase() === letter.toUpperCase());
+            };
 
             // 2. Create Global Config & Variables Node if configuracoes_gerais or contexto_global exists
             const vars = [];
@@ -3006,8 +3170,7 @@
                 { name: 'data_vencimento', label: 'Data de Vencimento' }
             ];
 
-            // Auto-detect custom fields from mappings
-            const mappings = json.mapeamento_campos || {};
+            // Auto-detect custom fields from mappings (already declared above as const mappings)
             Object.keys(mappings).forEach(k => {
                 if (k === 'transacoes_geradas') return;
                 const exists = destFields.some(f => f.name === k);
@@ -3062,18 +3225,22 @@
                     currentGenY += 150;
 
                     // Connect input columns
-                    flowchartData.connections.push({
-                        from: 'node_excel_input',
-                        fromPort: `col_${colVal}`,
-                        to: 'node_sinal_gen',
-                        toPort: 'in_valor'
-                    });
-                    flowchartData.connections.push({
-                        from: 'node_excel_input',
-                        fromPort: `col_${colData}`,
-                        to: 'node_sinal_gen',
-                        toPort: 'in_data'
-                    });
+                    if (colExists(colVal)) {
+                        flowchartData.connections.push({
+                            from: 'node_excel_input',
+                            fromPort: `col_${colVal}`,
+                            to: 'node_sinal_gen',
+                            toPort: 'in_valor'
+                        });
+                    }
+                    if (colExists(colData)) {
+                        flowchartData.connections.push({
+                            from: 'node_excel_input',
+                            fromPort: `col_${colData}`,
+                            to: 'node_sinal_gen',
+                            toPort: 'in_data'
+                        });
+                    }
 
                     // Visual connection from sinal_gen.out to save node
                     flowchartData.connections.push({
@@ -3111,53 +3278,35 @@
                     flowchartData.nodes.push(parcelasNode);
                     currentGenY += 150;
 
-                    // Connect input columns
-                    flowchartData.connections.push({
-                        from: 'node_excel_input',
-                        fromPort: `col_${colTotal}`,
-                        to: 'node_parcelas_gen',
-                        toPort: 'in_qtd_total'
-                    });
-                    flowchartData.connections.push({
-                        from: 'node_excel_input',
-                        fromPort: `col_${colPagas}`,
-                        to: 'node_parcelas_gen',
-                        toPort: 'in_qtd_pagas'
-                    });
-                    flowchartData.connections.push({
-                        from: 'node_excel_input',
-                        fromPort: `col_${colVal}`,
-                        to: 'node_parcelas_gen',
-                        toPort: 'in_valor_parcela'
-                    });
-                    flowchartData.connections.push({
-                        from: 'node_excel_input',
-                        fromPort: `col_${colInicio}`,
-                        to: 'node_parcelas_gen',
-                        toPort: 'in_data_inicio'
-                    });
-
-                    // Visual connection from parcelas_gen.out to save node
-                    flowchartData.connections.push({
-                        from: 'node_parcelas_gen',
-                        fromPort: 'out',
-                        to: 'node_save_transaction',
-                        toPort: 'field_ValorComissao'
-                    });
+                    if (colExists(colTotal)) {
+                        flowchartData.connections.push({ from: 'node_excel_input', fromPort: `col_${colTotal}`, to: 'node_parcelas_gen', toPort: 'in_qtd_total' });
+                    }
+                    if (colExists(colPagas)) {
+                        flowchartData.connections.push({ from: 'node_excel_input', fromPort: `col_${colPagas}`, to: 'node_parcelas_gen', toPort: 'in_qtd_pagas' });
+                    }
+                    if (colExists(colVal)) {
+                        flowchartData.connections.push({ from: 'node_excel_input', fromPort: `col_${colVal}`, to: 'node_parcelas_gen', toPort: 'in_valor_parcela' });
+                    }
+                    if (colExists(colInicio)) {
+                        flowchartData.connections.push({ from: 'node_excel_input', fromPort: `col_${colInicio}`, to: 'node_parcelas_gen', toPort: 'in_data_inicio' });
+                    }
+                    flowchartData.connections.push({ from: 'node_parcelas_gen', fromPort: 'out', to: 'node_save_transaction', toPort: 'field_ValorComissao' });
                 }
 
-                if (scriptText.includes('// Balões')) {
-                    const valMatch = scriptText.match(/const valor_balao = helpers\.parseMoeda\(row\.([A-Z])\)/);
-                    const datasMatch = scriptText.match(/const string_datas = String\(row\.([A-Z])\s*\|\|\s*''\)/);
-                    const delimMatch = scriptText.match(/const delimitador = "([^"]+)";/);
-                    const statusMatch = scriptText.match(/status: "([^"]+)"/);
-                    const justMatch = scriptText.match(/let just_balao = "([^"]+)";/);
+                if (scriptText.includes('// Baloes')) {
+                    const valMatch2   = scriptText.match(/const valor_balao = helpers\.parseMoeda\(row\.([A-Z]+)\)/);
+                    const qtdMatch2   = scriptText.match(/const qtd_baloes_col = row\.([A-Z]+)/);
+                    const datasMatch2 = scriptText.match(/const string_datas = String\(row\.([A-Z]+)\s*\|\|\s*''\)/);
+                    const delimMatch2 = scriptText.match(/const delimitador = "([^"]+)";/);
+                    const statusMatch2 = scriptText.match(/status: "([^"]+)"/);
+                    const justMatch2  = scriptText.match(/let just_balao = "([^"]+)";/);
 
-                    const colVal = valMatch ? valMatch[1] : 'L';
-                    const colDatas = datasMatch ? datasMatch[1] : 'N';
-                    const delim = delimMatch ? delimMatch[1] : '|';
-                    const status = statusMatch ? statusMatch[1] : 'PENDENTE';
-                    const just = justMatch ? justMatch[1] : 'Lançamento Extra {i}/{total} - {{C}} {{D}}';
+                    const bColVal   = valMatch2   ? valMatch2[1]   : 'L';
+                    const bColQtd   = qtdMatch2   ? qtdMatch2[1]   : null;
+                    const bColDatas = datasMatch2 ? datasMatch2[1] : 'N';
+                    const bDelim    = delimMatch2 ? delimMatch2[1] : '|';
+                    const bStatus   = statusMatch2 ? statusMatch2[1] : 'PENDENTE';
+                    const bJust     = justMatch2  ? justMatch2[1]  : 'Lançamento Extra {i}/{total} - {{C}} {{D}}';
 
                     const baloesNode = {
                         id: 'node_baloes_gen',
@@ -3165,35 +3314,20 @@
                         title: 'Gerador de Lançamentos Extras',
                         x: 320,
                         y: currentGenY,
-                        data: {
-                            delimitador: delim,
-                            status: status,
-                            justificativa: just
-                        }
+                        data: { delimitador: bDelim, status: bStatus, justificativa: bJust }
                     };
                     flowchartData.nodes.push(baloesNode);
 
-                    // Connect input columns
-                    flowchartData.connections.push({
-                        from: 'node_excel_input',
-                        fromPort: `col_${colVal}`,
-                        to: 'node_baloes_gen',
-                        toPort: 'in_valor_unitario'
-                    });
-                    flowchartData.connections.push({
-                        from: 'node_excel_input',
-                        fromPort: `col_${colDatas}`,
-                        to: 'node_baloes_gen',
-                        toPort: 'in_string_datas'
-                    });
-
-                    // Visual connection from baloes_gen.out to save node
-                    flowchartData.connections.push({
-                        from: 'node_baloes_gen',
-                        fromPort: 'out',
-                        to: 'node_save_transaction',
-                        toPort: 'field_ValorComissao'
-                    });
+                    if (colExists(bColVal)) {
+                        flowchartData.connections.push({ from: 'node_excel_input', fromPort: `col_${bColVal}`,   to: 'node_baloes_gen', toPort: 'in_valor_unitario' });
+                    }
+                    if (bColQtd && colExists(bColQtd)) {
+                        flowchartData.connections.push({ from: 'node_excel_input', fromPort: `col_${bColQtd}`, to: 'node_baloes_gen', toPort: 'in_qtd_baloes' });
+                    }
+                    if (colExists(bColDatas)) {
+                        flowchartData.connections.push({ from: 'node_excel_input', fromPort: `col_${bColDatas}`, to: 'node_baloes_gen', toPort: 'in_string_datas' });
+                    }
+                    flowchartData.connections.push({ from: 'node_baloes_gen',  fromPort: 'out',              to: 'node_save_transaction', toPort: 'field_ValorComissao' });
                 }
             }
 
@@ -3242,7 +3376,7 @@
                             currentScriptY += 120;
 
                             // Connect excel column to sanitizer input
-                            if (mapMeta.celula) {
+                            if (mapMeta.celula && colExists(mapMeta.celula)) {
                                 flowchartData.connections.push({
                                     from: 'node_excel_input',
                                     fromPort: `col_${mapMeta.celula.toUpperCase()}`,
@@ -3276,7 +3410,7 @@
                             currentScriptY += 120;
 
                             // Connect excel column to script input
-                            if (mapMeta.celula) {
+                            if (mapMeta.celula && colExists(mapMeta.celula)) {
                                 flowchartData.connections.push({
                                     from: 'node_excel_input',
                                     fromPort: `col_${mapMeta.celula.toUpperCase()}`,
@@ -3294,7 +3428,7 @@
                             });
                         }
 
-                    } else if (mapMeta.celula) {
+                    } else if (mapMeta.celula && colExists(mapMeta.celula)) {
                         // Direct connection line from input to output field
                         flowchartData.connections.push({
                             from: 'node_excel_input',
@@ -3338,13 +3472,41 @@
                 flowchartData.nodes.push(webhookNode);
             }
 
+            // 6. Rebuild loop_node from hooks.loop_personalizado
+            if (json.hooks?.loop_personalizado) {
+                const lp = json.hooks.loop_personalizado;
+                const loopNode = {
+                    id: 'node_loop_custom',
+                    type: 'loop_node',
+                    title: '🔁 Repetição Loop',
+                    x: 320,
+                    y: currentScriptY + 150,
+                    data: {
+                        itemName: lp.itemName || 'item'
+                    }
+                };
+                flowchartData.nodes.push(loopNode);
+
+                if (lp.celula_entrada && colExists(lp.celula_entrada)) {
+                    flowchartData.connections.push({
+                        from: 'node_excel_input',
+                        fromPort: `col_${lp.celula_entrada}`,
+                        to: 'node_loop_custom',
+                        toPort: 'in'
+                    });
+                }
+                if (lp.campo_saida) {
+                    flowchartData.connections.push({
+                        from: 'node_loop_custom',
+                        fromPort: 'out',
+                        to: 'node_save_transaction',
+                        toPort: `field_${lp.campo_saida}`
+                    });
+                }
+            }
+
             renderNodes();
         }
-
-        // Attach parsing trigger on switching tabs to Map
-        tabVisual.addEventListener('click', () => {
-            setTimeout(parseJSONToFlowchart, 50);
-        });
 
         // Initialize Monaco Editor value sync hook on startup
         document.addEventListener('DOMContentLoaded', () => {

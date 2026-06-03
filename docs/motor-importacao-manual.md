@@ -161,6 +161,74 @@ for (let i = 0; i < totalRepeticoes; i++) {
 return transacoes; // Retorna o array de transações geradas pelo loop
 ```
 
+### Exemplo Prático: Bloco Código JS (Script)
+Este é um nó (bloco roxo/variante roxa) usado para aplicar lógicas procedimentais personalizadas ou cálculos complexos a um campo específico utilizando Javascript.
+
+- **Portas de Conexão:** Possui uma porta de entrada (`in`) para receber o valor bruto de uma coluna da planilha (`value`) e uma porta de saída (`out`) que é conectada à porta correspondente do nó **Gravar Transação**.
+- **Painel de Configuração:**
+  - **Nome do Campo de Saída:** O nome da coluna de destino no banco de dados (ex: `ValorVenda`, `ValorComissao`).
+  - **Editor de Código:** Um editor de código Monaco incorporado onde você escreve a função.
+- **Contexto e Lógica:** O script deve retornar o valor resolvido usando `return`. Possui acesso à variável `value` (valor da coluna conectada na entrada) e ao objeto `row` (linha completa da planilha).
+- **Exemplo de Script:**
+  ```javascript
+  // Aplica 10% de comissão extra sobre o valor lido da coluna conectada
+  const valorVenda = helpers.parseMoeda(value);
+  return valorVenda * 0.10;
+  ```
+
+### Exemplo Prático: Sanitizador de Texto
+Este é um nó (bloco azul) focado na limpeza rápida, formatação e padronização de campos de texto, sem a necessidade de codificação manual em Javascript.
+
+- **Portas de Conexão:** Possui uma porta de entrada (`in`) ligada a uma coluna do Excel, e uma porta de saída (`out`) ligada a uma das portas do nó **Gravar Transação**.
+- **Painel de Configuração:**
+  - **Nome do Campo de Saída:** Propriedade de destino.
+  - **Regra de Sanitização:** Dropdown com regras pré-definidas:
+    - *Tudo em Maiúsculo (UPPERCASE):* Converte para maiúsculas (ex: `"parceiro"` ➔ `"PARCEIRO"`).
+    - *Tudo em Minúsculo (lowercase):* Converte para minúsculas (ex: `"Parceiro"` ➔ `"parceiro"`).
+    - *Remover Espaços Extras (trim):* Elimina espaços em branco nas pontas e espaços duplicados.
+    - *Limpar Caracteres Especiais (clean):* Retém exclusivamente letras, números e espaços, eliminando pontuações e símbolos.
+
+### Exemplo Prático: Condicional Se (Hook)
+Este é um nó (bloco rosa) de validação estruturado para atuar no nível da linha completa do arquivo antes da sua inserção final.
+
+- **Portas de Conexão:** Possui uma porta de entrada (`in`).
+- **Painel de Configuração:** Contém uma caixa Monaco Editor para o script de validação de linha.
+- **Funcionamento:** O script do hook é compilado para a chave `hooks.antes_salvar_linha`. Ele deve retornar `true` (para aceitar e salvar a linha processada) ou `false` (para ignorar e descartar a linha atual inteira da importação).
+- **Exemplo de Script:**
+  ```javascript
+  // Valida se a venda é superior a zero e o nome do consultor está presente
+  if (!linhaResult.NomeConsultor || linhaResult.ValorVenda <= 0) {
+    log.warning("Linha descartada por ausência de consultor ou valor nulo.");
+    return false;
+  }
+  return true;
+  ```
+
+### Exemplo Prático: Enviar Webhook/Alerta
+Este é um nó terminal (bloco laranja) focado na automação de alertas e integrações via canais de mensagens externos.
+
+- **Portas de Conexão:** Possui uma porta de entrada (`in`).
+- **Painel de Configuração:**
+  - **URL do Webhook:** Endereço POST do canal de destino (ex: Slack, Teams).
+  - **Mensagem customizada:** Conteúdo do alerta, com suporte a substituição de macros de campo `{{NomeConsultor}}`.
+- **Exemplo de Configuração:**
+  - *URL:* `https://hooks.slack.com/services/T00/B00/XXXX`
+  - *Mensagem:* `🎉 Carga efetuada! O parceiro {{NomeConsultor}} registrou uma nova venda no valor de R$ {{ValorVenda}}.`
+
+### Exemplo Prático: Configurações & Vars (Variáveis Globais)
+Este é um nó estático global (bloco dourado/amarelo) utilizado para definir as configurações de cabeçalho da planilha e registrar variáveis globais persistentes compartilhadas.
+
+- **Portas de Conexão:** Não possui portas de conexão (bloco conceitual estático).
+- **Painel de Configuração:**
+  - **Linha do Cabeçalho:** Indica a linha dos cabeçalhos na planilha.
+  - **Separador de Lista:** Define o caractere delimitador (ex: `;` ou `,`).
+  - **Fator Conversão:** O valor padrão para cálculo dos Talentos virtuais.
+  - **Pular Linhas Vazias:** Booleano para pular ou não linhas vazias.
+  - **Variáveis Globais:** Tabela dinâmica de chave-valor para configurar parâmetros que ficam disponíveis no objeto `globalStore` durante toda a execução.
+- **Exemplo de Variável:**
+  - *Chave:* `fatorDolar` | *Tipo:* `Número` | *Valor:* `5.25`
+  - *Acesso nos scripts:* `globalStore.fatorDolar`
+
 ### **Portas de Entrada (Campos de Destino) do Nó "Gravar Transação"**:
 
 O nó **Gravar Transação** possui 11 portas de entrada, cada uma mapeando diretamente para a coluna correspondente na tabela `GamTransacao` no banco de dados:
@@ -176,6 +244,74 @@ O nó **Gravar Transação** possui 11 portas de entrada, cada uma mapeando dire
 9. **`Tipo (Crédito/Débito)`**: Grava na coluna `tipo` (padrão: `'CREDITO'`).
 10. **`Status da Transação`**: Grava na coluna `status` (padrão: `'COMPENSADO'`).
 11. **`Data de Vencimento`**: Grava na coluna `data_vencimento`.
+
+### **Mapeamento Obrigatório e Comportamento em Caso de Ausência**
+
+Para que uma linha da planilha seja importada com sucesso no motor programável, o resultado da execução do script (ou o mapeamento direto de campos) deve atender a alguns critérios de obrigatoriedade.
+
+#### 1. Identificação do Corretor (Obrigatório)
+O motor precisa vincular a transação a um corretor cadastrado no banco de dados (`GamUsuario`).
+* **Como o sistema resolve:** Ele busca no objeto resultante por chaves comuns (independente de maiúsculas/minúsculas):
+  * **Chaves de Nome:** `NomeConsultor`, `parceiro`, `consultor`, `nome`, `corretor`, `colaborador`, `nome_consultor`
+  * **Chaves de Documento/CRECI:** `IDProfissional`, `creci`, `cpf`, `matricula`, `email`, `documento`, `id_profissional`
+* **Se faltar:** Se o script ou mapeamento não fornecer nenhuma dessas chaves, ou se o corretor indicado não for localizado no banco de dados da empresa, a linha receberá o status **NÃO ENCONTRADO** (tarja vermelha). 
+* **Impacto:** A importação definitiva ficará bloqueada até que o corretor seja cadastrado no banco ou resolvido manualmente na tela de preview.
+
+#### 2. Transações e Valores (Obrigatório)
+Deve ser gerada pelo menos uma transação financeira válida.
+* **Como o sistema resolve:** Ele procura por uma lista chamada `transacoes_geradas` (ou `transacoes`, `movimentacoes`). Se não houver essa lista, ele cai em um *fallback* de transação única buscando as chaves de valor (`valor`, `valor_talentos`, `valor_pontos`, `valortalentos`) ou o primeiro número retornado.
+* **Se faltar:** Se o valor resolvido em pontos for zero (ou não numérico) e nenhuma transação for adicionada, a simulação não criará transações para essa linha.
+
+#### 💡 Exemplo Prático de Mapeamento Manual Mínimo (JSON)
+Abaixo, veja um exemplo de mapeamento JSON mínimo que atende a todos os critérios obrigatórios de forma manual (sem scripts complexos), vinculando o nome da coluna R, CRECI da coluna S, valor total da venda da coluna E e os pontos finais da coluna F:
+
+```json
+{
+  "versao_motor": "2.0",
+  "colunas_entrada": [
+    {
+      "celula": "R",
+      "label": "Nome/Consultor",
+      "tipo": "String"
+    },
+    {
+      "celula": "S",
+      "label": "Creci",
+      "tipo": "String"
+    },
+    {
+      "celula": "E",
+      "label": "Valor Total",
+      "tipo": "String"
+    },
+    {
+      "celula": "F",
+      "label": "Valor Pago",
+      "tipo": "String"
+    }
+  ],
+  "configuracoes_gerais": {
+    "linha_cabecalho": 3,
+    "pular_linhas_vazias": true
+  },
+  "mapeamento_campos": {
+    "NomeConsultor": {
+      "celula": "R"
+    },
+    "IDProfissional": {
+      "celula": "S"
+    },
+    "ValorVenda": {
+      "celula": "E",
+      "script": "return helpers.parseMoeda(value);"
+    },
+    "valor": {
+      "celula": "F",
+      "script": "return Math.floor(helpers.parseMoeda(value) / 100);"
+    }
+  }
+}
+```
 
 ---
 
