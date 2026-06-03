@@ -276,6 +276,10 @@ window.renderHeader = function(titulo, subtitulo) {
         ? `${roleLabel}`
         : `${roleLabel} | <span id="userSaldoHeader">${saldoExibido} T$</span>`;
 
+    // Persiste titulo/subtitulo para que o re-render do auth.js possa recuperá-los
+    if (titulo) headerEl.setAttribute('data-titulo', titulo);
+    if (subtitulo) headerEl.setAttribute('data-subtitulo', subtitulo);
+
     headerEl.innerHTML = `
         <div style="display: flex; align-items: center;">
             <button id="menuToggleBtn" style="background: none; border: none; font-size: 1.6rem; color: var(--text-primary); cursor: pointer; display: none; margin-right: 15px;" title="Abrir Menu">☰</button>
@@ -538,10 +542,10 @@ window.addEventListener('DOMContentLoaded', async () => {
 
                     // Re-renderiza o cabeçalho dinamicamente para aplicar o nome da empresa e saldo atualizados imediatamente
                     if (window.renderHeader) {
-                        const titleEl = document.getElementById('welcomeText');
-                        const subtitleEl = document.getElementById('dashboardSub');
-                        const activeTitle = titleEl ? titleEl.innerText : '';
-                        const activeSubtitle = subtitleEl ? subtitleEl.innerText : '';
+                        const headerEl = document.getElementById('appHeader') || document.querySelector('header.header');
+                        // Recupera titulo/subtitulo dos data-attributes (salvos pelo renderHeader original da página)
+                        const activeTitle = headerEl ? (headerEl.getAttribute('data-titulo') || '') : '';
+                        const activeSubtitle = headerEl ? (headerEl.getAttribute('data-subtitulo') || '') : '';
                         window.renderHeader(activeTitle, activeSubtitle);
                     }
                 }
