@@ -2836,10 +2836,51 @@
                 });
             }
 
+            // ─────────────────────────────────────────────────────────────────────
+            // SECOND PASS: Serialize orphan/disconnected script and sanitizer nodes
+            // Nodes not connected to the save node are still in the flowchart state
+            // but are not reached by the saveNode.destFields loop above.
+            // We persist them under their fieldName so they survive JSON round-trips.
+            // ─────────────────────────────────────────────────────────────────────
+            flowchartData.nodes.forEach(n => {
+                if (n.type !== 'script_node' && n.type !== 'text_sanitizer') return;
+                const fieldName = n.data && n.data.fieldName;
+                if (!fieldName) return;
+                // Already serialized by the connected-node pass above? Skip.
+                if (compiled.mapeamento_campos[fieldName]) return;
+
+                let script = '';
+                let celula;
+                // Check if this node has an input connection to the excel input
+                const inputConn = flowchartData.connections.find(c => c.to === n.id && c.toPort === 'in');
+                if (inputConn) {
+                    const srcNode = flowchartData.nodes.find(nd => nd.id === inputConn.from);
+                    if (srcNode && srcNode.type === 'excel_input') {
+                        celula = inputConn.fromPort.replace('col_', '') || undefined;
+                    }
+                }
+
+                if (n.type === 'text_sanitizer') {
+                    if (n.data.regra === 'lowercase') script = 'return value.trim().toLowerCase();';
+                    else if (n.data.regra === 'trim') script = 'return value.trim();';
+                    else if (n.data.regra === 'clean') script = 'return value.replace(/[^a-zA-Z0-9\\s]/g, "");';
+                    else script = 'return value.trim().toUpperCase()';
+                } else {
+                    script = n.data.script || '';
+                }
+
+                compiled.mapeamento_campos[fieldName] = Object.assign(
+                    { script },
+                    celula ? { celula } : {}
+                );
+            });
+
             // Generate automatic transacoes_geradas.script from Visual No-Code nodes if present
-            const sinalNode = flowchartData.nodes.find(n => n.type === 'sinal_node' && flowchartData.connections.some(c => c.from === n.id && c.fromPort === 'out' && c.to === 'node_save_transaction'));
-            const parcelasNode = flowchartData.nodes.find(n => n.type === 'parcelas_node' && flowchartData.connections.some(c => c.from === n.id && c.fromPort === 'out' && c.to === 'node_save_transaction'));
-            const baloesNode = flowchartData.nodes.find(n => n.type === 'baloes_node' && flowchartData.connections.some(c => c.from === n.id && c.fromPort === 'out' && c.to === 'node_save_transaction'));
+            // NOTE: We find ALL generator nodes regardless of connection state.
+            // Ghost connection issue (orphaned lines) is handled separately via colExists() in parseJSONToFlowchart.
+            const sinalNode = flowchartData.nodes.find(n => n.type === 'sinal_node');
+            const parcelasNode = flowchartData.nodes.find(n => n.type === 'parcelas_node');
+            const baloesNode = flowchartData.nodes.find(n => n.type === 'baloes_node');
 
             if (sinalNode || parcelasNode || baloesNode) {
                 let generatorScript = `// SCRIPT GERADO AUTOMATICAMENTE VIA NO-CODE NODES\n`;
@@ -3343,12 +3384,17 @@
                 if (isSaveField) {
                     if (mapMeta.script) {
                         const scriptText = mapMeta.script.trim();
-                        // Detect if script was automatically compiled by our Text Sanitizer node
-                        const isSanitizer = 
-                            scriptText.includes('toUpperCase()') || 
-                            scriptText.includes('toLowerCase()') || 
-                            scriptText === 'return value.trim();' || 
-                            scriptText.includes('replace(/[^a-zA-Z0-9');
+                        // Detect if script was automatically compiled by our Text Sanitizer node.
+                        // We use EXACT matching against the known sanitizer outputs to avoid false-positives
+                        // when user scripts legitimately contain toUpperCase(), toLowerCase(), etc.
+                        const knownSanitizerScripts = [
+                            'return value.trim().toUpperCase()',
+                            'return value.trim().toUpperCase();',
+                            'return value.trim().toLowerCase();',
+                            'return value.trim();',
+                            'return value.replace(/[^a-zA-Z0-9\\s]/g, "");'
+                        ];
+                        const isSanitizer = knownSanitizerScripts.includes(scriptText);
 
                         if (isSanitizer) {
                             const sanitizerId = `node_sanitizer_${scriptIndex++}`;
