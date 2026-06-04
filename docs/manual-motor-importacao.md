@@ -38,6 +38,7 @@ Este manual descreve a estrutura dos perfis de importação, a API de execução
    - [Exemplo 5: Lote de Lançamentos Extras/Balões (Sem Parcelas)](#exemplo-5-lote-de-lançamentos-extrasbalões-sem-parcelas)
    - [Exemplo 6: Esteira de Venda Parcelada Padrão (Sem Balões)](#exemplo-6-esteira-de-venda-parcelada-padrão-sem-balões)
    - [Exemplo 7: Conciliação Automática e Baixa de Parcelas (Motor FIFO)](#exemplo-7-conciliação-automática-e-baixa-de-parcelas-motor-fifo)
+8. [Auto-Mapeamento Inteligente de Cabeçalhos](#8-auto-mapeamento-inteligente-de-cabeçalhos)
 
 ---
 
@@ -716,3 +717,33 @@ Perfil ideal para recebimentos de lotes de comissão (Modo Baixas). Lê a planil
   }
 }
 ```
+
+---
+
+## 8. Auto-Mapeamento Inteligente de Cabeçalhos
+
+O sistema possui uma inteligência embarcada de detecção de colunas que analisa os cabeçalhos das planilhas enviadas. Ele utiliza uma normalização de texto (removendo acentos e espaços), cálculo de similaridade via distância de Levenshtein e busca de padrões de palavras-chave (sinônimos) para sugerir o mapeamento ideal no editor.
+
+Para que a importação reconheça suas colunas automaticamente com 100% de assertividade, dê preferência por nomear os cabeçalhos da sua planilha utilizando um dos sinônimos reconhecidos abaixo:
+
+### Dicionário de Cabeçalhos e Sinônimos Recomendados
+
+| Campo Interno | Rótulo (Label) do Sistema | Sinônimos / Padrões de Nomes Recomendados na Planilha |
+| :--- | :--- | :--- |
+| **`corretor_identificador`** | Parceiro/Consultor (Nome) | `corretor`, `nome`, `consultor`, `vendedor`, `parceiro`, `colaborador`, `angariador`, `responsável` |
+| **`corretor_creci`** | ID Profissional / Matrícula | `creci`, `cpf`, `cnpj`, `registro`, `identificador`, `matricula`, `documento`, `doc` |
+| **`valor_venda`** | Valor Total do Negócio | `valor venda`, `venda`, `vgv`, `total`, `negócio`, `bruto`, `contrato valor` |
+| **`valor_pago`** | Valor Pago (Entrada/Sinal) | `valor pago`, `pago`, `sinal`, `entrada`, `ato`, `recebido`, `repasse`, `pago ato` |
+| **`empreendimento`** | Produto / Serviço / Campanha | `empreendimento`, `obra`, `residencial`, `produto`, `servico`, `campanha`, `projeto`, `loteamento` |
+| **`unidade`** | Ref. Contrato / ID Venda | `unidade`, `apto`, `sala`, `lote`, `quadra`, `imovel`, `contrato`, `ref`, `venda id` |
+| **`cliente_nome`** | Nome do Cliente | `cliente`, `comprador`, `adquirente`, `mutuário`, `cliente final` |
+| **`balao_valor`** | Valores Rec. Extras | `balao valor`, `balão valor`, `reforco valor`, `reforço valor`, `extra valor` |
+| **`balao_datas`** | Datas Rec. Extras | `balao datas`, `balão datas`, `reforco datas`, `reforço datas`, `datas baloes`, `datas balões` |
+| **`balao_qtd`** | Qtd Recebimentos Extras | `balao qtd`, `balão qtd`, `reforco qtd`, `reforço qtd`, `qtd reforcos`, `qtd baloes` |
+| **`parcela_valor`** | Valor da Parcela | `parcela valor`, `mensal valor`, `valor parcela`, `mensalidade` |
+| **`parcela_qtd`** | Qtd de Parcelas | `parcela qtd`, `qtd parcelas`, `quantidade parcelas`, `meses` |
+| **`parcela_data_inicio`** | Data Início Parcelas | `parcela data`, `data parcelas`, `inicio parcelas`, `primeiro vencimento` |
+
+> [!TIP]
+> **Como tirar vantagem da auto-detecção:** 
+> Se você padronizar a sua planilha para usar nomes como `CPF` para documento, `Valor Venda` para o VGV e `Meses` para a quantidade de parcelas, o sistema fará o mapeamento inicial de forma instantânea quando você criar um novo perfil de importação, sem a necessidade de arrastar conexões manualmente para cada coluna.
