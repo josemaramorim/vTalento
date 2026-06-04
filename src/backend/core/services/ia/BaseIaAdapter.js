@@ -1,4 +1,7 @@
 class BaseIaAdapter {
+  constructor(manualContent = '') {
+    this.manualContent = manualContent;
+  }
   /**
    * Traduz um prompt em linguagem natural para um grafo JSON estruturado do Motor Programável.
    * @param {string} promptUsuario - Descrição textual do que o usuário deseja mapear/fazer.

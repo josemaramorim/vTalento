@@ -1,8 +1,8 @@
 const BaseIaAdapter = require('./BaseIaAdapter');
 
 class OpenAiIaAdapter extends BaseIaAdapter {
-  constructor(apiKey) {
-    super();
+  constructor(apiKey, manualContent = '') {
+    super(manualContent);
     this.apiKey = apiKey || process.env.OPENAI_API_KEY;
   }
 
@@ -11,7 +11,7 @@ class OpenAiIaAdapter extends BaseIaAdapter {
       return this._mockGerarFluxoJSON(promptUsuario, colunasExcel);
     }
 
-    const systemPrompt = `Você é o tradutor de linguagem natural para o JSON do Motor de Importação Programável (V-Talentos).
+    let systemPrompt = `Você é o tradutor de linguagem natural para o JSON do Motor de Importação Programável (V-Talentos).
 Seu papel é retornar um objeto JSON válido correspondente às instruções do usuário.
 As colunas disponíveis na planilha são: ${JSON.stringify(colunasExcel)}.
 O JSON deve seguir esta estrutura estrita:
@@ -46,6 +46,10 @@ Nós disponíveis:
 - webhook_alert: para alertas de webhook (webhookUrl, mensagem)
 
 Retorne estritamente o JSON, sem markdown ou explicações.`;
+
+    if (this.manualContent) {
+      systemPrompt += `\n\nUse como referência as especificações e regras oficiais do manual do sistema:\n<manual>\n${this.manualContent}\n</manual>`;
+    }
 
     try {
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -132,7 +136,7 @@ Retorne um objeto JSON contendo:
       return this._mockDiagnosticarErro(mensagemErro, contexto);
     }
 
-    const systemPrompt = `Você é o assistente técnico e Import Doctor do V-Talentos.
+    let systemPrompt = `Você é o assistente técnico e Import Doctor do V-Talentos.
 Sua tarefa é analisar a instrução/mensagem do usuário: "${mensagemErro}".
 O contexto atual é: ${JSON.stringify(contexto)}.
 Explique o que deve ser feito (ou explique o erro) de forma amigável em português e sugira a correção ou alteração.
@@ -143,6 +147,10 @@ Retorne um objeto JSON com esta estrutura:
   "script_corrigido": "Código Javascript ou JSON de fluxo corrigido/atualizado (completo) se aplicável à instrução (opcional). Se for alteração de JSON, retorne o JSON completo atualizado.",
   "tipo_correcao": "script" | "json" | "data" | "none"
 }`;
+
+    if (this.manualContent) {
+      systemPrompt += `\n\nUse como referência as instruções e soluções do manual do sistema:\n<manual>\n${this.manualContent}\n</manual>`;
+    }
 
     try {
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
