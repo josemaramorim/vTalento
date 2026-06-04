@@ -600,6 +600,6 @@ Esta fase permite que o administrador da empresa (`ADMIN_EMPRESA`) gerencie a id
 
 - [x] **Tarefa 35.1 (Backend):** Implementar a leitura física em boot e cache em memória do arquivo `manual-motor-importacao.md` na inicialização do serviço.
 - [x] **Tarefa 35.2 (Backend):** Atualizar o `systemPrompt` do `OpenAiIaAdapter` e `GeminiIaAdapter` para injetar o conteúdo do manual no contexto das conversas/diagnósticos.
-- [/] **Tarefa 35.3 (Testes):** Adicionar testes unitários ou validar o correto funcionamento do Copiloto IA respondendo a termos documentados no manual.
+- [x] **Tarefa 35.3 (Testes):** Adicionar testes unitários ou validar o correto funcionamento do Copiloto IA respondendo a termos documentados no manual.
 
 
