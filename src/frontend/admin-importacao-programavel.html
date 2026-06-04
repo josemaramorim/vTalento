@@ -781,6 +781,18 @@
         // ═══════════════════════ MONACO SETUP ═══════════════════════
         let editorInstance = null;
         let propEditorInstance = null;
+
+        // Expor para o Copiloto IA acessar globalmente
+        Object.defineProperty(window, 'editorInstance', {
+            get: () => editorInstance,
+            set: (val) => { editorInstance = val; },
+            configurable: true
+        });
+        Object.defineProperty(window, 'propEditorInstance', {
+            get: () => propEditorInstance,
+            set: (val) => { propEditorInstance = val; },
+            configurable: true
+        });
         let selectedFileBase64 = null;
         let selectedFileName = '';
         let perfisCached = [];
