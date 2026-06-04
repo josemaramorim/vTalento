@@ -2,6 +2,10 @@ const db = require('../../../infra/db');
 const GeminiIaAdapter = require('./GeminiIaAdapter');
 const OpenAiIaAdapter = require('./OpenAiIaAdapter');
 const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
+
+let cacheManual = null;
 
 // Configuração de Criptografia Simples para as chaves de API
 const ALGORITHM = 'aes-256-cbc';
@@ -74,15 +78,39 @@ class IaFactory {
     }
 
     // Instancia o provedor correto
+    const manual = this.obterManual();
     if (provedor === 'GEMINI' && chave) {
-      return new GeminiIaAdapter(chave);
+      return new GeminiIaAdapter(chave, manual);
     } else if (provedor === 'OPENAI' && chave) {
-      return new OpenAiIaAdapter(chave);
+      return new OpenAiIaAdapter(chave, manual);
     }
 
     // Fallback Mock se nada estiver configurado (útil para desenvolvimento local/testes)
     console.log('[IaFactory] Nenhum provedor de IA ativo ou chave encontrada. Usando adapter de Fallback Local.');
-    return new GeminiIaAdapter('mock');
+    return new GeminiIaAdapter('mock', manual);
+  }
+
+  /**
+   * Obtém o conteúdo do manual em cache de memória
+   * @returns {string}
+   */
+  obterManual() {
+    if (cacheManual !== null) {
+      return cacheManual;
+    }
+    try {
+      const p = path.resolve(__dirname, '../../../../../docs/manual-motor-importacao.md');
+      if (fs.existsSync(p)) {
+        cacheManual = fs.readFileSync(p, 'utf-8');
+      } else {
+        console.warn('[IaFactory] Arquivo de manual não encontrado em:', p);
+        cacheManual = '';
+      }
+    } catch (err) {
+      console.error('[IaFactory] Erro ao carregar manual:', err.message);
+      cacheManual = '';
+    }
+    return cacheManual;
   }
 
   /**

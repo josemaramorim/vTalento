@@ -595,3 +595,11 @@ Esta fase permite que o administrador da empresa (`ADMIN_EMPRESA`) gerencie a id
 - [x] **Tarefa 34.1 (Frontend):** Atualizar a lógica de compilação em `admin-importacao-programavel.html` para aplicar a divisão por `fatorConversao` nas transações geradas para sinal, parcelas e balões.
 - [x] **Tarefa 34.2 (Testes):** Adaptar e verificar os testes unitários do motor programável para garantir conformidade com a divisão do fator.
 
+### História 35: Integração do Manual do Motor no Contexto do Copiloto IA
+*Como administrador, quero que o Copiloto IA conheça o manual avançado de importação de forma estável e segura, para que ele possa responder a perguntas teóricas de ajuda e sugerir exemplos de fluxos idênticos aos homologados.*
+
+- [x] **Tarefa 35.1 (Backend):** Implementar a leitura física em boot e cache em memória do arquivo `manual-motor-importacao.md` na inicialização do serviço.
+- [x] **Tarefa 35.2 (Backend):** Atualizar o `systemPrompt` do `OpenAiIaAdapter` e `GeminiIaAdapter` para injetar o conteúdo do manual no contexto das conversas/diagnósticos.
+- [x] **Tarefa 35.3 (Testes):** Adicionar testes unitários ou validar o correto funcionamento do Copiloto IA respondendo a termos documentados no manual.
+
+

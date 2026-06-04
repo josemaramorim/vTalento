@@ -61,6 +61,13 @@ describe('IaStrategy & Adapters Unit Tests', () => {
       expect(db).toHaveBeenCalledWith('GamEmpresa');
       expect(db.where).toHaveBeenCalledWith({ id: 'empresa-123' });
     });
+
+    it('Deve carregar o manualContent e repassar para o adapter', async () => {
+      db.first.mockResolvedValue(null);
+      const adapter = await IaFactory.obterAdapter('empresa-123');
+      expect(adapter.manualContent).toBeDefined();
+      expect(typeof adapter.manualContent).toBe('string');
+    });
   });
 
   describe('GeminiIaAdapter Fallback Logic', () => {
@@ -68,6 +75,16 @@ describe('IaStrategy & Adapters Unit Tests', () => {
 
     beforeEach(() => {
       adapter = new GeminiIaAdapter('mock');
+    });
+
+    it('Deve instanciar com manualContent vazio por padrão', () => {
+      const tempAdapter = new GeminiIaAdapter('mock');
+      expect(tempAdapter.manualContent).toBe('');
+    });
+
+    it('Deve instanciar com manualContent fornecido', () => {
+      const tempAdapter = new GeminiIaAdapter('mock', 'conteúdo do manual');
+      expect(tempAdapter.manualContent).toBe('conteúdo do manual');
     });
 
     it('gerarFluxoJSON deve gerar fluxo com sanitizer se o prompt contiver "maiúscula" ou "uppercase"', async () => {
