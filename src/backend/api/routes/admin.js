@@ -3,6 +3,7 @@ const LancamentoController = require('../controllers/LancamentoController');
 const ImportacaoController = require('../controllers/ImportacaoController');
 const PremioController = require('../controllers/PremioController');
 const UsuarioController = require('../controllers/UsuarioController');
+const IaController = require('../controllers/IaController');
 const tenantMiddleware = require('../../infra/middlewares/TenantMiddleware');
 const adminMiddleware = require('../../infra/middlewares/AdminMiddleware');
 
@@ -53,6 +54,12 @@ routes.post('/importacao/sugerir-mapeamento', ImportacaoController.sugerirMapeam
 routes.post('/importacao/confirm', ImportacaoController.confirmarImportacao);
 routes.post('/importacao/programavel/preview', ImportacaoController.previewImportacaoProgramavel);
 routes.post('/importacao/programavel/confirm', ImportacaoController.confirmarImportacaoProgramavel);
+
+// Endpoints do Copiloto IA (FASE 18)
+routes.post('/ia/gerar-fluxo', IaController.gerarFluxo);
+routes.post('/ia/sugerir-sanitizacao', IaController.sugerirSanitizacao);
+routes.post('/ia/diagnosticar', IaController.diagnosticar);
+routes.put('/ia/config', IaController.salvarConfig);
 
 // Endpoints da Vitrine de Prêmios (CRUD Admin)
 routes.get('/premios', PremioController.listAdmin);

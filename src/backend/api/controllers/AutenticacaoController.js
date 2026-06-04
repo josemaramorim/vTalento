@@ -47,7 +47,9 @@ class AutenticacaoController {
         liberacao_emergencia: empresa ? !!empresa.liberacao_emergencia : false,
         emergencia_expiracao: empresa ? empresa.emergencia_expiracao : null,
         perfil: usuario.perfil,
-        tema_preferido: usuario.tema_preferido || 'dark'
+        tema_preferido: usuario.tema_preferido || 'dark',
+        provedor_ia: empresa ? empresa.provedor_ia : null,
+        tem_chave_ia: empresa ? !!empresa.chave_ia_encriptada : false
       });
     } catch (err) {
       return res.status(500).json({ error: err.message });

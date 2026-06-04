@@ -185,6 +185,25 @@
                                 </div>
                             </div>
 
+                            <h3 style="font-size: 1.05rem; color: var(--text-primary); margin-top: 30px; margin-bottom: 15px; border-top: 1px solid var(--glass-border); padding-top: 20px;">🤖 Configuração do Copiloto IA (Multi-LLM)</h3>
+                            <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 20px;">Escolha o provedor de inteligência artificial de sua preferência e informe a chave da API para habilitar o assistente nos motores de importação.</p>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="empresaProvedorIaSelect">Provedor de IA</label>
+                                    <select id="empresaProvedorIaSelect" style="width: 100%; padding: 10px 15px; border-radius: var(--radius-sm); border: 1px solid var(--glass-border); background: rgba(255, 255, 255, 0.05); color: var(--text-primary); cursor: pointer; transition: all 0.2s;">
+                                        <option value="" style="background: #111;">-- Nenhum (Usar Fallback Local/Mock) --</option>
+                                        <option value="GEMINI" style="background: #111;">Google Gemini</option>
+                                        <option value="OPENAI" style="background: #111;">OpenAI (GPT-4o)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="empresaChaveIaInput">Chave de API do Provedor</label>
+                                    <input type="password" id="empresaChaveIaInput" placeholder="Chave de API (Deixe em branco para manter a atual)">
+                                    <small id="empresaChaveIaStatus" style="font-size: 0.75rem; color: var(--accent-primary); display: none; margin-top: 5px;">✔ Chave de API configurada e encriptada</small>
+                                </div>
+                            </div>
+
                             <div style="text-align: right; margin-top: 30px;">
                                 <button type="submit" class="btn btn-primary" id="btnSalvarEmpresa">SALVAR CONFIGURAÇÕES DA EMPRESA</button>
                             </div>
@@ -237,6 +256,8 @@
                     currentUser.saldo_a_receber = latestData.saldo_a_receber;
                     currentUser.perfil = latestData.perfil;
                     currentUser.tema_preferido = latestData.tema_preferido || 'dark';
+                    currentUser.provedor_ia = latestData.provedor_ia;
+                    currentUser.tem_chave_ia = latestData.tem_chave_ia;
                     localStorage.setItem('@VTalentos:user', JSON.stringify(currentUser));
                     
                     // Garante que o menu lateral sincroniza com o perfil mais atualizado do banco
@@ -280,6 +301,15 @@
                 const activeColor = currentUser.empresa_cor_primaria || '#D4AF37';
                 document.getElementById('empresaCorInput').value = activeColor;
                 document.getElementById('empresaCorHexInput').value = activeColor.toUpperCase();
+
+                // Sincroniza campos de IA
+                document.getElementById('empresaProvedorIaSelect').value = currentUser.provedor_ia || '';
+                const keyStatusEl = document.getElementById('empresaChaveIaStatus');
+                if (currentUser.tem_chave_ia) {
+                    keyStatusEl.style.display = 'block';
+                } else {
+                    keyStatusEl.style.display = 'none';
+                }
             } else {
                 document.getElementById('empresaConfigSection').style.display = 'none';
             }
@@ -398,12 +428,16 @@
             const logo_url = document.getElementById('empresaLogoInput').value;
             const cor_primaria = document.getElementById('empresaCorHexInput').value || colorPicker.value;
 
+            const provedor_ia = document.getElementById('empresaProvedorIaSelect').value;
+            const chave_ia = document.getElementById('empresaChaveIaInput').value;
+
             const btnSalvarEmpresa = document.getElementById('btnSalvarEmpresa');
 
             try {
                 btnSalvarEmpresa.disabled = true;
                 btnSalvarEmpresa.innerText = 'SALVANDO...';
 
+                // 1. Atualiza Branding/Dados Gerais
                 const response = await fetch('http://localhost:3001/api/admin/empresa', {
                     method: 'PUT',
                     headers: {
@@ -424,8 +458,38 @@
                     throw new Error(resData.error || 'Erro ao atualizar dados da empresa');
                 }
 
-                showToast('Configurações da empresa atualizadas com sucesso!', 'success');
+                // 2. Atualiza Configuração do Copiloto IA
+                const bodyIa = { provedor_ia };
+                if (chave_ia) {
+                    bodyIa.chave_ia = chave_ia;
+                } else if (!provedor_ia) {
+                    bodyIa.chave_ia = ""; // limpa a chave se o provedor for limpo
+                }
+
+                const iaResponse = await fetch('http://localhost:3001/api/admin/ia/config', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(bodyIa)
+                });
+
+                if (iaResponse.status === 401) {
+                    logout();
+                    return;
+                }
+
+                const iaResData = await iaResponse.json();
+                if (!iaResponse.ok || !iaResData.success) {
+                    throw new Error(iaResData.error || 'Erro ao atualizar configurações de IA');
+                }
+
+                showToast('Configurações da empresa e de IA atualizadas!', 'success');
                 
+                // Limpa o campo de chave após atualizar com sucesso
+                document.getElementById('empresaChaveIaInput').value = '';
+
                 // Sincroniza e recarrega os dados na tela
                 await syncProfileInfo();
 

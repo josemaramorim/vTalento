@@ -556,4 +556,42 @@ Esta fase permite que o administrador da empresa (`ADMIN_EMPRESA`) gerencie a id
 - [x] **Tarefa 29.4 (Frontend):** Adicionar o painel expansível e colapsável de metadados no modal de detalhes em `admin-movimentacoes.html`.
 - [x] **Tarefa 29.5 (Testes):** Verificar o funcionamento simulado no navegador e confirmar se as movimentações mostram metadados corretos.
 
+---
+
+## FASE 18: Copiloto de Importação Inteligente (IA-First & Multi-LLM)
+
+### História 30: Infraestrutura e Padrão Strategy/Adapter para Múltiplas IAs (Gemini & OpenAI)
+*Como arquiteto, quero implementar uma infraestrutura baseada no padrão Strategy/Adapter para suportar múltiplos provedores de IA (Gemini e OpenAI) selecionáveis pelo usuário.*
+
+- [x] **Tarefa 30.1 (Infra / Banco):** Criar migration `20260603000000_add_ia_config_to_empresa.js` para adicionar `provedor_ia` (string, nullable) e `chave_ia_encriptada` (text, nullable) na tabela `GamEmpresa`.
+- [x] **Tarefa 30.2 (Backend):** Criar a classe abstrata `BaseIaAdapter.js` na nova pasta `src/backend/core/services/ia/`.
+- [x] **Tarefa 30.3 (Backend):** Criar a classe `GeminiIaAdapter.js` que implementa `BaseIaAdapter` conectando-se ao Google Gemini API para geração de fluxos JSON, sugestão de sanitizadores e diagnósticos.
+- [x] **Tarefa 30.4 (Backend):** Criar a classe `OpenAiIaAdapter.js` que implementa `BaseIaAdapter` conectando-se à API OpenAI Chat Completion para o mesmo escopo.
+- [x] **Tarefa 30.5 (Backend):** Criar a fábrica `IaFactory.js` para gerenciar a inicialização dos adapters de forma dinâmica com base na configuração do inquilino no banco de dados e fallback local inteligente.
+
+### História 31: Endpoints de IA e Segurança Multi-Tenant
+*Como desenvolvedor, quero expor endpoints seguros e restritos a inquilinos para consultas ao Copiloto de IA.*
+
+- [x] **Tarefa 31.1 (Backend):** Criar `IaController.js` contendo a lógica dos endpoints de geração de fluxo, sugestões e diagnósticos.
+- [x] **Tarefa 31.2 (Backend):** Registrar as rotas de IA no arquivo `admin.js` (`POST /api/admin/ia/gerar-fluxo`, `POST /api/admin/ia/sugerir-sanitizacao`, `POST /api/admin/ia/diagnosticar`, `PUT /api/admin/ia/config`), protegidas por `tenantMiddleware` e `adminMiddleware`.
+- [x] **Tarefa 31.3 (Testes):** Desenvolver testes unitários `IaStrategy.test.js` e testes de integração `IaController.test.js`.
+
+### História 32: Painel de Configurações de IA no Perfil da Empresa
+*Como administrador, quero configurar qual IA (Gemini ou OpenAI) minha empresa usará e cadastrar de forma segura a minha chave de API.*
+
+- [x] **Tarefa 32.1 (Backend):** Atualizar o endpoint `/api/auth/me` para retornar a configuração de IA ativa da empresa.
+- [x] **Tarefa 32.2 (Frontend):** Desenvolver na página `meu-perfil.html` (dentro de Configurações da Empresa) a interface de seleção de provedores de IA e salvamento criptografado da chave de API.
+
+### História 33: Widget Flutuante Glassmorphic do Copiloto IA (Chat e Ações Contextuais)
+*Como administrador, quero um assistente conversacional inteligente que me ajude a criar fluxos e diagnosticar erros em tempo real.*
+
+- [x] **Tarefa 33.1 (Frontend):** Implementar a função global `initAiCopilot()` no `auth.js` para renderizar o widget flutuante e o drawer lateral glassmorphic nas telas de importação.
+- [x] **Tarefa 33.2 (Frontend):** Integrar o Copiloto IA na tela `admin-importacao-programavel.html` permitindo gerar fluxos automaticamente por prompt e corrigir scripts Monaco com erros.
+- [x] **Tarefa 33.3 (Frontend):** Integrar o Copiloto IA em `admin-importacao-upload.html` e `admin-importacao-preview.html` para assistência contextual no upload e diagnóstico de erros com sugestões do "Import Doctor".
+
+### História 34: Correção de Bug do Fator de Conversão no Gerador No-Code
+*Como administrador, quero que os valores das transações criadas por nós No-Code sejam corretamente divididos pelo fator de conversão antes de salvar.*
+
+- [x] **Tarefa 34.1 (Frontend):** Atualizar a lógica de compilação em `admin-importacao-programavel.html` para aplicar a divisão por `fatorConversao` nas transações geradas para sinal, parcelas e balões.
+- [x] **Tarefa 34.2 (Testes):** Adaptar e verificar os testes unitários do motor programável para garantir conformidade com a divisão do fator.
 

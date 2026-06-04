@@ -229,6 +229,96 @@ window.showConfirmModal = function(title, message, onConfirm, onCancel = null) {
     backdrop.querySelector('#modalBtnCancel').addEventListener('click', cancelAction);
 };
 
+// Função global para Modal de Input (Prompt) Premium Glassmorphism
+window.showPromptModal = function(title, message, placeholder, onConfirm, onCancel = null) {
+    const existing = document.getElementById('premiumPromptModal');
+    if (existing) existing.remove();
+
+    const backdrop = document.createElement('div');
+    backdrop.id = 'premiumPromptModal';
+    backdrop.style.cssText = `
+        position: fixed;
+        top: 0; left: 0;
+        width: 100vw; height: 100vh;
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    `;
+
+    const card = document.createElement('div');
+    card.className = 'modal-card glass';
+    card.style.cssText = `
+        max-width: 480px;
+        width: 90%;
+        padding: 30px;
+        border-radius: var(--radius-md, 12px);
+        border: 1px solid var(--glass-border);
+        background: var(--glass-bg, rgba(20,20,20,0.8));
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        transform: scale(0.9);
+        transition: transform 0.3s ease;
+        text-align: center;
+    `;
+
+    card.innerHTML = `
+        <div style="font-size: 2.5rem; margin-bottom: 15px; color: var(--accent-primary, #D4AF37);">🤖</div>
+        <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 12px; color: var(--text-primary, #fff);">${title}</h3>
+        <p style="font-size: 0.88rem; color: var(--text-secondary, #a9b2c3); line-height: 1.5; margin-bottom: 20px;">${message}</p>
+        <div style="margin-bottom: 25px;">
+            <input type="text" id="modalPromptInput" placeholder="${placeholder}" class="form-control" style="width: 100%; padding: 12px 15px; border-radius: 8px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.05); color: #fff; box-sizing: border-box; font-size: 0.85rem;">
+        </div>
+        <div style="display: flex; justify-content: center; gap: 12px;">
+            <button id="promptBtnCancel" class="btn" style="background: rgba(255, 255, 255, 0.05); color: var(--text-secondary, #a9b2c3); border: 1px solid var(--glass-border); padding: 10px 20px; font-weight: 600; border-radius: 8px; cursor: pointer;">Cancelar</button>
+            <button id="promptBtnConfirm" class="btn btn-primary" style="padding: 10px 24px; font-weight: 600; background: var(--accent-primary, #D4AF37); color: #fff; border: none; border-radius: 8px; cursor: pointer;">Confirmar</button>
+        </div>
+    `;
+
+    backdrop.appendChild(card);
+    document.body.appendChild(backdrop);
+
+    // Fade in
+    setTimeout(() => {
+        backdrop.style.opacity = '1';
+        card.style.transform = 'scale(1)';
+        document.getElementById('modalPromptInput').focus();
+    }, 10);
+
+    const close = () => {
+        backdrop.style.opacity = '0';
+        card.style.transform = 'scale(0.9)';
+        setTimeout(() => {
+            backdrop.remove();
+        }, 300);
+    };
+
+    backdrop.querySelector('#promptBtnConfirm').addEventListener('click', () => {
+        const val = document.getElementById('modalPromptInput').value.trim();
+        close();
+        if (onConfirm) onConfirm(val);
+    });
+
+    backdrop.querySelector('#modalPromptInput').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            const val = document.getElementById('modalPromptInput').value.trim();
+            close();
+            if (onConfirm) onConfirm(val);
+        }
+    });
+
+    const cancelAction = () => {
+        close();
+        if (onCancel) onCancel();
+    };
+
+    backdrop.querySelector('#promptBtnCancel').addEventListener('click', cancelAction);
+};
+
 // Função para verificar se está logado
 function checkAuth() {
     const token = localStorage.getItem('@VTalentos:token');
@@ -577,4 +667,648 @@ window.addEventListener('DOMContentLoaded', async () => {
             await saveThemePreference(newTheme);
         });
     });
+
+    // Inicialização automática do Copiloto IA (FASE 18)
+    const isImportPage = window.location.pathname.includes('admin-importacao-upload') ||
+                         window.location.pathname.includes('admin-importacao-preview') ||
+                         window.location.pathname.includes('admin-importacao-programavel');
+    if (isImportPage) {
+        window.initAiCopilot();
+    }
 });
+
+// Implementação do Copiloto IA (Strategy/Multi-LLM) - Widget e Gaveta Flutuante
+window.initAiCopilot = function() {
+    const token = localStorage.getItem('@VTalentos:token');
+    if (!token) return;
+
+    // Evita inicialização dupla
+    if (document.getElementById('copilotoWidgetContainer')) return;
+
+    // Injeta Estilos Premium (Glassmorphic)
+    const styleEl = document.createElement('style');
+    styleEl.textContent = `
+        .copiloto-widget {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 10000;
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        .copiloto-trigger {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-primary, #D4AF37), #9b59b6);
+            border: 2px solid rgba(255,255,255,0.15);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+            color: white;
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .copiloto-trigger:hover {
+            transform: scale(1.1) rotate(5deg);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.45);
+        }
+        .copiloto-drawer {
+            position: fixed;
+            top: 0;
+            right: -420px;
+            width: 400px;
+            height: 100vh;
+            background: rgba(18, 19, 26, 0.92);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border-left: 1px solid rgba(255,255,255,0.08);
+            box-shadow: -15px 0 45px rgba(0,0,0,0.6);
+            transition: right 0.4s cubic-bezier(0.075, 0.82, 0.165, 1);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+        }
+        .copiloto-drawer.open {
+            right: 0;
+        }
+        .copiloto-header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(0,0,0,0.3);
+        }
+        .copiloto-header h3 {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .copiloto-close {
+            background: none;
+            border: none;
+            font-size: 1.3rem;
+            color: var(--text-secondary, #a9b2c3);
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .copiloto-close:hover {
+            color: #fff;
+        }
+        .copiloto-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .copiloto-msg {
+            max-width: 85%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 0.82rem;
+            line-height: 1.5;
+            word-break: break-word;
+        }
+        .copiloto-msg-system {
+            align-self: flex-start;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            color: #e2e8f0;
+            border-top-left-radius: 2px;
+        }
+        .copiloto-msg-user {
+            align-self: flex-end;
+            background: linear-gradient(135deg, var(--accent-primary, #D4AF37), #9b59b6);
+            color: white;
+            border-top-right-radius: 2px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+        .copiloto-msg pre {
+            background: rgba(0,0,0,0.4);
+            padding: 8px 12px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-family: monospace;
+            font-size: 0.75rem;
+            margin-top: 8px;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        .copiloto-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .copiloto-btn-action {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #e2e8f0;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 0.78rem;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .copiloto-btn-action:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: var(--accent-primary, #D4AF37);
+        }
+        .copiloto-footer {
+            padding: 15px 20px;
+            border-top: 1px solid rgba(255,255,255,0.08);
+            display: flex;
+            gap: 10px;
+            background: rgba(0,0,0,0.3);
+        }
+        .copiloto-input {
+            flex: 1;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #fff;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+        .copiloto-input:focus {
+            border-color: var(--accent-primary, #D4AF37);
+            outline: none;
+            background: rgba(255,255,255,0.08);
+        }
+        .copiloto-send {
+            background: var(--accent-primary, #D4AF37);
+            color: white;
+            border: none;
+            padding: 0 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .copiloto-send:hover {
+            filter: brightness(1.1);
+            transform: translateY(-1px);
+        }
+        .one-click-fix-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 10px;
+            background: rgba(46, 204, 113, 0.15);
+            border: 1px solid rgba(46, 204, 113, 0.35);
+            color: #2ecc71;
+            font-weight: 700;
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 0.78rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .one-click-fix-btn:hover {
+            background: #2ecc71;
+            color: white;
+            box-shadow: 0 4px 12px rgba(46, 204, 113, 0.3);
+        }
+        .copiloto-typing {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            padding: 8px 12px;
+            background: rgba(255,255,255,0.02);
+            border-radius: 8px;
+            width: fit-content;
+        }
+        .copiloto-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--text-secondary, #a9b2c3);
+            border-radius: 50%;
+            animation: copilotoBounce 1.4s infinite both;
+        }
+        .copiloto-dot:nth-child(2) { animation-delay: .2s; }
+        .copiloto-dot:nth-child(3) { animation-delay: .4s; }
+        @keyframes copilotoBounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+    `;
+    document.head.appendChild(styleEl);
+
+    // Create container
+    const container = document.createElement('div');
+    container.id = 'copilotoWidgetContainer';
+    container.className = 'copiloto-widget';
+
+    container.innerHTML = `
+        <div class="copiloto-trigger" id="copilotoTriggerBtn" title="Abrir Copiloto IA">🤖</div>
+        <div class="copiloto-drawer" id="copilotoDrawer">
+            <div class="copiloto-header">
+                <h3>🤖 Copiloto IA VTalentos</h3>
+                <button class="copiloto-close" id="copilotoCloseBtn">×</button>
+            </div>
+            <div class="copiloto-messages" id="copilotoMessages">
+                <!-- Welcome Message -->
+            </div>
+            <div class="copiloto-footer">
+                <input type="text" class="copiloto-input" id="copilotoInput" placeholder="Pergunte algo ou solicite ajuda...">
+                <button class="copiloto-send" id="copilotoSendBtn">Enviar</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(container);
+
+    const triggerBtn = document.getElementById('copilotoTriggerBtn');
+    const drawer = document.getElementById('copilotoDrawer');
+    const closeBtn = document.getElementById('copilotoCloseBtn');
+    const msgContainer = document.getElementById('copilotoMessages');
+    const inputField = document.getElementById('copilotoInput');
+    const sendBtn = document.getElementById('copilotoSendBtn');
+
+    // Toggle Drawer
+    triggerBtn.addEventListener('click', () => {
+        drawer.classList.toggle('open');
+        triggerBtn.style.display = drawer.classList.contains('open') ? 'none' : 'flex';
+    });
+
+    closeBtn.addEventListener('click', () => {
+        drawer.classList.remove('open');
+        triggerBtn.style.display = 'flex';
+    });
+
+    // Helper: Add Message
+    function addMessage(content, sender = 'system', customHtml = '') {
+        const msg = document.createElement('div');
+        msg.className = `copiloto-msg copiloto-msg-${sender}`;
+        msg.innerHTML = content + customHtml;
+        msgContainer.appendChild(msg);
+        msgContainer.scrollTop = msgContainer.scrollHeight;
+    }
+
+    // Helper: Show/Hide Typing Indicator
+    let typingIndicator = null;
+    function showTyping() {
+        if (typingIndicator) return;
+        typingIndicator = document.createElement('div');
+        typingIndicator.className = 'copiloto-msg copiloto-msg-system copiloto-typing';
+        typingIndicator.innerHTML = `
+            <div class="copiloto-dot"></div>
+            <div class="copiloto-dot"></div>
+            <div class="copiloto-dot"></div>
+        `;
+        msgContainer.appendChild(typingIndicator);
+        msgContainer.scrollTop = msgContainer.scrollHeight;
+    }
+
+    function hideTyping() {
+        if (typingIndicator) {
+            typingIndicator.remove();
+            typingIndicator = null;
+        }
+    }
+
+    // Helper: Extrapolar colunas
+    function obterColunasExcel() {
+        let cols = [];
+        if (window.flowchartData?.nodes) {
+            const node = window.flowchartData.nodes.find(n => n.type === 'excel_input');
+            if (node?.data?.columns) {
+                cols = node.data.columns.map(c => c.label || c.letter);
+            }
+        }
+        if (cols.length === 0) {
+            document.querySelectorAll('table thead th').forEach(th => {
+                const text = th.innerText.trim();
+                if (text && text !== 'Linha' && text !== 'Ações' && text !== 'Status') {
+                    cols.push(text);
+                }
+            });
+        }
+        return cols.length > 0 ? cols : ["Nome/Consultor", "Coluna_B", "ValorComissao"];
+    }
+
+    // Helper: Contexto do erro
+    function obterContextoErroPagina() {
+        const terminalEl = document.querySelector('.terminal-console');
+        if (terminalEl) {
+            const errors = Array.from(terminalEl.querySelectorAll('.terminal-line.error')).map(el => el.innerText).join('\n');
+            return errors || terminalEl.innerText;
+        }
+        const errorLogsEl = document.getElementById('errorLogs') || document.querySelector('.error-logs-container') || document.querySelector('.inconsistencias-wrapper');
+        if (errorLogsEl) {
+            return errorLogsEl.innerText;
+        }
+        const alertEl = document.querySelector('.alert-danger, .error-message, .alert-error');
+        if (alertEl) {
+            return alertEl.innerText;
+        }
+        return 'Nenhum log de erro visualizado na tela.';
+    }
+
+    // Welcome Message & Quick Actions based on page context
+    const isProgramavel = window.location.pathname.includes('admin-importacao-programavel');
+    const isUpload = window.location.pathname.includes('admin-importacao-upload');
+    const isPreview = window.location.pathname.includes('admin-importacao-preview');
+
+    let welcomeText = `Olá! Sou o seu <strong>Copiloto IA do V-Talentos</strong>. Como posso ajudar com sua importação?`;
+    let actionsHtml = `<div class="copiloto-actions">`;
+
+    if (isProgramavel) {
+        welcomeText = `Olá! Sou o seu <strong>Copiloto do Motor Programável</strong>. Posso te ajudar a gerar configurações, criar funções de sanitização personalizadas ou diagnosticar falhas na simulação.`;
+        actionsHtml += `
+            <button class="copiloto-btn-action" data-action="gerar">💡 Gerar Configuração por Prompt</button>
+            <button class="copiloto-btn-action" data-action="sanitizar">🔤 Sugerir Sanitização de Texto</button>
+            <button class="copiloto-btn-action" data-action="diagnosticar">🩺 Diagnosticar Último Erro</button>
+        `;
+    } else if (isUpload) {
+        welcomeText = `Olá! Posso ajudar você a entender as colunas obrigatórias do V-Talentos e como estruturar sua planilha de forma correta.`;
+        actionsHtml += `
+            <button class="copiloto-btn-action" data-action="ajuda_upload">📋 Como estruturar minha planilha?</button>
+            <button class="copiloto-btn-action" data-action="verificar_erros">🔍 Diagnosticar erros de validação</button>
+        `;
+    } else if (isPreview) {
+        welcomeText = `Olá! Estamos na fase de pré-visualização dos dados. Posso ajudar você a identificar o porquê de linhas inválidas ou corretores não encontrados.`;
+        actionsHtml += `
+            <button class="copiloto-btn-action" data-action="diagnosticar">🩺 Diagnosticar erros de inconsistência</button>
+        `;
+    }
+    actionsHtml += `</div>`;
+
+    addMessage(welcomeText, 'system', actionsHtml);
+
+    // Click Actions Handler
+    msgContainer.addEventListener('click', async (e) => {
+        const btn = e.target.closest('.copiloto-btn-action');
+        if (!btn) return;
+
+        const action = btn.getAttribute('data-action');
+        
+        if (action === 'gerar') {
+            window.showPromptModal(
+                'Gerar Configuração por Prompt',
+                'Descreva o que o seu motor de importação deve fazer para gerarmos o mapeamento correto.',
+                'Ex: Mapeie a coluna A para o nome em maiúsculas e a coluna B para comissões',
+                async (promptStr) => {
+                    if (!promptStr) return;
+                    addMessage('Solicitar geração de configuração: "' + promptStr + '"', 'user');
+                    await executarGeracaoFluxo(promptStr);
+                }
+            );
+        } else if (action === 'sanitizar') {
+            window.showPromptModal(
+                'Sugerir Sanitização de Texto',
+                'O que você deseja fazer com a coluna? O copiloto gerará a regra correspondente.',
+                'Ex: Remover pontuação do CPF, Formatar e-mail para minúsculas',
+                async (objetivo) => {
+                    if (!objetivo) return;
+                    addMessage('Solicitar sugestão de sanitização: "' + objetivo + '"', 'user');
+                    await executarSugestaoSanitizacao(objetivo);
+                }
+            );
+        } else if (action === 'diagnosticar' || action === 'verificar_erros') {
+            addMessage('Solicitar diagnóstico de erro', 'user');
+            await executarDiagnosticoErro();
+        } else if (action === 'ajuda_upload') {
+            addMessage('Como estruturar minha planilha?', 'user');
+            showTyping();
+            setTimeout(() => {
+                hideTyping();
+                addMessage(`
+                    <strong>Estrutura de Planilha Recomendada:</strong><br>
+                    1. <strong>Linha de Cabeçalho:</strong> Deve conter títulos claros nas colunas (Ex: Nome, CPF, Comissão).<br>
+                    2. <strong>Campos Obrigatórios:</strong> Para importar com sucesso, o sistema exige:<br>
+                       - Nome ou CPF do Consultor (para identificação).<br>
+                       - Valor (em Reais - será convertido em Talentos usando o fator cadastrado).<br>
+                    3. <strong>Fator de Conversão:</strong> Ex: se o fator for 100, uma venda de R$ 1.500 gerará 15 Talentos no extrato.
+                `, 'system');
+            }, 600);
+        }
+    });
+
+    // Execute Gerar Fluxo API
+    async function executarGeracaoFluxo(promptText) {
+        showTyping();
+        try {
+            const cols = obterColunasExcel();
+            const response = await fetch('http://localhost:3001/api/admin/ia/gerar-fluxo', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ promptUsuario: promptText, colunasExcel: cols })
+            });
+
+            const data = await response.json();
+            hideTyping();
+
+            if (!response.ok || !data.success) {
+                throw new Error(data.error || 'Erro na resposta do Copiloto');
+            }
+
+            // Exibe resposta
+            const jsonStr = JSON.stringify(data.json, null, 2);
+            let applyBtnHtml = '';
+            if (isProgramavel && window.editorInstance) {
+                applyBtnHtml = `<button class="one-click-fix-btn" id="btnApplyIaJson" data-json='${JSON.stringify(data.json)}'>⚡ Aplicar Configuração no Editor</button>`;
+            }
+
+            addMessage(`
+                <strong>Configuração Gerada com Sucesso:</strong><br>
+                Mapeamento gerado com base nas colunas: <code>${cols.join(', ')}</code>.
+                <pre><code>${jsonStr}</code></pre>
+            `, 'system', applyBtnHtml);
+
+            // Bind Apply Button
+            const applyBtn = document.getElementById('btnApplyIaJson');
+            if (applyBtn) {
+                applyBtn.addEventListener('click', (ev) => {
+                    const targetJson = JSON.parse(ev.currentTarget.getAttribute('data-json'));
+                    window.editorInstance.setValue(JSON.stringify(targetJson, null, 2));
+                    if (typeof window.parseJSONToFlowchart === 'function') {
+                        window.parseJSONToFlowchart();
+                    }
+                    showToast('Fluxo gerado por IA aplicado no editor!', 'success');
+                    ev.currentTarget.remove();
+                });
+            }
+
+        } catch (err) {
+            hideTyping();
+            addMessage(`Falha ao gerar fluxo: ${err.message}`, 'system');
+        }
+    }
+
+    // Execute Sugerir Sanitizacao API
+    async function executarSugestaoSanitizacao(objetivo) {
+        showTyping();
+        try {
+            const response = await fetch('http://localhost:3001/api/admin/ia/sugerir-sanitizacao', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ exemploDados: ["amostra"], objetivo })
+            });
+
+            const data = await response.json();
+            hideTyping();
+
+            if (!response.ok || !data.success) {
+                throw new Error(data.error || 'Erro na resposta do Copiloto');
+            }
+
+            let applyBtnHtml = '';
+            if (isProgramavel && window.propEditorInstance) {
+                applyBtnHtml = `<button class="one-click-fix-btn" id="btnApplyIaScript" data-script="${btoa(data.script)}">⚡ Aplicar no Nó Selecionado</button>`;
+            }
+
+            addMessage(`
+                <strong>Sugestão de Sanitização:</strong><br>
+                ${data.explicacao}<br>
+                Regra recomendada: <code>${data.regra}</code>
+                <pre><code>${data.script}</code></pre>
+            `, 'system', applyBtnHtml);
+
+            const applyBtn = document.getElementById('btnApplyIaScript');
+            if (applyBtn) {
+                applyBtn.addEventListener('click', (ev) => {
+                    const scriptCode = atob(ev.currentTarget.getAttribute('data-script'));
+                    window.propEditorInstance.setValue(scriptCode);
+                    showToast('Script de sanitização IA aplicado!', 'success');
+                    ev.currentTarget.remove();
+                });
+            }
+
+        } catch (err) {
+            hideTyping();
+            addMessage(`Falha ao sugerir sanitização: ${err.message}`, 'system');
+        }
+    }
+
+    // Execute Diagnosticar Erro API
+    async function executarDiagnosticoErro(customPrompt = '') {
+        showTyping();
+        try {
+            const lastErrorText = customPrompt || obterContextoErroPagina();
+            let schemaAtual = {};
+            if (isProgramavel && window.editorInstance) {
+                try {
+                    schemaAtual = JSON.parse(window.editorInstance.getValue());
+                } catch (e) {}
+            }
+
+            const response = await fetch('http://localhost:3001/api/admin/ia/diagnosticar', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    mensagemErro: lastErrorText,
+                    contexto: {
+                        pagina: window.location.pathname,
+                        schema: schemaAtual,
+                        ...(customPrompt && { logsPagina: obterContextoErroPagina() })
+                    }
+                })
+            });
+
+            const data = await response.json();
+            hideTyping();
+
+            if (!response.ok || !data.success) {
+                throw new Error(data.error || 'Erro na resposta do Copiloto');
+            }
+
+            let applyBtnHtml = '';
+            if (data.tipo_correcao === 'script' && data.script_corrigido) {
+                if (isProgramavel && window.propEditorInstance) {
+                    applyBtnHtml = `<button class="one-click-fix-btn" id="btnApplyIaDiagnosticScript" data-script="${btoa(data.script_corrigido)}">⚡ Aplicar Script Corrigido</button>`;
+                }
+            } else if (data.tipo_correcao === 'json' && data.script_corrigido) {
+                if (isProgramavel && window.editorInstance) {
+                    applyBtnHtml = `<button class="one-click-fix-btn" id="btnApplyIaDiagnosticJson" data-json="${btoa(data.script_corrigido)}">⚡ Aplicar JSON Corrigido</button>`;
+                }
+            }
+
+            addMessage(`
+                <strong>Diagnóstico do Copiloto:</strong><br>
+                ${data.explicacao}<br><br>
+                <strong>Sugestão de Resolução:</strong><br>
+                ${data.sugestao_correcao}
+                ${data.script_corrigido ? `<pre><code>${data.script_corrigido}</code></pre>` : ''}
+            `, 'system', applyBtnHtml);
+
+            // Bind actions
+            const applyScriptBtn = document.getElementById('btnApplyIaDiagnosticScript');
+            if (applyScriptBtn) {
+                applyScriptBtn.addEventListener('click', (ev) => {
+                    const code = atob(ev.currentTarget.getAttribute('data-script'));
+                    window.propEditorInstance.setValue(code);
+                    showToast('Script corrigido aplicado no nó!', 'success');
+                    ev.currentTarget.remove();
+                });
+            }
+
+            const applyJsonBtn = document.getElementById('btnApplyIaDiagnosticJson');
+            if (applyJsonBtn) {
+                applyJsonBtn.addEventListener('click', (ev) => {
+                    const code = atob(ev.currentTarget.getAttribute('data-json'));
+                    window.editorInstance.setValue(code);
+                    if (typeof window.parseJSONToFlowchart === 'function') {
+                        window.parseJSONToFlowchart();
+                    }
+                    showToast('Configuração JSON corrigida aplicada!', 'success');
+                    ev.currentTarget.remove();
+                });
+            }
+
+        } catch (err) {
+            hideTyping();
+            addMessage(`Falha ao diagnosticar erros: ${err.message}`, 'system');
+        }
+    }
+
+    // Chat submit event
+    async function handleChatSubmit() {
+        const text = inputField.value.trim();
+        if (!text) return;
+
+        inputField.value = '';
+        addMessage(text, 'user');
+
+        const textLower = text.toLowerCase();
+
+        // Smart dispatcher
+        if (textLower.includes('gerar') || textLower.includes('mapear') || textLower.includes('fluxo') || textLower.includes('config')) {
+            await executarGeracaoFluxo(text);
+        } else if (textLower.includes('sanitizar') || textLower.includes('limpar') || textLower.includes('formatar')) {
+            await executarSugestaoSanitizacao(text);
+        } else {
+            // Generico / Diagnostico / Conversa
+            await executarDiagnosticoErro(text);
+        }
+    }
+
+    sendBtn.addEventListener('click', handleChatSubmit);
+    inputField.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            handleChatSubmit();
+        }
+    });
+};
+

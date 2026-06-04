@@ -2922,7 +2922,7 @@
                     generatorScript += `let just_sinal = "${sinalNode.data.justificativa || 'Entrada de Contrato'}";\n`;
                     generatorScript += `just_sinal = just_sinal.replace(/\\{\\{([A-Z])\\}\\}/g, (match, col) => row[col] || '');\n`;
                     generatorScript += `list.push({\n`;
-                    generatorScript += `  valor: val_sinal,\n`;
+                    generatorScript += `  valor: Math.floor(val_sinal / (fatorConversao || 100)),\n`;
                     generatorScript += `  data_vencimento: parseExcelDate(data_sinal).toISOString().split('T')[0],\n`;
                     generatorScript += `  status: "${sinalNode.data.status || 'COMPENSADO'}",\n`;
                     generatorScript += `  justificativa: just_sinal,\n`;
@@ -2952,7 +2952,7 @@
                     generatorScript += `  let just_parcela = "${parcelasNode.data.justificativa || 'Parcela {i}/{total}'}";\n`;
                     generatorScript += `  just_parcela = just_parcela.replace('{i}', i).replace('{total}', qtd_total).replace(/\\{\\{([A-Z])\\}\\}/g, (match, col) => row[col] || '');\n`;
                     generatorScript += `  list.push({\n`;
-                    generatorScript += `    valor: valor_parcela,\n`;
+                    generatorScript += `    valor: Math.floor(valor_parcela / (fatorConversao || 100)),\n`;
                     generatorScript += `    data_vencimento: data_venc,\n`;
                     generatorScript += `    status: status_parcela,\n`;
                     generatorScript += `    justificativa: just_parcela,\n`;
@@ -2982,7 +2982,7 @@
                     generatorScript += `    let just_balao = "${baloesNode.data.justificativa || 'Balão Reforço {i}/{total}'}";\n`;
                     generatorScript += `    just_balao = just_balao.replace('{i}', idx + 1).replace('{total}', datas.length).replace(/\\{\\{([A-Z])\\}\\}/g, (match, col) => row[col] || '');\n`;
                     generatorScript += `    list.push({\n`;
-                    generatorScript += `      valor: valor_balao,\n`;
+                    generatorScript += `      valor: Math.floor(valor_balao / (fatorConversao || 100)),\n`;
                     generatorScript += `      data_vencimento: data_venc,\n`;
                     generatorScript += `      status: "${baloesNode.data.status || 'PENDENTE'}",\n`;
                     generatorScript += `      justificativa: just_balao,\n`;
