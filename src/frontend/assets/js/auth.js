@@ -1173,7 +1173,7 @@ window.initAiCopilot = function() {
 
             let applyBtnHtml = '';
             if (isProgramavel && window.propEditorInstance) {
-                applyBtnHtml = `<button class="one-click-fix-btn" id="btnApplyIaScript" data-script="${btoa(data.script)}">⚡ Aplicar no Nó Selecionado</button>`;
+                applyBtnHtml = `<button class="one-click-fix-btn" id="btnApplyIaScript" data-script="${btoa(unescape(encodeURIComponent(data.script)))}">⚡ Aplicar no Nó Selecionado</button>`;
             }
 
             addMessage(`
@@ -1186,7 +1186,7 @@ window.initAiCopilot = function() {
             const applyBtn = document.getElementById('btnApplyIaScript');
             if (applyBtn) {
                 applyBtn.addEventListener('click', (ev) => {
-                    const scriptCode = atob(ev.currentTarget.getAttribute('data-script'));
+                    const scriptCode = decodeURIComponent(escape(atob(ev.currentTarget.getAttribute('data-script'))));
                     window.propEditorInstance.setValue(scriptCode);
                     showToast('Script de sanitização IA aplicado!', 'success');
                     ev.currentTarget.remove();
@@ -1234,14 +1234,19 @@ window.initAiCopilot = function() {
                 throw new Error(data.error || 'Erro na resposta do Copiloto');
             }
 
+            let scriptText = data.script_corrigido || '';
+            if (scriptText && typeof scriptText === 'object') {
+                scriptText = JSON.stringify(scriptText, null, 2);
+            }
+
             let applyBtnHtml = '';
-            if (data.tipo_correcao === 'script' && data.script_corrigido) {
+            if (data.tipo_correcao === 'script' && scriptText) {
                 if (isProgramavel && window.propEditorInstance) {
-                    applyBtnHtml = `<button class="one-click-fix-btn" id="btnApplyIaDiagnosticScript" data-script="${btoa(data.script_corrigido)}">⚡ Aplicar Script Corrigido</button>`;
+                    applyBtnHtml = `<button class="one-click-fix-btn" id="btnApplyIaDiagnosticScript" data-script="${btoa(unescape(encodeURIComponent(scriptText)))}">⚡ Aplicar Script</button>`;
                 }
-            } else if (data.tipo_correcao === 'json' && data.script_corrigido) {
+            } else if (data.tipo_correcao === 'json' && scriptText) {
                 if (isProgramavel && window.editorInstance) {
-                    applyBtnHtml = `<button class="one-click-fix-btn" id="btnApplyIaDiagnosticJson" data-json="${btoa(data.script_corrigido)}">⚡ Aplicar JSON Corrigido</button>`;
+                    applyBtnHtml = `<button class="one-click-fix-btn" id="btnApplyIaDiagnosticJson" data-json="${btoa(unescape(encodeURIComponent(scriptText)))}">⚡ Aplicar JSON no Editor</button>`;
                 }
             }
 
@@ -1250,14 +1255,14 @@ window.initAiCopilot = function() {
                 ${data.explicacao}<br><br>
                 <strong>Sugestão de Resolução:</strong><br>
                 ${data.sugestao_correcao}
-                ${data.script_corrigido ? `<pre><code>${data.script_corrigido}</code></pre>` : ''}
+                ${scriptText ? `<pre><code>${scriptText}</code></pre>` : ''}
             `, 'system', applyBtnHtml);
 
             // Bind actions
             const applyScriptBtn = document.getElementById('btnApplyIaDiagnosticScript');
             if (applyScriptBtn) {
                 applyScriptBtn.addEventListener('click', (ev) => {
-                    const code = atob(ev.currentTarget.getAttribute('data-script'));
+                    const code = decodeURIComponent(escape(atob(ev.currentTarget.getAttribute('data-script'))));
                     window.propEditorInstance.setValue(code);
                     showToast('Script corrigido aplicado no nó!', 'success');
                     ev.currentTarget.remove();
@@ -1267,7 +1272,7 @@ window.initAiCopilot = function() {
             const applyJsonBtn = document.getElementById('btnApplyIaDiagnosticJson');
             if (applyJsonBtn) {
                 applyJsonBtn.addEventListener('click', (ev) => {
-                    const code = atob(ev.currentTarget.getAttribute('data-json'));
+                    const code = decodeURIComponent(escape(atob(ev.currentTarget.getAttribute('data-json'))));
                     window.editorInstance.setValue(code);
                     if (typeof window.parseJSONToFlowchart === 'function') {
                         window.parseJSONToFlowchart();

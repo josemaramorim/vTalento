@@ -132,15 +132,15 @@ Retorne um objeto JSON contendo:
       return this._mockDiagnosticarErro(mensagemErro, contexto);
     }
 
-    const systemPrompt = `Você é o Import Doctor do V-Talentos.
-Analise a mensagem de erro de importação: "${mensagemErro}".
+    const systemPrompt = `Você é o assistente técnico e Import Doctor do V-Talentos.
+Sua tarefa é analisar a instrução/mensagem do usuário: "${mensagemErro}".
 O contexto atual é: ${JSON.stringify(contexto)}.
-Explique o erro de forma amigável em português e sugira a correção.
+Explique o que deve ser feito (ou explique o erro) de forma amigável em português e sugira a correção ou alteração.
 Retorne um objeto JSON com esta estrutura:
 {
-  "explicacao": "Explicação amigável em português sobre por que o erro aconteceu.",
-  "sugestao_correcao": "Instruções claras de como o usuário pode corrigir o erro.",
-  "script_corrigido": "Código Javascript ou JSON corrigido se aplicável à falha (opcional).",
+  "explicacao": "Explicação amigável em português sobre o erro ou a alteração sugerida.",
+  "sugestao_correcao": "Instruções claras de como o usuário pode aplicar a alteração ou corrigir o erro.",
+  "script_corrigido": "Código Javascript ou JSON de fluxo corrigido/atualizado (completo) se aplicável à instrução (opcional). Se for alteração de JSON, retorne o JSON completo atualizado.",
   "tipo_correcao": "script" | "json" | "data" | "none"
 }`;
 
