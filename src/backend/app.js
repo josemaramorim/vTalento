@@ -12,6 +12,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Servir arquivos estáticos do frontend em produção
+const path = require('path');
+app.use(express.static(path.join(__dirname, '../frontend')));
+
 // Rotas
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
